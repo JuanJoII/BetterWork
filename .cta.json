@@ -1,0 +1,23 @@
+{
+  "projectName": "work_organizer",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": true,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {
+    "CONVEX_DEPLOYMENT": "impressive-pig-754",
+    "VITE_CONVEX_URL": "https://impressive-pig-754.convex.cloud"
+  },
+  "git": true,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "nitro",
+    "convex"
+  ]
+}
