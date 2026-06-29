@@ -41,10 +41,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
+      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(234,179,8,0.25)] bg-slate-950 text-slate-100 min-h-screen relative overflow-x-hidden">
+        {/* Grid background */}
+        <div className="grid-bg" />
         <ConvexProvider>
           <Header />
-          {children}
+          <div className="relative z-10">
+            {children}
+          </div>
           <Footer />
           <TanStackDevtools
             config={{

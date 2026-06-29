@@ -1,77 +1,77 @@
-
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Onest:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Arvo", Georgia, serif;
 }
 
 :root {
-  --sea-ink: #173a40;
-  --sea-ink-soft: #416166;
-  --lagoon: #4fb8b2;
-  --lagoon-deep: #328f97;
-  --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
-  --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.82);
-  --kicker: rgba(47, 106, 74, 0.9);
-  --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
-  --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
-  --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
+  --sea-ink: #f8fafc;
+  --sea-ink-soft: #94a3b8;
+  --lagoon: #ff00b6;
+  --lagoon-deep: #ec4899;
+  --palm: #eab308;
+  --sand: #020617;
+  --foam: #030712;
+  --surface: rgba(15, 23, 42, 0.45);
+  --surface-strong: rgba(15, 23, 42, 0.85);
+  --line: rgba(255, 0, 182, 0.12);
+  --inset-glint: rgba(255, 255, 255, 0.05);
+  --kicker: #ff00b6;
+  --bg-base: #020617;
+  --header-bg: rgba(2, 6, 23, 0.65);
+  --chip-bg: rgba(15, 23, 42, 0.5);
+  --chip-line: rgba(255, 0, 182, 0.15);
+  --link-bg-hover: rgba(255, 0, 182, 0.1);
+  --hero-a: rgba(255, 0, 182, 0.15);
+  --hero-b: rgba(124, 58, 237, 0.1);
 }
 
 :root[data-theme="dark"] {
-  --sea-ink: #d7ece8;
-  --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
-  --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
+  --sea-ink: #f8fafc;
+  --sea-ink-soft: #94a3b8;
+  --lagoon: #ff00b6;
+  --lagoon-deep: #ec4899;
+  --palm: #eab308;
+  --sand: #020617;
+  --foam: #030712;
+  --surface: rgba(15, 23, 42, 0.45);
+  --surface-strong: rgba(15, 23, 42, 0.85);
+  --line: rgba(255, 0, 182, 0.12);
+  --inset-glint: rgba(255, 255, 255, 0.05);
+  --kicker: #ff00b6;
+  --bg-base: #020617;
+  --header-bg: rgba(2, 6, 23, 0.65);
+  --chip-bg: rgba(15, 23, 42, 0.5);
+  --chip-line: rgba(255, 0, 182, 0.15);
+  --link-bg-hover: rgba(255, 0, 182, 0.1);
+  --hero-a: rgba(255, 0, 182, 0.15);
+  --hero-b: rgba(124, 58, 237, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --sea-ink: #d7ece8;
-    --sea-ink-soft: #afcdc8;
-    --lagoon: #60d7cf;
-    --lagoon-deep: #8de5db;
-    --palm: #6ec89a;
-    --sand: #0f1a1e;
-    --foam: #101d22;
-    --surface: rgba(16, 30, 34, 0.8);
-    --surface-strong: rgba(15, 27, 31, 0.92);
-    --line: rgba(141, 229, 219, 0.18);
-    --inset-glint: rgba(194, 247, 238, 0.14);
-    --kicker: #b8efe5;
-    --bg-base: #0a1418;
-    --header-bg: rgba(10, 20, 24, 0.8);
-    --chip-bg: rgba(13, 28, 32, 0.9);
-    --chip-line: rgba(141, 229, 219, 0.24);
-    --link-bg-hover: rgba(24, 44, 49, 0.8);
-    --hero-a: rgba(96, 215, 207, 0.18);
-    --hero-b: rgba(110, 200, 154, 0.12);
+    --sea-ink: #f8fafc;
+    --sea-ink-soft: #94a3b8;
+    --lagoon: #ff00b6;
+    --lagoon-deep: #ec4899;
+    --palm: #eab308;
+    --sand: #020617;
+    --foam: #030712;
+    --surface: rgba(15, 23, 42, 0.45);
+    --surface-strong: rgba(15, 23, 42, 0.85);
+    --line: rgba(255, 0, 182, 0.12);
+    --inset-glint: rgba(255, 255, 255, 0.05);
+    --kicker: #ff00b6;
+    --bg-base: #020617;
+    --header-bg: rgba(2, 6, 23, 0.65);
+    --chip-bg: rgba(15, 23, 42, 0.5);
+    --chip-line: rgba(255, 0, 182, 0.15);
+    --link-bg-hover: rgba(255, 0, 182, 0.1);
+    --hero-a: rgba(255, 0, 182, 0.15);
+    --hero-b: rgba(124, 58, 237, 0.1);
   }
 }
 
@@ -90,41 +90,9 @@ body {
   color: var(--sea-ink);
   font-family: var(--font-sans);
   background-color: var(--bg-base);
-  background:
-    radial-gradient(1100px 620px at -8% -10%, var(--hero-a), transparent 58%),
-    radial-gradient(1050px 620px at 112% -12%, var(--hero-b), transparent 62%),
-    radial-gradient(720px 380px at 50% 115%, rgba(79, 184, 178, 0.1), transparent 68%),
-    linear-gradient(180deg, color-mix(in oklab, var(--sand) 68%, white) 0%, var(--foam) 44%, var(--bg-base) 100%);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.28;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.8), transparent 34%),
-    radial-gradient(circle at 78% 26%, rgba(79, 184, 178, 0.2), transparent 42%),
-    radial-gradient(circle at 42% 82%, rgba(47, 106, 74, 0.14), transparent 36%);
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.14;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
 }
 
 a {
@@ -160,8 +128,9 @@ pre code {
   margin-inline: auto;
 }
 
-.display-title {
-  font-family: "Fraunces", Georgia, serif;
+.display-title,
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
 }
 
 .island-shell {
@@ -422,7 +391,7 @@ a {
   height: 2px;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--lagoon), #7ed3bf);
+  background: linear-gradient(90deg, #a855f7, #facc15);
   transition: transform 170ms ease;
 }
 
@@ -461,4 +430,90 @@ a {
     transform: translateY(0);
   }
 }
+
+/* Kanban & Focus Deck Visual Extensions */
+.dot-grid {
+  background-image: radial-gradient(var(--line) 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+
+.kanban-scroll::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.kanban-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 99px;
+}
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--lagoon-deep);
+}
+
+/* Waveform/Equalizer Animations */
+@keyframes eq-bounce {
+  0%, 100% {
+    transform: scaleY(0.15);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.eq-bar {
+  transform-origin: bottom;
+  will-change: transform;
+}
+.eq-bar-1 { animation: eq-bounce 0.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+.eq-bar-2 { animation: eq-bounce 1.1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite 0.2s; }
+.eq-bar-3 { animation: eq-bounce 0.7s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite 0.4s; }
+.eq-bar-4 { animation: eq-bounce 0.9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite 0.1s; }
+.eq-bar-5 { animation: eq-bounce 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite 0.3s; }
+
+/* Coral Spark Accents */
+.coral-glow {
+  box-shadow: 0 0 20px rgba(255, 123, 96, 0.25);
+}
+.coral-border {
+  border-color: rgba(255, 123, 96, 0.4);
+}
+
+/* Card tactile style */
+.tactile-card {
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 1px 0 var(--inset-glint) inset,
+    0 4px 10px rgba(23, 58, 64, 0.04);
+}
+.tactile-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: var(--lagoon);
+  box-shadow:
+    0 1px 0 var(--inset-glint) inset,
+    0 12px 24px rgba(30, 90, 72, 0.08),
+    0 4px 8px rgba(23, 58, 64, 0.03);
+}
+
+/* Deep focus mode backdrop transitions */
+.deep-focus-transition {
+  transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Grid background pattern requested by user */
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(79, 79, 79, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(79, 79, 79, 0.18) 1px, transparent 1px);
+  background-size: 14px 24px;
+  z-index: -10;
+}
+
+
 
