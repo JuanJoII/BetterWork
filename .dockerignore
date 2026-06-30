@@ -1,0 +1,12 @@
+node_modules
+.output
+.git
+.github
+.vscode
+.agents
+.env
+.env.local
+bun.lockb
+README.md
+Dockerfile
+.dockerignore
