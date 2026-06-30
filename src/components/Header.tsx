@@ -1,8 +1,8 @@
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Link } from "@tanstack/react-router";
+import { useConvexAuth } from "convex/react";
 import { Compass, HelpCircle, LogOut, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useConvexAuth } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
@@ -52,7 +52,7 @@ export default function Header() {
 							className="nav-link"
 							activeProps={{ className: "nav-link is-active" }}
 						>
-							Concentrarme
+							Concentración
 						</Link>
 						<Link
 							to="/rituales"
