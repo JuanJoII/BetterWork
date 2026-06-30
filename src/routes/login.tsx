@@ -38,10 +38,14 @@ function LoginPage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!email.trim() || !password.trim()) {
+		const trimmedEmail = email.trim();
+		const trimmedPassword = password.trim();
+
+		// 1. Check for empty fields
+		if (!trimmedEmail || !trimmedPassword) {
 			sileo.error({
-				title: "Campos incompletos",
-				description: "Por favor, rellena todos los campos requeridos.",
+				title: "Campos vacíos",
+				description: "Por favor, ingresa tu correo y contraseña.",
 				fill: "#260f1c",
 				styles: {
 					title: "text-red-200 font-extrabold",
@@ -51,10 +55,56 @@ function LoginPage() {
 			return;
 		}
 
-		if (isRegister && password !== confirmPassword) {
+		// 2. Email format validation
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(trimmedEmail)) {
+			sileo.error({
+				title: "Correo inválido",
+				description: "Por favor, introduce una dirección de correo válida (ejemplo@correo.com).",
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			return;
+		}
+
+		// 3. Password length validation
+		if (trimmedPassword.length < 8) {
+			sileo.error({
+				title: "Contraseña muy corta",
+				description: "La contraseña debe tener al menos 8 caracteres.",
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			return;
+		}
+
+		// 4. Password complexity validation (must contain at least one letter and one number)
+		const hasLetter = /[a-zA-Z]/.test(trimmedPassword);
+		const hasNumber = /[0-9]/.test(trimmedPassword);
+		if (!hasLetter || !hasNumber) {
+			sileo.error({
+				title: "Contraseña insegura",
+				description: "La contraseña debe incluir al menos una letra y un número.",
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			return;
+		}
+
+		// 5. Confirm password matching (only for register)
+		if (isRegister && trimmedPassword !== confirmPassword.trim()) {
 			sileo.error({
 				title: "Contraseñas no coinciden",
-				description: "La confirmación de la contraseña no coincide con la contraseña original.",
+				description: "La confirmación de la contraseña debe ser idéntica.",
 				fill: "#260f1c",
 				styles: {
 					title: "text-red-200 font-extrabold",
@@ -68,8 +118,8 @@ function LoginPage() {
 		try {
 			await signIn("password", {
 				flow: isRegister ? "signUp" : "signIn",
-				email: email.trim(),
-				password: password.trim(),
+				email: trimmedEmail,
+				password: trimmedPassword,
 			});
 
 			sileo.success({
@@ -100,120 +150,133 @@ function LoginPage() {
 	};
 
 	return (
-		<main className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative">
-			{/* Decorative glows */}
-			<div className="pointer-events-none absolute -right-32 top-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(234,179,8,0.06),transparent_70%)]" />
-			<div className="pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.08),transparent_70%)]" />
+		<main className="min-h-[85vh] flex items-center justify-center px-4 py-16 relative">
+			{/* Decorative glows to match the design system */}
+			<div className="pointer-events-none absolute -right-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.04),transparent_70%)]" />
+			<div className="pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(192,132,252,0.06),transparent_70%)]" />
 
-			<div className="w-full max-w-md relative z-10">
-				{/* Header */}
-				<div className="text-center mb-8">
-					<div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-4 shadow-inner">
-						<ShieldCheck className="h-6 w-6" />
+			<div className="w-full max-w-[32rem] relative z-10">
+				{/* Refactored Auth Card containing the titles inside */}
+				<div className="auth-glow-card rounded-[2.25rem] p-8 dot-grid sm:p-10">
+					{/* Top Branding Section INSIDE the container */}
+					<div className="text-center mb-8">
+						<div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+							<ShieldCheck className="h-7 w-7 text-purple-300" />
+						</div>
+						<h1 className="text-3xl font-black tracking-tight text-white font-serif mb-2">
+							{isRegister ? "Crear una Cuenta" : "Iniciar Sesión"}
+						</h1>
+						<p className="text-xs text-[var(--sea-ink-soft)] font-medium max-w-sm mx-auto">
+							{isRegister 
+								? "Regístrate en BetterWork para gestionar tus tareas y automatizar tus rituales de productividad." 
+								: "Ingresa tus credenciales para acceder a tus tableros y cronómetro de concentración."}
+						</p>
 					</div>
-					<h1 className="text-3xl font-black tracking-tight text-white font-serif mb-2">
-						{isRegister ? "Crear cuenta" : "Iniciar sesión"}
-					</h1>
-					<p className="text-xs text-[var(--sea-ink-soft)] font-semibold">
-						{isRegister 
-							? "Regístrate para comenzar a organizar tus tareas y rituales" 
-							: "Ingresa tus credenciales para acceder a tus tableros"}
-					</p>
-				</div>
 
-				{/* Card */}
-				<div className="rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-md p-8 shadow-xl dot-grid">
+					{/* Custom Tabs */}
+					<div className="auth-tabs">
+						<button
+							type="button"
+							onClick={() => {
+								setIsRegister(false);
+								setEmail("");
+								setPassword("");
+								setConfirmPassword("");
+							}}
+							className={`auth-tab-btn ${!isRegister ? "is-active" : ""}`}
+						>
+							Iniciar Sesión
+						</button>
+						<button
+							type="button"
+							onClick={() => {
+								setIsRegister(true);
+								setEmail("");
+								setPassword("");
+								setConfirmPassword("");
+							}}
+							className={`auth-tab-btn ${isRegister ? "is-active" : ""}`}
+						>
+							Registrarse
+						</button>
+					</div>
+
 					<form onSubmit={handleSubmit} className="space-y-5">
 						<div>
-							<label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+							<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
 								Correo Electrónico
 							</label>
-							<div className="relative">
-								<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--sea-ink-soft)]" />
+							<div className="auth-input-container">
 								<input
 									type="email"
 									required
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 									placeholder="tu@correo.com"
-									className="demo-input py-2.5 pl-10 pr-4 text-xs font-semibold w-full bg-slate-950/40 border border-yellow-500/10 text-yellow-100 placeholder-yellow-100/30 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+									className="auth-input"
 								/>
+								<Mail className="auth-input-icon h-4 w-4" />
 							</div>
 						</div>
 
 						<div>
-							<label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+							<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
 								Contraseña
 							</label>
-							<div className="relative">
-								<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--sea-ink-soft)]" />
+							<div className="auth-input-container">
 								<input
 									type="password"
 									required
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
 									placeholder="••••••••"
-									className="demo-input py-2.5 pl-10 pr-4 text-xs font-semibold w-full bg-slate-950/40 border border-yellow-500/10 text-yellow-100 placeholder-yellow-100/30 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+									className="auth-input"
 								/>
+								<Lock className="auth-input-icon h-4 w-4" />
 							</div>
 						</div>
 
 						{isRegister && (
 							<div>
-								<label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+								<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
 									Confirmar Contraseña
 								</label>
-								<div className="relative">
-									<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--sea-ink-soft)]" />
+								<div className="auth-input-container">
 									<input
 										type="password"
 										required
 										value={confirmPassword}
 										onChange={(e) => setConfirmPassword(e.target.value)}
 										placeholder="••••••••"
-										className="demo-input py-2.5 pl-10 pr-4 text-xs font-semibold w-full bg-slate-950/40 border border-yellow-500/10 text-yellow-100 placeholder-yellow-100/30 rounded-xl focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+										className="auth-input"
 									/>
+									<Lock className="auth-input-icon h-4 w-4" />
 								</div>
 							</div>
 						)}
 
-						<button
-							type="submit"
-							disabled={pending}
-							className="w-full flex h-11 items-center justify-center gap-2 rounded-xl bg-yellow-400 border border-yellow-500 text-slate-950 hover:bg-yellow-300 font-extrabold text-xs tracking-wide shadow-md hover:shadow-yellow-400/10 transition active:scale-[0.98] disabled:opacity-50 cursor-pointer"
-						>
-							{pending ? (
-								<div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-							) : isRegister ? (
-								<>
-									<UserPlus className="h-4 w-4" />
-									<span>Registrarse</span>
-								</>
-							) : (
-								<>
-									<LogIn className="h-4 w-4" />
-									<span>Iniciar Sesión</span>
-								</>
-							)}
-						</button>
+						<div className="pt-2">
+							<button
+								type="submit"
+								disabled={pending}
+								className="auth-submit-btn"
+							>
+								{pending ? (
+									<div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
+								) : isRegister ? (
+									<>
+										<UserPlus className="h-4.5 w-4.5" />
+										<span>Crear Cuenta</span>
+									</>
+								) : (
+									<>
+										<LogIn className="h-4.5 w-4.5" />
+										<span>Entrar al Sistema</span>
+									</>
+								)}
+							</button>
+						</div>
 					</form>
-
-					<div className="mt-6 border-t border-[var(--line)] pt-4 text-center">
-						<button
-							type="button"
-							onClick={() => {
-								setIsRegister(!isRegister);
-								setEmail("");
-								setPassword("");
-								setConfirmPassword("");
-							}}
-							className="text-xs font-bold text-purple-400 hover:text-purple-300 hover:underline transition bg-transparent border-none cursor-pointer"
-						>
-							{isRegister 
-								? "¿Ya tienes una cuenta? Inicia sesión" 
-								: "¿No tienes una cuenta? Regístrate gratis"}
-						</button>
-					</div>
 				</div>
 			</div>
 		</main>
