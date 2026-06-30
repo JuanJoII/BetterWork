@@ -1,28 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	CheckCircle,
-	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
-	Clock,
-	Edit,
-	Plus,
-	Sparkles,
-	Trash2,
-	X,
-} from "lucide-react";
+import { CheckCircle, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { sileo } from "sileo";
+import CreateTaskModal from "../components/kanban/CreateTaskModal";
+import EditTaskModal from "../components/kanban/EditTaskModal";
+// Components
+import ProjectsBar from "../components/kanban/ProjectsBar";
+import TaskCard from "../components/kanban/TaskCard";
+// Types
+import type { Project, Ritual, Task } from "../types/kanban";
 
 export const Route = createFileRoute("/")({
 	component: App,
 });
-
-// Definition of Project
-interface Project {
-	id: string;
-	name: string;
-	createdAt: string;
-}
 
 const INITIAL_PROJECTS: Project[] = [
 	{
@@ -36,17 +26,6 @@ const INITIAL_PROJECTS: Project[] = [
 		createdAt: new Date().toISOString(),
 	},
 ];
-
-// Definition of Kanban Task
-interface Task {
-	id: string;
-	title: string;
-	description: string;
-	priority: "low" | "medium" | "high";
-	column: "pendiente" | "en-proceso" | "finalizado";
-	projectId?: string;
-	createdAt: string;
-}
 
 const INITIAL_TASKS: Task[] = [
 	{
@@ -122,8 +101,6 @@ const COLUMNS = [
 	},
 ] as const;
 
-// Configurations complete
-
 function App() {
 	const navigate = useNavigate();
 
@@ -148,21 +125,6 @@ function App() {
 	}, [projects]);
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
-	const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
-
-	const handleCreateProject = () => {
-		const name = prompt("Introduce el nombre del nuevo proyecto:");
-		if (name?.trim()) {
-			const newProj: Project = {
-				id: `proj-${Date.now()}`,
-				name: name.trim(),
-				createdAt: new Date().toISOString(),
-			};
-			setProjects((prev) => [...prev, newProj]);
-			setCurrentProjectId(newProj.id);
-			setNewProjectId(newProj.id);
-		}
-	};
 
 	// Tasks State
 	const [tasks, setTasks] = useState<Task[]>(() => {
@@ -188,10 +150,64 @@ function App() {
 		return INITIAL_TASKS;
 	});
 
-	// Persistence
+	// Persistence of tasks
 	useEffect(() => {
 		localStorage.setItem("kairos_kanban_tasks", JSON.stringify(tasks));
 	}, [tasks]);
+
+	// Startup Daily Rituals synchronization
+	useEffect(() => {
+		// 1. Always synchronize missing ritual tasks from templates (runs every time view mounts)
+		const templates = (() => {
+			try {
+				const saved = localStorage.getItem("kairos_rituals");
+				return saved ? (JSON.parse(saved) as Ritual[]) : [];
+			} catch (_e) {
+				return [];
+			}
+		})();
+
+		setTasks((prevTasks) => {
+			let updated = [...prevTasks];
+			let changed = false;
+
+			for (const temp of templates) {
+				const hasTask = updated.some(
+					(t) => t.id.startsWith(`ritual-${temp.id}`) || t.title === temp.title,
+				);
+				if (!hasTask) {
+					const newTask: Task = {
+						id: `ritual-${temp.id}-${Date.now()}`,
+						title: temp.title,
+						description: temp.description,
+						priority: "medium",
+						column: "pendiente",
+						isRitual: true,
+						projectId: "proj-1",
+						createdAt: new Date().toISOString(),
+					};
+					updated = [newTask, ...updated];
+					changed = true;
+				}
+			}
+			return changed ? updated : prevTasks;
+		});
+
+		// 2. Reset completed rituals back to "pendiente" if the day changed (runs once per day)
+		const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+		const lastSync = localStorage.getItem("kairos_last_sync_date");
+		if (lastSync !== today) {
+			setTasks((prevTasks) => {
+				return prevTasks.map((t) => {
+					if (t.isRitual && t.column === "finalizado") {
+						return { ...t, column: "pendiente" as const };
+					}
+					return t;
+				});
+			});
+			localStorage.setItem("kairos_last_sync_date", today);
+		}
+	}, []);
 
 	// Filter Configurations
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -200,12 +216,6 @@ function App() {
 	const [showAddModal, setShowAddModal] = useState<boolean>(false);
 	const [modalColumn, setModalColumn] = useState<Task["column"]>("pendiente");
 	const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-	// Form Fields for Add
-	const [newTitle, setNewTitle] = useState("");
-	const [newDesc, setNewDesc] = useState("");
-	const [newPriority, setNewPriority] = useState<Task["priority"]>("medium");
-	const [newProjectId, setNewProjectId] = useState("proj-1");
 
 	// Drag and Drop
 	const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
@@ -251,35 +261,103 @@ function App() {
 		}
 	};
 
-	const handleAddCardSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!newTitle.trim()) return;
-
+	const handleAddCardSubmit = (
+		title: string,
+		description: string,
+		priority: Task["priority"],
+		projectId: string,
+	) => {
 		const newTask: Task = {
 			id: `task-${Date.now()}`,
-			title: newTitle.trim(),
-			description: newDesc.trim(),
-			priority: newPriority,
+			title,
+			description,
+			priority,
 			column: modalColumn,
-			projectId: currentProjectId === "all" ? newProjectId : currentProjectId,
+			projectId,
 			createdAt: new Date().toISOString(),
 		};
 
 		setTasks((prev) => [newTask, ...prev]);
-		setNewTitle("");
-		setNewDesc("");
-		setNewPriority("medium");
+		sileo.success({
+			title: "¡Nota Creada!",
+			description: `Se ha añadido "${title}" a la columna de ${
+				modalColumn === "pendiente"
+					? "Pendiente"
+					: modalColumn === "en-proceso"
+						? "En Proceso"
+						: "Finalizado"
+			}.`,
+		});
 		setShowAddModal(false);
 	};
 
-	const handleEditCardSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!editingTask || !editingTask.title.trim()) return;
-
+	const handleEditCardSubmit = (updatedTask: Task) => {
 		setTasks((prev) =>
-			prev.map((t) => (t.id === editingTask.id ? { ...editingTask } : t)),
+			prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
 		);
 		setEditingTask(null);
+	};
+
+	const handleCreateProject = () => {
+		const toastId = sileo.action({
+			title: "Nuevo Proyecto",
+			description: (
+				<div className="flex flex-col gap-2 mt-2">
+					<input
+						type="text"
+						id="toast-proj-name"
+						placeholder="Nombre del proyecto..."
+						className="w-full rounded-lg bg-slate-950/40 border border-yellow-500/20 px-3 py-1.5 text-xs text-yellow-100 placeholder-yellow-100/40 font-semibold focus:outline-none focus:border-yellow-400"
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								const val = (e.target as HTMLInputElement).value;
+								if (val.trim()) {
+									const newProj: Project = {
+										id: `proj-${Date.now()}`,
+										name: val.trim(),
+										createdAt: new Date().toISOString(),
+									};
+									setProjects((prev) => [...prev, newProj]);
+									setCurrentProjectId(newProj.id);
+									sileo.dismiss(toastId);
+									sileo.success({
+										title: "Proyecto creado",
+										description: `Se ha creado el proyecto "${val.trim()}"`,
+									});
+								}
+							}
+						}}
+					/>
+					<div className="text-[9px] text-yellow-500/60 font-semibold">
+						Escribe el nombre y presiona Enter
+					</div>
+				</div>
+			),
+			duration: null,
+			button: {
+				title: "Crear",
+				onClick: () => {
+					const input = document.getElementById(
+						"toast-proj-name",
+					) as HTMLInputElement;
+					if (input?.value.trim()) {
+						const val = input.value.trim();
+						const newProj: Project = {
+							id: `proj-${Date.now()}`,
+							name: val,
+							createdAt: new Date().toISOString(),
+						};
+						setProjects((prev) => [...prev, newProj]);
+						setCurrentProjectId(newProj.id);
+						sileo.dismiss(toastId);
+						sileo.success({
+							title: "Proyecto creado",
+							description: `Se ha creado el proyecto "${val}"`,
+						});
+					}
+				},
+			},
+		});
 	};
 
 	// HTML5 Drag & Drop
@@ -314,108 +392,15 @@ function App() {
 	};
 
 	return (
-		<main className="page-wrap px-4 py-8 max-w-7xl">
+		<main className="page-wrap px-4 py-8 max-w-[92rem]">
 			{/* Projects Tab-Capsules & Search Toolbar */}
 			<section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				{/* Projects Tabs */}
-				<div className="flex flex-wrap items-center gap-2 relative">
-					<button
-						type="button"
-						onClick={() => {
-							setCurrentProjectId("all");
-							setShowProjectsDropdown(false);
-						}}
-						className={`rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 active:scale-95 shadow-sm border cursor-pointer ${
-							currentProjectId === "all"
-								? "bg-yellow-300 border-yellow-400 text-slate-950"
-								: "border-yellow-500/20 bg-yellow-500/5 text-yellow-100/90 hover:bg-yellow-400/10"
-						}`}
-					>
-						Tablero General
-					</button>
-
-					{projects.slice(0, 3).map((proj) => (
-						<button
-							key={proj.id}
-							type="button"
-							onClick={() => {
-								setCurrentProjectId(proj.id);
-								setShowProjectsDropdown(false);
-							}}
-							className={`rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 active:scale-95 shadow-sm border cursor-pointer ${
-								currentProjectId === proj.id
-									? "bg-yellow-300 border-yellow-400 text-slate-950"
-									: "border-yellow-500/20 bg-yellow-500/5 text-yellow-100/90 hover:bg-yellow-400/10"
-							}`}
-						>
-							{proj.name}
-						</button>
-					))}
-
-					{/* Dropdown for remaining projects */}
-					{projects.length > 3 && (
-						<div className="relative">
-							<button
-								type="button"
-								onClick={() => setShowProjectsDropdown(!showProjectsDropdown)}
-								className={`rounded-full px-3.5 py-2 text-xs font-extrabold transition-all duration-200 active:scale-95 shadow-sm border cursor-pointer flex items-center gap-1.5 ${
-									projects.slice(3).some((p) => p.id === currentProjectId)
-										? "bg-yellow-300 border-yellow-400 text-slate-950"
-										: "border-yellow-500/20 bg-yellow-500/5 text-yellow-100/90 hover:bg-yellow-400/10"
-								}`}
-							>
-								<span>
-									{projects.slice(3).some((p) => p.id === currentProjectId)
-										? projects.find((p) => p.id === currentProjectId)?.name
-										: "Más"}
-								</span>
-								<ChevronDown className="h-3 w-3" />
-							</button>
-
-							{showProjectsDropdown && (
-								<div className="absolute left-0 mt-2 w-48 z-40 rounded-2xl border border-yellow-500/20 bg-slate-900 p-2.5 shadow-xl backdrop-blur-md">
-									{projects.slice(3).map((proj) => (
-										<button
-											key={proj.id}
-											type="button"
-											onClick={() => {
-												setCurrentProjectId(proj.id);
-												setShowProjectsDropdown(false);
-											}}
-											className={`w-full text-left rounded-xl px-3 py-2 text-xs font-extrabold transition cursor-pointer ${
-												currentProjectId === proj.id
-													? "bg-yellow-300 text-slate-950"
-													: "text-yellow-100/90 hover:bg-yellow-400/10"
-											}`}
-										>
-											{proj.name}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
-					)}
-
-					{/* Add Project trigger */}
-					{projects.length > 3 ? (
-						<button
-							type="button"
-							onClick={handleCreateProject}
-							title="Nuevo Proyecto"
-							className="rounded-full p-2.5 text-xs font-extrabold border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 hover:bg-yellow-400/10 transition cursor-pointer flex items-center justify-center"
-						>
-							<Plus className="h-4 w-4" />
-						</button>
-					) : (
-						<button
-							type="button"
-							onClick={handleCreateProject}
-							className="rounded-full px-3.5 py-2 text-xs font-extrabold border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 hover:bg-yellow-400/10 transition cursor-pointer"
-						>
-							+ Nuevo Proyecto
-						</button>
-					)}
-				</div>
+				<ProjectsBar
+					projects={projects}
+					currentProjectId={currentProjectId}
+					setCurrentProjectId={setCurrentProjectId}
+					handleCreateProject={handleCreateProject}
+				/>
 
 				{/* Search bar */}
 				<div className="relative w-full max-w-xs">
@@ -449,7 +434,7 @@ function App() {
 							key={col.id}
 							onDragOver={handleDragOver}
 							onDrop={() => handleDrop(col.id)}
-							className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/30 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[600px] w-full"
+							className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[600px] w-full"
 						>
 							{/* Column Header */}
 							<div className="mb-4 flex items-center justify-between border-b border-[var(--line)] pb-4">
@@ -461,7 +446,7 @@ function App() {
 										{col.subtitle}
 									</span>
 								</div>
-								<span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--sea-ink-soft)]/10 text-xs font-black text-[var(--sea-ink-soft)]">
+								<span className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
 									{colTasks.length}
 								</span>
 							</div>
@@ -488,103 +473,18 @@ function App() {
 										);
 
 										return (
-											/* biome-ignore lint/a11y/noStaticElementInteractions: draggable task card */
-											<div
+											<TaskCard
 												key={task.id}
-												draggable
+												task={task}
+												projectOfTask={projectOfTask}
+												currentProjectId={currentProjectId}
+												colId={col.id}
 												onDragStart={() => handleDragStart(task.id)}
-												className="relative rounded-2xl border border-yellow-500/20 bg-yellow-950/20 p-5 flex flex-col justify-between transition-all duration-300 cursor-grab active:cursor-grabbing shadow-[0_8px_20px_rgba(234,179,8,0.02)] hover:shadow-[0_16px_32px_rgba(234,179,8,0.08)] hover:-translate-y-1 hover:border-yellow-400/40 hover:bg-yellow-950/30 text-yellow-100/90"
-											>
-												{/* Tech-tape overlay */}
-												<div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 bg-yellow-400/10 border-x border-yellow-400/30 shadow-sm backdrop-blur-[2px] z-10" />
-
-												<div>
-													{/* Note meta bar */}
-													<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
-														<span className="opacity-75 text-yellow-400/70 font-black">
-															Prioridad {task.priority}
-														</span>
-
-														{task.priority === "high" && (
-															<span className="px-2 py-0.5 rounded border border-red-500/20 bg-red-500/10 text-red-400 font-black">
-																URGENTE
-															</span>
-														)}
-													</div>
-
-													<h3 className="m-0 text-base font-black text-yellow-400 leading-snug">
-														{task.title}
-													</h3>
-
-													<p className="mt-2 mb-4 text-xs leading-relaxed opacity-85 font-medium text-slate-300">
-														{task.description}
-													</p>
-
-													{/* Project Indicator (only for General Board view) */}
-													{currentProjectId === "all" && projectOfTask && (
-														<div className="mt-2 text-[9px] font-black uppercase tracking-wider text-yellow-500/70 flex items-center gap-1">
-															<span>📁</span> <span>{projectOfTask.name}</span>
-														</div>
-													)}
-												</div>
-
-												{/* Note Footer Actions */}
-												<div className="border-t border-yellow-500/10 pt-3.5 flex items-center justify-end text-yellow-400/70">
-													<div className="flex items-center gap-1">
-														{col.id !== "finalizado" && (
-															<button
-																type="button"
-																onClick={() => handleFocusClick(task.id)}
-																className="rounded-lg border border-yellow-500/25 bg-yellow-500/5 hover:bg-yellow-400/10 px-2 py-1 text-[10px] font-black flex items-center gap-0.5 transition text-yellow-300 hover:text-yellow-200"
-																title="Iniciar Deep Work"
-															>
-																<Clock className="h-3 w-3" />
-																<span>Focus</span>
-															</button>
-														)}
-
-														{/* Card shifts */}
-														<div className="flex items-center">
-															{col.id !== "pendiente" && (
-																<button
-																	type="button"
-																	onClick={() => moveTask(task.id, "backward")}
-																	className="p-1 rounded-lg hover:bg-yellow-400/10 text-yellow-400/70 hover:text-yellow-300 transition"
-																	title="Mover atrás"
-																>
-																	<ChevronLeft className="h-3.5 w-3.5" />
-																</button>
-															)}
-															{col.id !== "finalizado" && (
-																<button
-																	type="button"
-																	onClick={() => moveTask(task.id, "forward")}
-																	className="p-1 rounded-lg hover:bg-yellow-400/10 text-yellow-400/70 hover:text-yellow-300 transition"
-																	title="Mover adelante"
-																>
-																	<ChevronRight className="h-3.5 w-3.5" />
-																</button>
-															)}
-															<button
-																type="button"
-																onClick={() => setEditingTask(task)}
-																className="p-1 rounded-lg hover:bg-yellow-400/10 text-yellow-400/70 hover:text-yellow-300 ml-0.5 transition"
-																title="Editar"
-															>
-																<Edit className="h-3.5 w-3.5" />
-															</button>
-															<button
-																type="button"
-																onClick={() => deleteTask(task.id)}
-																className="p-1 rounded-lg hover:bg-red-500/20 text-red-400/80 hover:text-red-400 ml-0.5 transition"
-																title="Eliminar"
-															>
-																<Trash2 className="h-3.5 w-3.5" />
-															</button>
-														</div>
-													</div>
-												</div>
-											</div>
+												onFocusClick={() => handleFocusClick(task.id)}
+												onMoveTask={(dir) => moveTask(task.id, dir)}
+												onEditTask={() => setEditingTask(task)}
+												onDeleteTask={() => deleteTask(task.id)}
+											/>
 										);
 									})
 								) : (
@@ -600,274 +500,21 @@ function App() {
 			</section>
 
 			{/* CREATE CARD DRAW MODAL */}
-			{showAddModal && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-					<div className="w-full max-w-md rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface-strong)] p-6 shadow-xl relative rise-in">
-						<button
-							type="button"
-							onClick={() => setShowAddModal(false)}
-							className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--sea-ink-soft)] hover:bg-[var(--bg-base)]"
-						>
-							<X className="h-4.5 w-4.5" />
-						</button>
-
-						<h2 className="display-title mb-4 text-xl font-bold text-[var(--sea-ink)] flex items-center gap-1.5">
-							<Sparkles className="h-5 w-5 text-[var(--palm)]" />
-							<span>Crear Nota Adhesiva</span>
-						</h2>
-
-						<form onSubmit={handleAddCardSubmit} className="space-y-4">
-							<div>
-								<label
-									htmlFor="add-title"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Título
-								</label>
-								<input
-									id="add-title"
-									type="text"
-									required
-									placeholder="Ej. Diseño de escala tipográfica"
-									value={newTitle}
-									onChange={(e) => setNewTitle(e.target.value)}
-									className="demo-input text-sm font-semibold"
-								/>
-							</div>
-
-							<div>
-								<label
-									htmlFor="add-desc"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Descripción
-								</label>
-								<textarea
-									id="add-desc"
-									placeholder="Ej. Tareas a realizar y recordatorios..."
-									value={newDesc}
-									onChange={(e) => setNewDesc(e.target.value)}
-									className="demo-textarea text-xs"
-								/>
-							</div>
-
-							<div>
-								<label
-									htmlFor="add-priority"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Prioridad
-								</label>
-								<select
-									id="add-priority"
-									value={newPriority}
-									onChange={(e) =>
-										setNewPriority(e.target.value as Task["priority"])
-									}
-									className="demo-select text-xs font-semibold"
-								>
-									<option value="low">Baja</option>
-									<option value="medium">Media</option>
-									<option value="high">Alta / Urgente</option>
-								</select>
-							</div>
-
-							{currentProjectId === "all" && (
-								<div>
-									<label
-										htmlFor="add-project"
-										className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-									>
-										Proyecto Destino
-									</label>
-									<select
-										id="add-project"
-										value={newProjectId}
-										onChange={(e) => setNewProjectId(e.target.value)}
-										className="demo-select text-xs font-semibold"
-									>
-										{projects.map((proj) => (
-											<option key={proj.id} value={proj.id}>
-												{proj.name}
-											</option>
-										))}
-									</select>
-								</div>
-							)}
-
-							<div className="pt-2 flex justify-end gap-2">
-								<button
-									type="button"
-									onClick={() => setShowAddModal(false)}
-									className="rounded-xl border border-[var(--line)] px-4 py-2 text-xs font-bold text-[var(--sea-ink-soft)] hover:bg-[var(--bg-base)]"
-								>
-									Cancelar
-								</button>
-								<button
-									type="submit"
-									className="rounded-xl bg-[var(--lagoon)] text-white px-5 py-2 text-xs font-extrabold hover:bg-[var(--lagoon-deep)] active:scale-95 transition shadow-md"
-								>
-									Guardar Nota
-								</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			)}
+			<CreateTaskModal
+				isOpen={showAddModal}
+				onClose={() => setShowAddModal(false)}
+				projects={projects}
+				currentProjectId={currentProjectId}
+				onSubmit={handleAddCardSubmit}
+			/>
 
 			{/* EDIT CARD MODAL */}
-			{editingTask && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-					<div className="w-full max-w-md rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface-strong)] p-6 shadow-xl relative rise-in">
-						<button
-							type="button"
-							onClick={() => setEditingTask(null)}
-							className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--sea-ink-soft)] hover:bg-[var(--bg-base)]"
-						>
-							<X className="h-4.5 w-4.5" />
-						</button>
-
-						<h2 className="display-title mb-4 text-xl font-bold text-[var(--sea-ink)] flex items-center gap-1.5">
-							<Edit className="h-5 w-5 text-[var(--lagoon)]" />
-							<span>Editar Nota Adhesiva</span>
-						</h2>
-
-						<form onSubmit={handleEditCardSubmit} className="space-y-4">
-							<div>
-								<label
-									htmlFor="edit-title"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Título
-								</label>
-								<input
-									id="edit-title"
-									type="text"
-									required
-									placeholder="Task naming..."
-									value={editingTask.title}
-									onChange={(e) =>
-										setEditingTask({ ...editingTask, title: e.target.value })
-									}
-									className="demo-input text-sm font-semibold"
-								/>
-							</div>
-
-							<div>
-								<label
-									htmlFor="edit-desc"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Descripción
-								</label>
-								<textarea
-									id="edit-desc"
-									placeholder="Task breakdowns..."
-									value={editingTask.description}
-									onChange={(e) =>
-										setEditingTask({
-											...editingTask,
-											description: e.target.value,
-										})
-									}
-									className="demo-textarea text-xs"
-								/>
-							</div>
-
-							<div className="grid grid-cols-2 gap-3">
-								<div>
-									<label
-										htmlFor="edit-priority"
-										className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-									>
-										Prioridad
-									</label>
-									<select
-										id="edit-priority"
-										value={editingTask.priority}
-										onChange={(e) =>
-											setEditingTask({
-												...editingTask,
-												priority: e.target.value as Task["priority"],
-											})
-										}
-										className="demo-select text-xs font-semibold"
-									>
-										<option value="low">Baja</option>
-										<option value="medium">Media</option>
-										<option value="high">Alta / Urgente</option>
-									</select>
-								</div>
-								<div>
-									<label
-										htmlFor="edit-column"
-										className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-									>
-										Estado
-									</label>
-									<select
-										id="edit-column"
-										value={editingTask.column}
-										onChange={(e) =>
-											setEditingTask({
-												...editingTask,
-												column: e.target.value as Task["column"],
-											})
-										}
-										className="demo-select text-xs font-semibold"
-									>
-										<option value="pendiente">Pendiente</option>
-										<option value="en-proceso">En Proceso</option>
-										<option value="finalizado">Finalizado</option>
-									</select>
-								</div>
-							</div>
-
-							<div>
-								<label
-									htmlFor="edit-project"
-									className="block text-xs font-bold text-[var(--sea-ink-soft)] uppercase tracking-wider mb-1.5"
-								>
-									Proyecto
-								</label>
-								<select
-									id="edit-project"
-									value={editingTask.projectId || "proj-1"}
-									onChange={(e) =>
-										setEditingTask({
-											...editingTask,
-											projectId: e.target.value,
-										})
-									}
-									className="demo-select text-xs font-semibold"
-								>
-									{projects.map((proj) => (
-										<option key={proj.id} value={proj.id}>
-											{proj.name}
-										</option>
-									))}
-								</select>
-							</div>
-
-							<div className="pt-2 flex justify-end gap-2">
-								<button
-									type="button"
-									onClick={() => setEditingTask(null)}
-									className="rounded-xl border border-[var(--line)] px-4 py-2 text-xs font-bold text-[var(--sea-ink-soft)] hover:bg-[var(--bg-base)]"
-								>
-									Cancelar
-								</button>
-								<button
-									type="submit"
-									className="rounded-xl bg-[var(--lagoon)] text-white px-5 py-2 text-xs font-extrabold hover:bg-[var(--lagoon-deep)] active:scale-95 transition shadow-md"
-								>
-									Actualizar Nota
-								</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			)}
+			<EditTaskModal
+				task={editingTask}
+				onClose={() => setEditingTask(null)}
+				projects={projects}
+				onSubmit={handleEditCardSubmit}
+			/>
 		</main>
 	);
 }

@@ -10,19 +10,11 @@ import {
 	SkipForward,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Task } from "../types/kanban";
 
 export const Route = createFileRoute("/focus")({
 	component: FocusPage,
 });
-
-interface Task {
-	id: string;
-	title: string;
-	description: string;
-	priority: "low" | "medium" | "high";
-	column: "pendiente" | "en-proceso" | "finalizado";
-	createdAt: string;
-}
 
 function playCompletionChime() {
 	try {

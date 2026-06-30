@@ -50,11 +50,11 @@ export default function Header() {
 						Focus Room
 					</Link>
 					<Link
-						to="/about"
+						to="/rituales"
 						className="nav-link"
 						activeProps={{ className: "nav-link is-active" }}
 					>
-						About
+						Rituales
 					</Link>
 				</div>
 

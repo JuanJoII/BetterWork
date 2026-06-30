@@ -9,19 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RitualesRouteImport } from './routes/rituales'
 import { Route as FocusRouteImport } from './routes/focus'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoConvexRouteImport } from './routes/demo/convex'
 
+const RitualesRoute = RitualesRouteImport.update({
+  id: '/rituales',
+  path: '/rituales',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FocusRoute = FocusRouteImport.update({
   id: '/focus',
   path: '/focus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,52 +37,52 @@ const DemoConvexRoute = DemoConvexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/focus': typeof FocusRoute
+  '/rituales': typeof RitualesRoute
   '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/focus': typeof FocusRoute
+  '/rituales': typeof RitualesRoute
   '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/focus': typeof FocusRoute
+  '/rituales': typeof RitualesRoute
   '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/focus' | '/demo/convex'
+  fullPaths: '/' | '/focus' | '/rituales' | '/demo/convex'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/focus' | '/demo/convex'
-  id: '__root__' | '/' | '/about' | '/focus' | '/demo/convex'
+  to: '/' | '/focus' | '/rituales' | '/demo/convex'
+  id: '__root__' | '/' | '/focus' | '/rituales' | '/demo/convex'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   FocusRoute: typeof FocusRoute
+  RitualesRoute: typeof RitualesRoute
   DemoConvexRoute: typeof DemoConvexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/rituales': {
+      id: '/rituales'
+      path: '/rituales'
+      fullPath: '/rituales'
+      preLoaderRoute: typeof RitualesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/focus': {
       id: '/focus'
       path: '/focus'
       fullPath: '/focus'
       preLoaderRoute: typeof FocusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,8 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   FocusRoute: FocusRoute,
+  RitualesRoute: RitualesRoute,
   DemoConvexRoute: DemoConvexRoute,
 }
 export const routeTree = rootRouteImport
