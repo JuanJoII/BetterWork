@@ -20,12 +20,8 @@ FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-
-# Variables genéricas
 ENV HOST=0.0.0.0
 ENV PORT=3000
-
-# Variables específicas de Nitro (algunos presets las priorizan sobre HOST/PORT)
 ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=3000
 
@@ -41,8 +37,5 @@ COPY --from=builder --chown=nitro:nodejs /app/.output ./.output
 USER nitro
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:3000/ || exit 1
 
 CMD ["bun", "run", ".output/server/index.mjs"]
