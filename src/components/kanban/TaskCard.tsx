@@ -57,7 +57,7 @@ export default function TaskCard({
 
 					{isRitual ? (
 						<span className="px-2 py-0.5 rounded border border-purple-500/40 bg-purple-500/20 text-purple-300 font-black animate-pulse">
-							🔮 RITUAL
+							RITUAL
 						</span>
 					) : (
 						task.priority === "high" && (
