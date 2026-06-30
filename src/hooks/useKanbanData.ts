@@ -17,6 +17,7 @@ export function useKanbanData() {
 	const updateTaskMutation = useMutation(api.tasks.update);
 	const updateColumnMutation = useMutation(api.tasks.updateColumn);
 	const removeTaskMutation = useMutation(api.tasks.remove);
+	const removeProjectMutation = useMutation(api.projects.remove);
 
 	// Map Convex data to local types for backwards compatibility with child components
 	const projects = useMemo<Project[]>(() => {
@@ -126,6 +127,7 @@ export function useKanbanData() {
 		updateTaskMutation,
 		updateColumnMutation,
 		removeTaskMutation,
+		removeProjectMutation,
 		convexTasks,
 	};
 }

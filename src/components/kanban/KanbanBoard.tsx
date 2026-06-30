@@ -41,6 +41,7 @@ export default function KanbanBoard() {
 		updateTaskMutation,
 		updateColumnMutation,
 		removeTaskMutation,
+		removeProjectMutation,
 		convexTasks,
 	} = useKanbanData();
 
@@ -275,6 +276,55 @@ export default function KanbanBoard() {
 		});
 	};
 
+	const handleDeleteProject = (projectId: string, projectName: string) => {
+		const toastKey = `delete-project-${projectId}`;
+		sileo.error({
+			id: toastKey,
+			title: "¿Eliminar proyecto?",
+			fill: "#260f1c",
+			duration: 5000,
+			description: `Se eliminará el proyecto "${projectName}" y TODAS sus notas asociadas de forma irreversible. Pulsa 'Confirmar' o cierra este aviso para cancelar.`,
+			styles: {
+				title: "text-red-200 font-extrabold",
+				description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				button: "bg-red-600 text-white hover:bg-red-700 font-bold",
+			},
+			button: {
+				title: "Confirmar",
+				onClick: () => {
+					sileo.dismiss(toastKey);
+					removeProjectMutation({ id: projectId as Id<"projects"> })
+						.then(() => {
+							if (currentProjectId === projectId) {
+								setCurrentProjectId("all");
+							}
+							sileo.success({
+								title: "Proyecto eliminado",
+								description: `Se ha eliminado el proyecto "${projectName}" y sus tareas.`,
+								fill: "#130f26",
+								styles: {
+									title: "text-purple-200 font-extrabold",
+									description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+								},
+							});
+						})
+						.catch((e) => {
+							console.error("Error deleting project:", e);
+							sileo.error({
+								title: "Error al eliminar",
+								description: "No se pudo eliminar el proyecto. Intenta de nuevo.",
+								fill: "#260f1c",
+								styles: {
+									title: "text-red-200 font-extrabold",
+									description: "text-red-300/80 text-xs font-semibold mt-0.5",
+								},
+							});
+						});
+				},
+			},
+		} as any);
+	};
+
 	// HTML5 Drag & Drop
 	const handleDragStart = (id: string) => {
 		setDraggingTaskId(id);
@@ -325,6 +375,7 @@ export default function KanbanBoard() {
 					currentProjectId={currentProjectId}
 					setCurrentProjectId={setCurrentProjectId}
 					handleCreateProject={handleCreateProject}
+					handleDeleteProject={handleDeleteProject}
 				/>
 
 				<SearchBar value={searchQuery} onChange={setSearchQuery} />
