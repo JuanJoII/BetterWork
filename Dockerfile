@@ -20,8 +20,14 @@ FROM oven/bun:1-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
+
+# Variables genéricas
 ENV HOST=0.0.0.0
+ENV PORT=3000
+
+# Variables específicas de Nitro (algunos presets las priorizan sobre HOST/PORT)
+ENV NITRO_HOST=0.0.0.0
+ENV NITRO_PORT=3000
 
 ARG VITE_CONVEX_URL
 ARG VITE_CONVEX_SITE_URL
