@@ -5,32 +5,27 @@ export default function Footer() {
 		<footer className="mt-20 border-t border-[var(--line)] px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]">
 			<div className="page-wrap flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
 				<p className="m-0 text-sm">
-					&copy; {year} Your name here. All rights reserved.
+					&copy; {year} Juan José Camacho. All rights reserved.
 				</p>
-				<p className="island-kicker m-0">Built with TanStack Start</p>
+				<p className="island-kicker m-0">Apoyame en GitHub</p>
 			</div>
 			<div className="mt-4 flex justify-center gap-4">
 				<a
-					href="https://x.com/tan_stack"
+					href="https://portafolio.jayjo.cloud"
 					target="_blank"
 					rel="noreferrer"
-					className="rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+					className="rounded-xl p-2 text-purple-400 transition hover:bg-[var(--link-bg-hover)] hover:text-yellow-400"
 				>
-					<span className="sr-only">Follow TanStack on X</span>
-					<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32">
-						<path
-							fill="currentColor"
-							d="M12.6 1h2.2L10 6.48 15.64 15h-4.41L7.78 9.82 3.23 15H1l5.14-5.84L.72 1h4.52l3.12 4.73L12.6 1zm-.77 12.67h1.22L4.57 2.26H3.26l8.57 11.41z"
-						/>
-					</svg>
+					<span className="sr-only">Ir a mi web</span>
+					<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" className="icon icon-tabler icons-tabler-filled icon-tabler-world"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M21.165 16a10 10 0 0 1 -8.434 5.973a1 1 0 0 0 .617 -.444a18 18 0 0 0 2.28 -5.528z" /><path d="M8.372 16a18 18 0 0 0 2.28 5.53a1 1 0 0 0 .616 .443a10 10 0 0 1 -8.433 -5.973z" /><path d="M13.57 16a16 16 0 0 1 -1.57 3.884a16 16 0 0 1 -1.57 -3.884" /><path d="M8.034 10a18 18 0 0 0 0 4h-5.832a10 10 0 0 1 -.002 -4z" /><path d="M13.952 10a16 16 0 0 1 0 4h-3.904a16 16 0 0 1 0 -4z" /><path d="M21.8 10a10.05 10.05 0 0 1 -.002 4h-5.832c.149 -1.329 .149 -2.67 0 -4z" /><path d="M11.267 2.027a1 1 0 0 0 -.615 .444a18 18 0 0 0 -2.28 5.529h-5.54a10.01 10.01 0 0 1 8.334 -5.967z" /><path d="M12 4.116a16 16 0 0 1 1.57 3.885h-3.14c.34 -1.317 .85 -2.6 1.53 -3.817z" /><path d="M12.733 2.026a10.01 10.01 0 0 1 8.435 5.974h-5.54a18 18 0 0 0 -2.28 -5.53a1 1 0 0 0 -.517 -.414z" /></svg>
 				</a>
 				<a
-					href="https://github.com/TanStack"
+					href="https://github.com/JuanJoII"
 					target="_blank"
 					rel="noreferrer"
-					className="rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+					className="rounded-xl p-2 text-purple-400 transition hover:bg-[var(--link-bg-hover)] hover:text-yellow-400"
 				>
-					<span className="sr-only">Go to TanStack GitHub</span>
+					<span className="sr-only">Mi GitHub</span>
 					<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32">
 						<path
 							fill="currentColor"

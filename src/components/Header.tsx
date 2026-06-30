@@ -27,7 +27,7 @@ export default function Header() {
 				<h1 className="m-0 flex-shrink-0 text-base font-black tracking-tight">
 					<Link
 						to="/"
-						className="text-[var(--sea-ink)] hover:text-yellow-400 transition no-underline font-serif font-black text-lg"
+						className="text-purple-400 hover:text-yellow-400 transition no-underline font-serif font-black text-lg"
 					>
 						BetterWork
 					</Link>
@@ -47,7 +47,7 @@ export default function Header() {
 						className="nav-link"
 						activeProps={{ className: "nav-link is-active" }}
 					>
-						Focus Room
+						Concentrarme
 					</Link>
 					<Link
 						to="/rituales"
@@ -72,7 +72,7 @@ export default function Header() {
 						className="nav-link"
 						activeProps={{ className: "nav-link is-active" }}
 					>
-						Focus
+						Concentrarme
 					</Link>
 				</div>
 

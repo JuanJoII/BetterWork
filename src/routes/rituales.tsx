@@ -104,6 +104,11 @@ function RitualesPage() {
 		sileo.success({
 			title: "¡Ritual Añadido!",
 			description: `"${newRitual.title}" se ha integrado en tus hábitos diarios y tu tablero de hoy.`,
+			fill: "#130f26",
+			styles: {
+				title: "text-purple-200 font-extrabold",
+				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+			},
 		});
 
 		setNewTitle("");
@@ -141,6 +146,11 @@ function RitualesPage() {
 			sileo.error({
 				title: "Ritual Eliminado",
 				description: `"${title}" ha sido removido de tu rutina diaria.`,
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
 			});
 		}
 	};
@@ -150,11 +160,8 @@ function RitualesPage() {
 			{/* Explanation Area */}
 			<section className="mb-8 rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-md p-6 shadow-sm relative">
 				<div className="flex items-center gap-3 mb-3">
-					<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
-						<Zap className="h-5 w-5 animate-pulse" />
-					</div>
 					<h1 className="display-title m-0 text-2xl font-black text-slate-100 font-serif">
-						Mis Rituales Diarios
+						¿Qué es un Ritual?
 					</h1>
 				</div>
 				<p className="m-0 text-xs leading-relaxed text-[var(--sea-ink-soft)] font-medium max-w-3xl">
@@ -172,12 +179,8 @@ function RitualesPage() {
 				<div className="mb-4 flex items-center justify-between border-b border-[var(--line)] pb-4">
 					<div>
 						<h2 className="display-title m-0 text-lg font-black tracking-tight text-slate-100 flex items-center gap-2">
-							<Zap className="h-5 w-5 text-purple-400" />
-							<span>Hábitos Diarios</span>
+							<span>Mis Rituales</span>
 						</h2>
-						<span className="text-xs font-bold text-[var(--sea-ink-soft)]">
-							Tus rituales activos para el día a día
-						</span>
 					</div>
 					<span className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
 						{rituals.length}

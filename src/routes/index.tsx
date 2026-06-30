@@ -287,6 +287,11 @@ function App() {
 						? "En Proceso"
 						: "Finalizado"
 			}.`,
+			fill: "#130f26",
+			styles: {
+				title: "text-purple-200 font-extrabold",
+				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+			},
 		});
 		setShowAddModal(false);
 	};
@@ -301,6 +306,11 @@ function App() {
 	const handleCreateProject = () => {
 		const toastId = sileo.action({
 			title: "Nuevo Proyecto",
+			fill: "#130f26",
+			styles: {
+				title: "text-purple-200 font-extrabold",
+				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
+			},
 			description: (
 				<div className="flex flex-col gap-2 mt-2">
 					<input
@@ -323,6 +333,11 @@ function App() {
 									sileo.success({
 										title: "Proyecto creado",
 										description: `Se ha creado el proyecto "${val.trim()}"`,
+										fill: "#130f26",
+										styles: {
+											title: "text-purple-200 font-extrabold",
+											description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+										},
 									});
 								}
 							}
@@ -353,6 +368,11 @@ function App() {
 						sileo.success({
 							title: "Proyecto creado",
 							description: `Se ha creado el proyecto "${val}"`,
+							fill: "#130f26",
+							styles: {
+								title: "text-purple-200 font-extrabold",
+								description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+							},
 						});
 					}
 				},
