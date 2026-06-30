@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
+import type * as http from "../http.js";
 import type * as projects from "../projects.js";
 import type * as rituals from "../rituals.js";
 import type * as seed from "../seed.js";
@@ -20,6 +22,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
+  http: typeof http;
   projects: typeof projects;
   rituals: typeof rituals;
   seed: typeof seed;

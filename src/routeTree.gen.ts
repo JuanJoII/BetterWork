@@ -10,13 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RitualesRouteImport } from './routes/rituales'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as FocusRouteImport } from './routes/focus'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoConvexRouteImport } from './routes/demo/convex'
 
 const RitualesRoute = RitualesRouteImport.update({
   id: '/rituales',
   path: '/rituales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FocusRoute = FocusRouteImport.update({
@@ -29,44 +34,39 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoConvexRoute = DemoConvexRouteImport.update({
-  id: '/demo/convex',
-  path: '/demo/convex',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
+  '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
-  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
+  '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
-  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/focus': typeof FocusRoute
+  '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
-  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/focus' | '/rituales' | '/demo/convex'
+  fullPaths: '/' | '/focus' | '/login' | '/rituales'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/focus' | '/rituales' | '/demo/convex'
-  id: '__root__' | '/' | '/focus' | '/rituales' | '/demo/convex'
+  to: '/' | '/focus' | '/login' | '/rituales'
+  id: '__root__' | '/' | '/focus' | '/login' | '/rituales'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FocusRoute: typeof FocusRoute
+  LoginRoute: typeof LoginRoute
   RitualesRoute: typeof RitualesRoute
-  DemoConvexRoute: typeof DemoConvexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/rituales'
       fullPath: '/rituales'
       preLoaderRoute: typeof RitualesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/focus': {
@@ -92,21 +99,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/convex': {
-      id: '/demo/convex'
-      path: '/demo/convex'
-      fullPath: '/demo/convex'
-      preLoaderRoute: typeof DemoConvexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FocusRoute: FocusRoute,
+  LoginRoute: LoginRoute,
   RitualesRoute: RitualesRoute,
-  DemoConvexRoute: DemoConvexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

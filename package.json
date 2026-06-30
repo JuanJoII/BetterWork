@@ -16,6 +16,8 @@
     "check": "biome check"
   },
   "dependencies": {
+    "@auth/core": "0.37.0",
+    "@convex-dev/auth": "^0.0.94",
     "@convex-dev/react-query": "0.1.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",

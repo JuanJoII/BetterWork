@@ -2,86 +2,20 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 import CreateTaskModal from "../components/kanban/CreateTaskModal";
 import EditTaskModal from "../components/kanban/EditTaskModal";
 // Components
 import ProjectsBar from "../components/kanban/ProjectsBar";
 import TaskCard from "../components/kanban/TaskCard";
 // Types
-import type { Project, Ritual, Task } from "../types/kanban";
+import type { Project, Task } from "../types/kanban";
 
 export const Route = createFileRoute("/")({
 	component: App,
 });
-
-const INITIAL_PROJECTS: Project[] = [
-	{
-		id: "proj-1",
-		name: "Proyecto Principal",
-		createdAt: new Date().toISOString(),
-	},
-	{
-		id: "proj-2",
-		name: "Estudios",
-		createdAt: new Date().toISOString(),
-	},
-];
-
-const INITIAL_TASKS: Task[] = [
-	{
-		id: "task-1",
-		title: "Refining typography scale for BetterWork",
-		description:
-			"Pair Onest for headings and body. Double-check margins and scale contrast on mobile screens.",
-		priority: "medium",
-		column: "pendiente",
-		projectId: "proj-1",
-		createdAt: new Date().toISOString(),
-	},
-	{
-		id: "task-2",
-		title: "Implement local storage persistence",
-		description:
-			"Save Kanban board tasks, column orders, and deep work session history to local storage so details survive browser reloads.",
-		priority: "high",
-		column: "pendiente",
-		projectId: "proj-1",
-		createdAt: new Date(Date.now() - 3600000).toISOString(),
-	},
-	{
-		id: "task-3",
-		title: "Animate Focus Deck waveforms",
-		description:
-			"Write CSS keyframe animations for the audio equalizer bands. Synchronize movements with play and pause interactions.",
-		priority: "high",
-		column: "en-proceso",
-		projectId: "proj-2",
-		createdAt: new Date(Date.now() - 7200000).toISOString(),
-	},
-	{
-		id: "task-4",
-		title: "Configure routing with TanStack Start",
-		description:
-			"Initialize project structure, register root document wrappers, and set up file-based routes for / and /about pages.",
-		priority: "low",
-		column: "finalizado",
-		projectId: "proj-1",
-		createdAt: new Date(Date.now() - 86400000).toISOString(),
-	},
-	{
-		id: "task-5",
-		title: "Draft client review presentation slides",
-		description:
-			"Synthesize user feedback and prepare wireframe slide deck for the upcoming BetterWork progress meeting.",
-		priority: "medium",
-		column: "pendiente",
-		projectId: "proj-2",
-		createdAt: new Date().toISOString(),
-	},
-];
 
 const COLUMNS = [
 	{
@@ -105,7 +39,14 @@ const COLUMNS = [
 ] as const;
 
 function App() {
+	const { isLoading, isAuthenticated } = useConvexAuth();
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!isLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [isLoading, isAuthenticated, navigate]);
 	// Convex queries and mutations
 	const convexProjects = useQuery(api.projects.list);
 	const convexTasks = useQuery(api.tasks.list);
@@ -122,7 +63,7 @@ function App() {
 	// Map Convex data to local types for backwards compatibility with child components
 	const projects = useMemo<Project[]>(() => {
 		return (
-			convexProjects?.map((p) => ({
+			convexProjects?.map((p: Doc<"projects">) => ({
 				id: p._id,
 				name: p.name,
 				createdAt: p.createdAt,
@@ -132,7 +73,7 @@ function App() {
 
 	const tasks = useMemo<Task[]>(() => {
 		return (
-			convexTasks?.map((t) => ({
+			convexTasks?.map((t: Doc<"tasks">) => ({
 				id: t._id,
 				title: t.title,
 				description: t.description,
@@ -150,14 +91,14 @@ function App() {
 		if (!convexRituals || !convexTasks || !convexProjects) return;
 
 		const syncMissingRituals = async () => {
-			for (const temp of convexRituals) {
-				const hasTask = convexTasks.some(
-					(t) => t.isRitual && t.title === temp.title,
+			for (const temp of convexRituals as Doc<"rituals">[]) {
+				const hasTask = (convexTasks as Doc<"tasks">[]).some(
+					(t: Doc<"tasks">) => t.isRitual && t.title === temp.title,
 				);
 				if (!hasTask) {
 					try {
 						// Find first project as fallback for ritual tasks
-						const mainProj = convexProjects[0];
+						const mainProj = convexProjects[0] as Doc<"projects">;
 						if (mainProj) {
 							await createTaskMutation({
 								title: temp.title,
@@ -182,7 +123,7 @@ function App() {
 		const lastSync = localStorage.getItem("kairos_last_sync_date");
 		if (lastSync !== today) {
 			const resetCompletedRituals = async () => {
-				for (const t of convexTasks) {
+				for (const t of (convexTasks || []) as Doc<"tasks">[]) {
 					if (t.isRitual && t.column === "finalizado") {
 						try {
 							await updateColumnMutation({
@@ -232,7 +173,9 @@ function App() {
 			"en-proceso",
 			"finalizado",
 		];
-		const task = convexTasks?.find((t) => t._id === id);
+		const task = (convexTasks as Doc<"tasks">[])?.find(
+			(t: Doc<"tasks">) => t._id === id,
+		);
 		if (!task) return;
 
 		const currentIndex = columnProgression.indexOf(task.column as Task["column"]);
@@ -416,7 +359,9 @@ function App() {
 	// Navigate to Focus route
 	const handleFocusClick = async (id: string) => {
 		localStorage.setItem("kairos_active_task_id", id);
-		const task = convexTasks?.find((t) => t._id === id);
+		const task = (convexTasks as Doc<"tasks">[])?.find(
+			(t: Doc<"tasks">) => t._id === id,
+		);
 		if (task && task.column === "pendiente") {
 			try {
 				await updateColumnMutation({
@@ -429,6 +374,16 @@ function App() {
 		}
 		navigate({ to: "/focus" });
 	};
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-slate-950">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-yellow-500/20 border-t-yellow-400" />
+			</div>
+		);
+	}
+
+	if (!isAuthenticated) return null;
 
 	return (
 		<main className="page-wrap px-4 py-8 max-w-[92rem]">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	ArrowLeft,
@@ -10,9 +10,9 @@ import {
 	SkipForward,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 import type { Task } from "../types/kanban";
 
 export const Route = createFileRoute("/focus")({
@@ -56,13 +56,22 @@ function playCompletionChime() {
 }
 
 function FocusPage() {
+	const { isLoading, isAuthenticated } = useConvexAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!isLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [isLoading, isAuthenticated, navigate]);
+
 	// Load Tasks from Convex
 	const convexTasks = useQuery(api.tasks.list);
 	const updateColumnMutation = useMutation(api.tasks.updateColumn);
 
 	const tasks = useMemo<Task[]>(() => {
 		return (
-			convexTasks?.map((t) => ({
+			convexTasks?.map((t: Doc<"tasks">) => ({
 				id: t._id,
 				title: t.title,
 				description: t.description,
@@ -169,6 +178,16 @@ function FocusPage() {
 	const progressPercentage = (secondsRemaining / (timerDuration * 60)) * 100;
 	const strokeDashoffset =
 		circleCircumference - (progressPercentage / 100) * circleCircumference;
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-slate-950">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-yellow-500/20 border-t-yellow-400" />
+			</div>
+		);
+	}
+
+	if (!isAuthenticated) return null;
 
 	return (
 		<main className="page-wrap px-4 py-12 max-w-3xl min-h-[85vh] flex flex-col justify-center">

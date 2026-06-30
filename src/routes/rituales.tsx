@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus, Sparkles, Trash2, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Doc, Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/rituales")({
 	component: RitualesPage,
@@ -17,18 +17,16 @@ interface Ritual {
 	createdAt: string;
 }
 
-interface Task {
-	id: string;
-	title: string;
-	description: string;
-	priority: "low" | "medium" | "high";
-	column: "pendiente" | "en-proceso" | "finalizado";
-	projectId?: string;
-	isRitual?: boolean;
-	createdAt: string;
-}
-
 function RitualesPage() {
+	const { isLoading, isAuthenticated } = useConvexAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!isLoading && !isAuthenticated) {
+			navigate({ to: "/login" });
+		}
+	}, [isLoading, isAuthenticated, navigate]);
+
 	const convexRituals = useQuery(api.rituals.list);
 	const convexTasks = useQuery(api.tasks.list);
 	const convexProjects = useQuery(api.projects.list);
@@ -40,7 +38,7 @@ function RitualesPage() {
 
 	const rituals = useMemo<Ritual[]>(() => {
 		return (
-			convexRituals?.map((r) => ({
+			convexRituals?.map((r: Doc<"rituals">) => ({
 				id: r._id,
 				title: r.title,
 				description: r.description,
@@ -107,8 +105,8 @@ function RitualesPage() {
 
 				// Also remove the task instance of this ritual if it exists
 				if (convexTasks) {
-					const matchingTasks = convexTasks.filter(
-						(t) => t.isRitual && t.title === title,
+					const matchingTasks = (convexTasks as Doc<"tasks">[]).filter(
+						(t: Doc<"tasks">) => t.isRitual && t.title === title,
 					);
 					for (const task of matchingTasks) {
 						await removeTaskMutation({ id: task._id });
@@ -129,6 +127,16 @@ function RitualesPage() {
 			}
 		}
 	};
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-slate-950">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-yellow-500/20 border-t-yellow-400" />
+			</div>
+		);
+	}
+
+	if (!isAuthenticated) return null;
 
 	return (
 		<main className="page-wrap px-4 py-8 max-w-4xl mx-auto">

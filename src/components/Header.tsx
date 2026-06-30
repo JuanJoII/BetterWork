@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Compass, HelpCircle, X } from "lucide-react";
+import { Compass, HelpCircle, LogOut, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
+	const { isAuthenticated } = useConvexAuth();
+	const { signOut } = useAuthActions();
 	const [showGuide, setShowGuide] = useState(false);
 	const guideRef = useRef<HTMLDivElement>(null);
 
@@ -34,47 +38,51 @@ export default function Header() {
 				</h1>
 
 				{/* Centered Navigation Links (Desktop) */}
-				<div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-5 text-sm font-semibold">
-					<Link
-						to="/"
-						className="nav-link"
-						activeProps={{ className: "nav-link is-active" }}
-					>
-						Tablero
-					</Link>
-					<Link
-						to="/focus"
-						className="nav-link"
-						activeProps={{ className: "nav-link is-active" }}
-					>
-						Concentrarme
-					</Link>
-					<Link
-						to="/rituales"
-						className="nav-link"
-						activeProps={{ className: "nav-link is-active" }}
-					>
-						Rituales
-					</Link>
-				</div>
+				{isAuthenticated && (
+					<div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-5 text-sm font-semibold">
+						<Link
+							to="/"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Tablero
+						</Link>
+						<Link
+							to="/focus"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Concentrarme
+						</Link>
+						<Link
+							to="/rituales"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Rituales
+						</Link>
+					</div>
+				)}
 
 				{/* Mobile Navigation */}
-				<div className="flex md:hidden items-center gap-3 text-xs font-semibold">
-					<Link
-						to="/"
-						className="nav-link"
-						activeProps={{ className: "nav-link is-active" }}
-					>
-						Tablero
-					</Link>
-					<Link
-						to="/focus"
-						className="nav-link"
-						activeProps={{ className: "nav-link is-active" }}
-					>
-						Concentrarme
-					</Link>
-				</div>
+				{isAuthenticated && (
+					<div className="flex md:hidden items-center gap-3 text-xs font-semibold">
+						<Link
+							to="/"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Tablero
+						</Link>
+						<Link
+							to="/focus"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Concentrarme
+						</Link>
+					</div>
+				)}
 
 				<div className="flex items-center gap-1 sm:gap-1.5">
 					{/* Workspace Help Tooltip Trigger */}
@@ -130,6 +138,16 @@ export default function Header() {
 					</div>
 
 					<ThemeToggle />
+					{isAuthenticated && (
+						<button
+							type="button"
+							onClick={() => signOut()}
+							className="rounded-xl p-2 text-red-400 transition hover:bg-red-500/10 hover:text-red-300 flex items-center justify-center cursor-pointer border-none bg-transparent"
+							title="Cerrar Sesión"
+						>
+							<LogOut className="h-5 w-5" />
+						</button>
+					)}
 				</div>
 			</nav>
 		</header>
