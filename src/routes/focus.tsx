@@ -10,6 +10,9 @@ import {
 	SkipForward,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import type { Task } from "../types/kanban";
 
 export const Route = createFileRoute("/focus")({
@@ -53,20 +56,24 @@ function playCompletionChime() {
 }
 
 function FocusPage() {
-	// Load Tasks from local storage
-	const [tasks, setTasks] = useState<Task[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("kairos_kanban_tasks");
-			if (saved) {
-				try {
-					return JSON.parse(saved);
-				} catch (e) {
-					console.error(e);
-				}
-			}
-		}
-		return [];
-	});
+	// Load Tasks from Convex
+	const convexTasks = useQuery(api.tasks.list);
+	const updateColumnMutation = useMutation(api.tasks.updateColumn);
+
+	const tasks = useMemo<Task[]>(() => {
+		return (
+			convexTasks?.map((t) => ({
+				id: t._id,
+				title: t.title,
+				description: t.description,
+				priority: t.priority as Task["priority"],
+				column: t.column as Task["column"],
+				projectId: t.projectId,
+				isRitual: t.isRitual,
+				createdAt: t.createdAt,
+			})) || []
+		);
+	}, [convexTasks]);
 
 	// Load Active Task ID
 	const [activeTaskId, setActiveTaskId] = useState<string>(() => {
@@ -83,13 +90,6 @@ function FocusPage() {
 	const [timerRunning, setTimerRunning] = useState<boolean>(false);
 	const [completedSessions, setCompletedSessions] = useState<number>(0);
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-	// Sync tasks update
-	useEffect(() => {
-		if (tasks.length > 0) {
-			localStorage.setItem("kairos_kanban_tasks", JSON.stringify(tasks));
-		}
-	}, [tasks]);
 
 	// Sync active task change
 	useEffect(() => {
@@ -126,13 +126,10 @@ function FocusPage() {
 
 						// Mark task as Finalizado automatically when Pomodoro finishes
 						if (activeTask) {
-							setTasks((prevTasks) =>
-								prevTasks.map((t) =>
-									t.id === activeTask.id
-										? { ...t, column: "finalizado" as const }
-										: t,
-								),
-							);
+							updateColumnMutation({
+								id: activeTask.id as Id<"tasks">,
+								column: "finalizado",
+							}).catch((e) => console.error("Error completing task:", e));
 						}
 						return timerDuration * 60;
 					}

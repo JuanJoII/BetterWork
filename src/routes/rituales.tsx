@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Sparkles, Trash2, X, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/rituales")({
 	component: RitualesPage,
@@ -26,132 +29,104 @@ interface Task {
 }
 
 function RitualesPage() {
-	const [rituals, setRituals] = useState<Ritual[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("kairos_rituals");
-			if (saved) {
-				try {
-					return JSON.parse(saved) as Ritual[];
-				} catch (e) {
-					console.error(e);
-				}
-			}
-		}
-		return [
-			{
-				id: "rit-1",
-				title: "Revisar Gmail",
-				description:
-					"Verificar correos importantes de clientes y responder pendientes a primera hora.",
-				createdAt: new Date().toISOString(),
-			},
-			{
-				id: "rit-2",
-				title: "Planificación Diaria",
-				description:
-					"Reorganizar las columnas del tablero y elegir el objetivo de enfoque del día.",
-				createdAt: new Date().toISOString(),
-			},
-		];
-	});
+	const convexRituals = useQuery(api.rituals.list);
+	const convexTasks = useQuery(api.tasks.list);
+	const convexProjects = useQuery(api.projects.list);
+
+	const createRitualMutation = useMutation(api.rituals.create);
+	const removeRitualMutation = useMutation(api.rituals.remove);
+	const createTaskMutation = useMutation(api.tasks.create);
+	const removeTaskMutation = useMutation(api.tasks.remove);
+
+	const rituals = useMemo<Ritual[]>(() => {
+		return (
+			convexRituals?.map((r) => ({
+				id: r._id,
+				title: r.title,
+				description: r.description,
+				createdAt: r.createdAt,
+			})) || []
+		);
+	}, [convexRituals]);
 
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [newTitle, setNewTitle] = useState("");
 	const [newDesc, setNewDesc] = useState("");
 
-	useEffect(() => {
-		localStorage.setItem("kairos_rituals", JSON.stringify(rituals));
-	}, [rituals]);
-
-	const handleAddRitual = (e: React.FormEvent) => {
+	const handleAddRitual = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!newTitle.trim()) return;
 
-		const newRitual: Ritual = {
-			id: `rit-${Date.now()}`,
-			title: newTitle.trim(),
-			description: newDesc.trim(),
-			createdAt: new Date().toISOString(),
-		};
+		try {
+			// Create ritual template in Convex
+			await createRitualMutation({
+				title: newTitle.trim(),
+				description: newDesc.trim(),
+			});
 
-		// Add template
-		setRituals((prev) => [newRitual, ...prev]);
-
-		// Immediately add to current Kanban tasks list
-		if (typeof window !== "undefined") {
-			try {
-				const savedTasks = localStorage.getItem("kairos_kanban_tasks");
-				const tasks = savedTasks ? (JSON.parse(savedTasks) as Task[]) : [];
-				const newTask: Task = {
-					id: `ritual-${newRitual.id}-${Date.now()}`,
-					title: newRitual.title,
-					description: newRitual.description,
+			// Find a default project to assign the task to
+			const mainProj = convexProjects?.[0];
+			if (mainProj) {
+				await createTaskMutation({
+					title: newTitle.trim(),
+					description: newDesc.trim(),
 					priority: "medium",
 					column: "pendiente",
+					projectId: mainProj._id,
 					isRitual: true,
-					projectId: "proj-1",
-					createdAt: new Date().toISOString(),
-				};
-				localStorage.setItem(
-					"kairos_kanban_tasks",
-					JSON.stringify([newTask, ...tasks]),
-				);
-			} catch (err) {
-				console.error(err);
+				});
 			}
+
+			sileo.success({
+				title: "¡Ritual Añadido!",
+				description: `"${newTitle.trim()}" se ha integrado en tus hábitos diarios y tu tablero de hoy.`,
+				fill: "#130f26",
+				styles: {
+					title: "text-purple-200 font-extrabold",
+					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+
+			setNewTitle("");
+			setNewDesc("");
+			setShowAddModal(false);
+		} catch (err) {
+			console.error(err);
 		}
-
-		sileo.success({
-			title: "¡Ritual Añadido!",
-			description: `"${newRitual.title}" se ha integrado en tus hábitos diarios y tu tablero de hoy.`,
-			fill: "#130f26",
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-			},
-		});
-
-		setNewTitle("");
-		setNewDesc("");
-		setShowAddModal(false);
 	};
 
-	const handleDeleteRitual = (id: string, title: string) => {
+	const handleDeleteRitual = async (id: string, title: string) => {
 		if (
 			confirm(
 				`¿Deseas eliminar el ritual "${title}"? Se removerá de tus hábitos diarios.`,
 			)
 		) {
-			setRituals((prev) => prev.filter((r) => r.id !== id));
+			try {
+				// Remove the ritual template
+				await removeRitualMutation({ id: id as Id<"rituals"> });
 
-			// Remove active tasks of this ritual from the board
-			if (typeof window !== "undefined") {
-				try {
-					const savedTasks = localStorage.getItem("kairos_kanban_tasks");
-					if (savedTasks) {
-						const tasks = JSON.parse(savedTasks) as Task[];
-						const filtered = tasks.filter(
-							(t) => !t.id.startsWith(`ritual-${id}`) && t.title !== title,
-						);
-						localStorage.setItem(
-							"kairos_kanban_tasks",
-							JSON.stringify(filtered),
-						);
+				// Also remove the task instance of this ritual if it exists
+				if (convexTasks) {
+					const matchingTasks = convexTasks.filter(
+						(t) => t.isRitual && t.title === title,
+					);
+					for (const task of matchingTasks) {
+						await removeTaskMutation({ id: task._id });
 					}
-				} catch (err) {
-					console.error(err);
 				}
-			}
 
-			sileo.error({
-				title: "Ritual Eliminado",
-				description: `"${title}" ha sido removido de tu rutina diaria.`,
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
-			});
+				sileo.error({
+					title: "Ritual Eliminado",
+					description: `"${title}" ha sido removido de tu rutina diaria.`,
+					fill: "#260f1c",
+					styles: {
+						title: "text-red-200 font-extrabold",
+						description: "text-red-300/80 text-xs font-semibold mt-0.5",
+					},
+				});
+			} catch (err) {
+				console.error(err);
+			}
 		}
 	};
 

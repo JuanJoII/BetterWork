@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { sileo } from "sileo";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import CreateTaskModal from "../components/kanban/CreateTaskModal";
 import EditTaskModal from "../components/kanban/EditTaskModal";
 // Components
@@ -103,111 +106,99 @@ const COLUMNS = [
 
 function App() {
 	const navigate = useNavigate();
+	// Convex queries and mutations
+	const convexProjects = useQuery(api.projects.list);
+	const convexTasks = useQuery(api.tasks.list);
+	const convexRituals = useQuery(api.rituals.list);
 
-	// Projects State
-	const [projects, setProjects] = useState<Project[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("kairos_kanban_projects");
-			if (saved) {
-				try {
-					return JSON.parse(saved) as Project[];
-				} catch (e) {
-					console.error(e);
-				}
-			}
-		}
-		return INITIAL_PROJECTS;
-	});
-
-	// Persistence of projects
-	useEffect(() => {
-		localStorage.setItem("kairos_kanban_projects", JSON.stringify(projects));
-	}, [projects]);
+	const createProjectMutation = useMutation(api.projects.create);
+	const createTaskMutation = useMutation(api.tasks.create);
+	const updateTaskMutation = useMutation(api.tasks.update);
+	const updateColumnMutation = useMutation(api.tasks.updateColumn);
+	const removeTaskMutation = useMutation(api.tasks.remove);
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
 
-	// Tasks State
-	const [tasks, setTasks] = useState<Task[]>(() => {
-		if (typeof window !== "undefined") {
-			const saved = localStorage.getItem("kairos_kanban_tasks");
-			if (saved) {
-				try {
-					// Convert columns dynamically if they were in the 4-column system before
-					/* biome-ignore lint/suspicious/noExplicitAny: parsing migration from old schema */
-					const parsed = JSON.parse(saved) as any[];
-					return parsed.map((task) => {
-						let col = task.column;
-						if (col === "spark" || col === "backlog") col = "pendiente";
-						if (col === "flowing") col = "en-proceso";
-						if (col === "shipped") col = "finalizado";
-						return { ...task, column: col };
-					});
-				} catch (e) {
-					console.error(e);
-				}
-			}
-		}
-		return INITIAL_TASKS;
-	});
+	// Map Convex data to local types for backwards compatibility with child components
+	const projects = useMemo<Project[]>(() => {
+		return (
+			convexProjects?.map((p) => ({
+				id: p._id,
+				name: p.name,
+				createdAt: p.createdAt,
+			})) || []
+		);
+	}, [convexProjects]);
 
-	// Persistence of tasks
+	const tasks = useMemo<Task[]>(() => {
+		return (
+			convexTasks?.map((t) => ({
+				id: t._id,
+				title: t.title,
+				description: t.description,
+				priority: t.priority as Task["priority"],
+				column: t.column as Task["column"],
+				projectId: t.projectId,
+				isRitual: t.isRitual,
+				createdAt: t.createdAt,
+			})) || []
+		);
+	}, [convexTasks]);
+
+	// Startup Daily Rituals synchronization in Convex
 	useEffect(() => {
-		localStorage.setItem("kairos_kanban_tasks", JSON.stringify(tasks));
-	}, [tasks]);
+		if (!convexRituals || !convexTasks || !convexProjects) return;
 
-	// Startup Daily Rituals synchronization
-	useEffect(() => {
-		// 1. Always synchronize missing ritual tasks from templates (runs every time view mounts)
-		const templates = (() => {
-			try {
-				const saved = localStorage.getItem("kairos_rituals");
-				return saved ? (JSON.parse(saved) as Ritual[]) : [];
-			} catch (_e) {
-				return [];
-			}
-		})();
-
-		setTasks((prevTasks) => {
-			let updated = [...prevTasks];
-			let changed = false;
-
-			for (const temp of templates) {
-				const hasTask = updated.some(
-					(t) => t.id.startsWith(`ritual-${temp.id}`) || t.title === temp.title,
+		const syncMissingRituals = async () => {
+			for (const temp of convexRituals) {
+				const hasTask = convexTasks.some(
+					(t) => t.isRitual && t.title === temp.title,
 				);
 				if (!hasTask) {
-					const newTask: Task = {
-						id: `ritual-${temp.id}-${Date.now()}`,
-						title: temp.title,
-						description: temp.description,
-						priority: "medium",
-						column: "pendiente",
-						isRitual: true,
-						projectId: "proj-1",
-						createdAt: new Date().toISOString(),
-					};
-					updated = [newTask, ...updated];
-					changed = true;
+					try {
+						// Find first project as fallback for ritual tasks
+						const mainProj = convexProjects[0];
+						if (mainProj) {
+							await createTaskMutation({
+								title: temp.title,
+								description: temp.description,
+								priority: "medium",
+								column: "pendiente",
+								projectId: mainProj._id,
+								isRitual: true,
+							});
+						}
+					} catch (e) {
+						console.error("Error syncing ritual:", e);
+					}
 				}
 			}
-			return changed ? updated : prevTasks;
-		});
+		};
 
-		// 2. Reset completed rituals back to "pendiente" if the day changed (runs once per day)
+		syncMissingRituals();
+
+		// Reset completed rituals back to "pendiente" if the day changed
 		const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
 		const lastSync = localStorage.getItem("kairos_last_sync_date");
 		if (lastSync !== today) {
-			setTasks((prevTasks) => {
-				return prevTasks.map((t) => {
+			const resetCompletedRituals = async () => {
+				for (const t of convexTasks) {
 					if (t.isRitual && t.column === "finalizado") {
-						return { ...t, column: "pendiente" as const };
+						try {
+							await updateColumnMutation({
+								id: t._id,
+								column: "pendiente",
+							});
+						} catch (e) {
+							console.error("Error resetting ritual task:", e);
+						}
 					}
-					return t;
-				});
-			});
-			localStorage.setItem("kairos_last_sync_date", today);
+				}
+				localStorage.setItem("kairos_last_sync_date", today);
+			};
+			resetCompletedRituals();
 		}
-	}, []);
+	}, [convexRituals, convexTasks, convexProjects, createTaskMutation, updateColumnMutation]);
 
 	// Filter Configurations
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -229,78 +220,96 @@ function App() {
 			const matchesProject =
 				currentProjectId === "all" ||
 				t.projectId === currentProjectId ||
-				(!t.projectId && currentProjectId === "proj-1");
+				(!t.projectId && projects[0] && currentProjectId === projects[0].id);
 			return matchesSearch && matchesProject;
 		});
-	}, [tasks, searchQuery, currentProjectId]);
+	}, [tasks, searchQuery, currentProjectId, projects]);
 
 	// Handlers
-	const moveTask = (id: string, direction: "forward" | "backward") => {
+	const moveTask = async (id: string, direction: "forward" | "backward") => {
 		const columnProgression: Task["column"][] = [
 			"pendiente",
 			"en-proceso",
 			"finalizado",
 		];
-		setTasks((prev) =>
-			prev.map((t) => {
-				if (t.id === id) {
-					const currentIndex = columnProgression.indexOf(t.column);
-					const nextIndex = currentIndex + (direction === "forward" ? 1 : -1);
-					if (nextIndex >= 0 && nextIndex < columnProgression.length) {
-						return { ...t, column: columnProgression[nextIndex] };
-					}
-				}
-				return t;
-			}),
-		);
-	};
+		const task = convexTasks?.find((t) => t._id === id);
+		if (!task) return;
 
-	const deleteTask = (id: string) => {
-		if (confirm("¿Estás seguro de que deseas eliminar esta nota adhesiva?")) {
-			setTasks((prev) => prev.filter((t) => t.id !== id));
+		const currentIndex = columnProgression.indexOf(task.column as Task["column"]);
+		const nextIndex = currentIndex + (direction === "forward" ? 1 : -1);
+		if (nextIndex >= 0 && nextIndex < columnProgression.length) {
+			try {
+				await updateColumnMutation({
+					id: task._id,
+					column: columnProgression[nextIndex],
+				});
+			} catch (e) {
+				console.error(e);
+			}
 		}
 	};
 
-	const handleAddCardSubmit = (
+	const deleteTask = async (id: string) => {
+		if (confirm("¿Estás seguro de que deseas eliminar esta nota adhesiva?")) {
+			try {
+				await removeTaskMutation({ id: id as Id<"tasks"> });
+			} catch (e) {
+				console.error(e);
+			}
+		}
+	};
+
+	const handleAddCardSubmit = async (
 		title: string,
 		description: string,
 		priority: Task["priority"],
 		projectId: string,
 	) => {
-		const newTask: Task = {
-			id: `task-${Date.now()}`,
-			title,
-			description,
-			priority,
-			column: modalColumn,
-			projectId,
-			createdAt: new Date().toISOString(),
-		};
+		try {
+			await createTaskMutation({
+				title,
+				description,
+				priority,
+				column: modalColumn,
+				projectId: projectId as Id<"projects">,
+			});
 
-		setTasks((prev) => [newTask, ...prev]);
-		sileo.success({
-			title: "¡Nota Creada!",
-			description: `Se ha añadido "${title}" a la columna de ${
-				modalColumn === "pendiente"
-					? "Pendiente"
-					: modalColumn === "en-proceso"
-						? "En Proceso"
-						: "Finalizado"
-			}.`,
-			fill: "#130f26",
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-			},
-		});
-		setShowAddModal(false);
+			sileo.success({
+				title: "¡Nota Creada!",
+				description: `Se ha añadido "${title}" a la columna de ${
+					modalColumn === "pendiente"
+						? "Pendiente"
+						: modalColumn === "en-proceso"
+							? "En Proceso"
+							: "Finalizado"
+				}.`,
+				fill: "#130f26",
+				styles: {
+					title: "text-purple-200 font-extrabold",
+					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			setShowAddModal(false);
+		} catch (e) {
+			console.error(e);
+		}
 	};
 
-	const handleEditCardSubmit = (updatedTask: Task) => {
-		setTasks((prev) =>
-			prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
-		);
-		setEditingTask(null);
+	const handleEditCardSubmit = async (updatedTask: Task) => {
+		try {
+			await updateTaskMutation({
+				id: updatedTask.id as Id<"tasks">,
+				title: updatedTask.title,
+				description: updatedTask.description,
+				priority: updatedTask.priority,
+				column: updatedTask.column,
+				projectId: updatedTask.projectId as Id<"projects">,
+				isRitual: updatedTask.isRitual,
+			});
+			setEditingTask(null);
+		} catch (e) {
+			console.error(e);
+		}
 	};
 
 	const handleCreateProject = () => {
@@ -318,27 +327,28 @@ function App() {
 						id="toast-proj-name"
 						placeholder="Nombre del proyecto..."
 						className="w-full rounded-lg bg-slate-950/40 border border-yellow-500/20 px-3 py-1.5 text-xs text-yellow-100 placeholder-yellow-100/40 font-semibold focus:outline-none focus:border-yellow-400"
-						onKeyDown={(e) => {
+						onKeyDown={async (e) => {
 							if (e.key === "Enter") {
 								const val = (e.target as HTMLInputElement).value;
 								if (val.trim()) {
-									const newProj: Project = {
-										id: `proj-${Date.now()}`,
-										name: val.trim(),
-										createdAt: new Date().toISOString(),
-									};
-									setProjects((prev) => [...prev, newProj]);
-									setCurrentProjectId(newProj.id);
-									sileo.dismiss(toastId);
-									sileo.success({
-										title: "Proyecto creado",
-										description: `Se ha creado el proyecto "${val.trim()}"`,
-										fill: "#130f26",
-										styles: {
-											title: "text-purple-200 font-extrabold",
-											description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-										},
-									});
+									try {
+										const newId = await createProjectMutation({
+											name: val.trim(),
+										});
+										setCurrentProjectId(newId);
+										sileo.dismiss(toastId);
+										sileo.success({
+											title: "Proyecto creado",
+											description: `Se ha creado el proyecto "${val.trim()}"`,
+											fill: "#130f26",
+											styles: {
+												title: "text-purple-200 font-extrabold",
+												description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+											},
+										});
+									} catch (err) {
+										console.error(err);
+									}
 								}
 							}
 						}}
@@ -351,29 +361,30 @@ function App() {
 			duration: null,
 			button: {
 				title: "Crear",
-				onClick: () => {
+				onClick: async () => {
 					const input = document.getElementById(
 						"toast-proj-name",
 					) as HTMLInputElement;
 					if (input?.value.trim()) {
 						const val = input.value.trim();
-						const newProj: Project = {
-							id: `proj-${Date.now()}`,
-							name: val,
-							createdAt: new Date().toISOString(),
-						};
-						setProjects((prev) => [...prev, newProj]);
-						setCurrentProjectId(newProj.id);
-						sileo.dismiss(toastId);
-						sileo.success({
-							title: "Proyecto creado",
-							description: `Se ha creado el proyecto "${val}"`,
-							fill: "#130f26",
-							styles: {
-								title: "text-purple-200 font-extrabold",
-								description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-							},
-						});
+						try {
+							const newId = await createProjectMutation({
+								name: val,
+							});
+							setCurrentProjectId(newId);
+							sileo.dismiss(toastId);
+							sileo.success({
+								title: "Proyecto creado",
+								description: `Se ha creado el proyecto "${val}"`,
+								fill: "#130f26",
+								styles: {
+									title: "text-purple-200 font-extrabold",
+									description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+								},
+							});
+						} catch (err) {
+							console.error(err);
+						}
 					}
 				},
 			},
@@ -389,25 +400,33 @@ function App() {
 		e.preventDefault();
 	};
 
-	const handleDrop = (column: Task["column"]) => {
+	const handleDrop = async (column: Task["column"]) => {
 		if (!draggingTaskId) return;
-		setTasks((prev) =>
-			prev.map((t) => (t.id === draggingTaskId ? { ...t, column } : t)),
-		);
+		try {
+			await updateColumnMutation({
+				id: draggingTaskId as Id<"tasks">,
+				column,
+			});
+		} catch (e) {
+			console.error(e);
+		}
 		setDraggingTaskId(null);
 	};
 
 	// Navigate to Focus route
-	const handleFocusClick = (id: string) => {
+	const handleFocusClick = async (id: string) => {
 		localStorage.setItem("kairos_active_task_id", id);
-		// If the task isn't in progress, automatically shift it to en-proceso
-		setTasks((prev) =>
-			prev.map((t) =>
-				t.id === id && t.column === "pendiente"
-					? { ...t, column: "en-proceso" as const }
-					: t,
-			),
-		);
+		const task = convexTasks?.find((t) => t._id === id);
+		if (task && task.column === "pendiente") {
+			try {
+				await updateColumnMutation({
+					id: task._id,
+					column: "en-proceso",
+				});
+			} catch (e) {
+				console.error(e);
+			}
+		}
 		navigate({ to: "/focus" });
 	};
 
