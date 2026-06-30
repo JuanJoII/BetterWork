@@ -86,6 +86,25 @@ function App() {
 		);
 	}, [convexTasks]);
 
+	// Auto-create default project for new users
+	useEffect(() => {
+		if (
+			!isLoading &&
+			isAuthenticated &&
+			convexProjects !== undefined &&
+			convexProjects.length === 0
+		) {
+			const createDefaultProject = async () => {
+				try {
+					await createProjectMutation({ name: "General" });
+				} catch (e) {
+					console.error("Error creating default project:", e);
+				}
+			};
+			createDefaultProject();
+		}
+	}, [isLoading, isAuthenticated, convexProjects, createProjectMutation]);
+
 	// Startup Daily Rituals synchronization in Convex
 	useEffect(() => {
 		if (!convexRituals || !convexTasks || !convexProjects) return;

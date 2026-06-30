@@ -5,11 +5,15 @@ import { authTables } from "@convex-dev/auth/server";
 export default defineSchema({
   ...authTables,
   projects: defineTable({
+    userId: v.id("users"),
     name: v.string(),
     createdAt: v.string(),
-  }).index("by_createdAt", ["createdAt"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_createdAt", ["createdAt"]),
 
   tasks: defineTable({
+    userId: v.id("users"),
     title: v.string(),
     description: v.string(),
     priority: v.string(),
@@ -18,13 +22,16 @@ export default defineSchema({
     isRitual: v.optional(v.boolean()),
     createdAt: v.string(),
   })
+    .index("by_userId", ["userId"])
     .index("by_projectId", ["projectId"])
     .index("by_column", ["column"])
     .index("by_projectId_and_column", ["projectId", "column"]),
 
   rituals: defineTable({
+    userId: v.id("users"),
     title: v.string(),
     description: v.string(),
     createdAt: v.string(),
-  }),
+  })
+    .index("by_userId", ["userId"]),
 });
