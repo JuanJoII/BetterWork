@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useConvexAuth } from "convex/react";
+import { Lock, LogIn, Mail, UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { sileo } from "sileo";
-import { LogIn, UserPlus, ShieldCheck, Mail, Lock } from "lucide-react";
+import GradientText from "../components/GradientText";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
@@ -159,18 +160,17 @@ function LoginPage() {
 				{/* Refactored Auth Card containing the titles inside */}
 				<div className="auth-glow-card rounded-[2.25rem] p-8 dot-grid sm:p-10">
 					{/* Top Branding Section INSIDE the container */}
-					<div className="text-center mb-8">
-						<div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-4 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-							<ShieldCheck className="h-7 w-7 text-purple-300" />
-						</div>
-						<h1 className="text-3xl font-black tracking-tight text-white font-serif mb-2">
-							{isRegister ? "Crear una Cuenta" : "Iniciar Sesión"}
-						</h1>
-						<p className="text-xs text-[var(--sea-ink-soft)] font-medium max-w-sm mx-auto">
-							{isRegister 
-								? "Regístrate en BetterWork para gestionar tus tareas y automatizar tus rituales de productividad." 
-								: "Ingresa tus credenciales para acceder a tus tableros y cronómetro de concentración."}
-						</p>
+					<div className="text-center mb-12">
+						<GradientText
+							colors={["#5227FF", "#FF9FFC", "#B497CF"]}
+							animationSpeed={8}
+							showBorder={false}
+							className="text-4xl sm:text-5xl font-black tracking-tight leading-tight pb-1"
+						>
+							<h1 className="font-serif font-black">
+								{isRegister ? "¡Crea tu cuenta!" : "¡Bienvenido de nuevo!"}
+							</h1>
+						</GradientText>
 					</div>
 
 					{/* Custom Tabs */}
@@ -271,7 +271,7 @@ function LoginPage() {
 								) : (
 									<>
 										<LogIn className="h-4.5 w-4.5" />
-										<span>Entrar al Sistema</span>
+										<span>Iniciar Sesión</span>
 									</>
 								)}
 							</button>
