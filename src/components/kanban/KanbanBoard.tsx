@@ -53,51 +53,7 @@ export default function KanbanBoard() {
 
 	const { contextSafe } = useGSAP({ scope: boardRef });
 
-	const spawnParticles = contextSafe((clickedCard: HTMLElement) => {
-		const rect = clickedCard.getBoundingClientRect();
-		const boardRect = boardRef.current?.getBoundingClientRect();
-		if (!boardRect) return;
 
-		// Calculate center relative to board container
-		const startX = rect.left + rect.width / 2 - boardRect.left;
-		const startY = rect.top + rect.height / 2 - boardRect.top;
-
-		const isRitual = clickedCard.getAttribute("data-ritual") === "true";
-		const color = isRitual ? "#c084fc" : "#39fc23";
-
-		const particleCount = 20;
-		for (let i = 0; i < particleCount; i++) {
-			const particle = document.createElement("div");
-			particle.style.position = "absolute";
-			particle.style.width = `${gsap.utils.random(4, 9)}px`;
-			particle.style.height = particle.style.width;
-			particle.style.borderRadius = "50%";
-			particle.style.backgroundColor = color;
-			particle.style.boxShadow = `0 0 10px ${color}`;
-			particle.style.pointerEvents = "none";
-			particle.style.zIndex = "100";
-			particle.style.left = `${startX}px`;
-			particle.style.top = `${startY}px`;
-
-			boardRef.current?.appendChild(particle);
-
-			const destX = gsap.utils.random(-200, 200);
-			const destY = gsap.utils.random(-200, 200);
-			const duration = gsap.utils.random(0.5, 0.9);
-
-			gsap.to(particle, {
-				x: destX,
-				y: destY,
-				scale: 0,
-				opacity: 0,
-				duration: duration,
-				ease: "power3.out",
-				onComplete: () => {
-					particle.remove();
-				},
-			});
-		}
-	});
 
 	const triggerShockwave = contextSafe((originElement: HTMLElement, originId: string) => {
 		const rect = originElement.getBoundingClientRect();
@@ -208,7 +164,6 @@ export default function KanbanBoard() {
 
 					if (clickedCard) {
 						triggerShockwave(clickedCard, id);
-						spawnParticles(clickedCard);
 						gsap.to(clickedCard, {
 							scale: 0.3,
 							opacity: 0,
@@ -295,7 +250,6 @@ export default function KanbanBoard() {
 
 		if (clickedCard) {
 			triggerShockwave(clickedCard, id);
-			spawnParticles(clickedCard);
 			gsap.to(clickedCard, {
 				scale: 0.3,
 				opacity: 0,
