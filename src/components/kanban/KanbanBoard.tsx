@@ -1,9 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP);
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
+import { dispatchShockwave } from "./ShockwaveWrapper";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
@@ -26,13 +31,14 @@ const COLUMNS = [
 	{
 		id: "finalizado",
 		title: "Finalizado",
-		subtitle: "Completado con éxito",
-		color: "border-emerald-200 text-emerald-700 bg-emerald-500/5",
+		subtitle: "Listas para archivar",
+		color: "border-green-200 text-green-700 bg-green-500/5",
 	},
 ] as const;
 
 export default function KanbanBoard() {
 	const navigate = useNavigate();
+	const boardRef = useRef<HTMLDivElement>(null);
 	const {
 		projects,
 		tasks,
@@ -44,6 +50,61 @@ export default function KanbanBoard() {
 		removeProjectMutation,
 		convexTasks,
 	} = useKanbanData();
+
+	const { contextSafe } = useGSAP({ scope: boardRef });
+
+	const spawnParticles = contextSafe((clickedCard: HTMLElement) => {
+		const rect = clickedCard.getBoundingClientRect();
+		const boardRect = boardRef.current?.getBoundingClientRect();
+		if (!boardRect) return;
+
+		// Calculate center relative to board container
+		const startX = rect.left + rect.width / 2 - boardRect.left;
+		const startY = rect.top + rect.height / 2 - boardRect.top;
+
+		const isRitual = clickedCard.getAttribute("data-ritual") === "true";
+		const color = isRitual ? "#c084fc" : "#39fc23";
+
+		const particleCount = 20;
+		for (let i = 0; i < particleCount; i++) {
+			const particle = document.createElement("div");
+			particle.style.position = "absolute";
+			particle.style.width = `${gsap.utils.random(4, 9)}px`;
+			particle.style.height = particle.style.width;
+			particle.style.borderRadius = "50%";
+			particle.style.backgroundColor = color;
+			particle.style.boxShadow = `0 0 10px ${color}`;
+			particle.style.pointerEvents = "none";
+			particle.style.zIndex = "100";
+			particle.style.left = `${startX}px`;
+			particle.style.top = `${startY}px`;
+
+			boardRef.current?.appendChild(particle);
+
+			const destX = gsap.utils.random(-200, 200);
+			const destY = gsap.utils.random(-200, 200);
+			const duration = gsap.utils.random(0.5, 0.9);
+
+			gsap.to(particle, {
+				x: destX,
+				y: destY,
+				scale: 0,
+				opacity: 0,
+				duration: duration,
+				ease: "power3.out",
+				onComplete: () => {
+					particle.remove();
+				},
+			});
+		}
+	});
+
+	const triggerShockwave = contextSafe((originElement: HTMLElement, originId: string) => {
+		const rect = originElement.getBoundingClientRect();
+		const centerX = rect.left + rect.width / 2;
+		const centerY = rect.top + rect.height / 2;
+		dispatchShockwave(centerX, centerY, originId);
+	});
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
 
@@ -98,8 +159,10 @@ export default function KanbanBoard() {
 		}
 	};
 
-	const deleteTask = async (id: string) => {
+	const deleteTask = async (id: string, e: React.MouseEvent) => {
 		const toastKey = `delete-task-${id}`;
+		const clickedCard = (e.target as HTMLElement).closest("[data-task-card]") as HTMLElement;
+
 		sileo.error({
 			id: toastKey,
 			title: "¿Eliminar nota?",
@@ -115,33 +178,134 @@ export default function KanbanBoard() {
 				title: "Eliminar",
 				onClick: () => {
 					sileo.dismiss(toastKey);
-					removeTaskMutation({ id: id as Id<"tasks"> })
-						.then(() => {
-							sileo.success({
-								title: "Nota eliminada",
-								description: "La nota adhesiva se ha eliminado correctamente.",
-								fill: "#130f26",
-								styles: {
-									title: "text-purple-200 font-extrabold",
-									description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-								},
+					
+					const runDeletion = () => {
+						removeTaskMutation({ id: id as Id<"tasks"> })
+							.then(() => {
+								sileo.success({
+									title: "Nota eliminada",
+									description: "La nota adhesiva se ha eliminado correctamente.",
+									fill: "#130f26",
+									styles: {
+										title: "text-purple-200 font-extrabold",
+										description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+									},
+								});
+							})
+							.catch((err) => {
+								console.error("Error deleting task:", err);
+								sileo.error({
+									title: "Error al eliminar",
+									description: "No se pudo eliminar la nota. Intenta de nuevo.",
+									fill: "#260f1c",
+									styles: {
+										title: "text-red-200 font-extrabold",
+										description: "text-red-300/80 text-xs font-semibold mt-0.5",
+									},
+								});
 							});
-						})
-						.catch((e) => {
-							console.error("Error deleting task:", e);
-							sileo.error({
-								title: "Error al eliminar",
-								description: "No se pudo eliminar la nota. Intenta de nuevo.",
-								fill: "#260f1c",
-								styles: {
-									title: "text-red-200 font-extrabold",
-									description: "text-red-300/80 text-xs font-semibold mt-0.5",
-								},
-							});
+					};
+
+					if (clickedCard) {
+						triggerShockwave(clickedCard, id);
+						spawnParticles(clickedCard);
+						gsap.to(clickedCard, {
+							scale: 0.3,
+							opacity: 0,
+							duration: 0.25,
+							ease: "back.in(1.7)",
+							onComplete: runDeletion,
 						});
+					} else {
+						runDeletion();
+					}
 				},
 			},
 		} as any);
+	};
+
+	const completeTask = async (id: string, e: React.MouseEvent) => {
+		const task = (convexTasks as Doc<"tasks">[])?.find((t) => t._id === id);
+		if (!task) return;
+		const title = task.title;
+		const description = task.description;
+		const priority = task.priority;
+		const column = task.column;
+		const projectId = task.projectId;
+		const isRitual = task.isRitual;
+
+		const toastKey = `complete-task-${id}`;
+		const clickedCard = (e.target as HTMLElement).closest("[data-task-card]") as HTMLElement;
+
+		const runCompletion = async () => {
+			try {
+				await removeTaskMutation({ id: id as Id<"tasks"> });
+				sileo.success({
+					id: toastKey,
+					title: "¡Tarea Realizada!",
+					description: `Felicidades, has finalizado "${title}" con éxito.`,
+					fill: "#130f26",
+					duration: 8000,
+					styles: {
+						title: "text-purple-200 font-extrabold",
+						description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+						button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
+					},
+					button: {
+						title: "Deshacer",
+						onClick: async () => {
+							sileo.dismiss(toastKey);
+							try {
+								await createTaskMutation({
+									title,
+									description,
+									priority: priority as any,
+									column,
+									projectId,
+									isRitual,
+								});
+								sileo.success({
+									title: "Tarea restaurada",
+									description: `Se ha vuelto a agregar "${title}".`,
+									fill: "#130f26",
+									styles: {
+										title: "text-purple-200 font-extrabold",
+										description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+									},
+								});
+							} catch (err) {
+								console.error("Error undoing task completion:", err);
+							}
+						},
+					},
+				} as any);
+			} catch (err) {
+				console.error("Error completing task:", err);
+				sileo.error({
+					title: "Error al completar",
+					description: "No se pudo marcar la tarea como realizada. Intenta de nuevo.",
+					fill: "#260f1c",
+					styles: {
+						title: "text-red-200 font-extrabold",
+						description: "text-red-300/80 text-xs font-semibold mt-0.5",
+					},
+				});
+			}
+		};
+
+		if (clickedCard) {
+			triggerShockwave(clickedCard, id);
+			spawnParticles(clickedCard);
+			gsap.to(clickedCard, {
+				scale: 0.3,
+				opacity: 0,
+				duration: 0.25,
+				ease: "back.in(1.7)",
+				onComplete: runCompletion,
+			});
+		} else {
+			runCompletion();
+		}
 	};
 
 	const handleAddCardSubmit = async (
@@ -367,7 +531,7 @@ export default function KanbanBoard() {
 	};
 
 	return (
-		<main className="page-wrap px-4 py-8 max-w-[92rem]">
+		<main ref={boardRef} className="page-wrap px-4 py-8 max-w-[92rem] relative">
 			{/* Projects Tab-Capsules & Search Toolbar */}
 			<section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<ProjectsBar
@@ -404,6 +568,7 @@ export default function KanbanBoard() {
 							onMoveTask={moveTask}
 							onEditTask={setEditingTask}
 							onDeleteTask={deleteTask}
+							onCompleteTask={completeTask}
 						/>
 					);
 				})}
