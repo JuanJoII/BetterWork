@@ -1,9 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import confetti from "canvas-confetti";
+
+gsap.registerPlugin(useGSAP);
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
+import { dispatchShockwave } from "./ShockwaveWrapper";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
@@ -26,13 +32,14 @@ const COLUMNS = [
 	{
 		id: "finalizado",
 		title: "Finalizado",
-		subtitle: "Completado con éxito",
-		color: "border-emerald-200 text-emerald-700 bg-emerald-500/5",
+		subtitle: "Listas para archivar",
+		color: "border-green-200 text-green-700 bg-green-500/5",
 	},
 ] as const;
 
 export default function KanbanBoard() {
 	const navigate = useNavigate();
+	const boardRef = useRef<HTMLDivElement>(null);
 	const {
 		projects,
 		tasks,
@@ -44,6 +51,17 @@ export default function KanbanBoard() {
 		removeProjectMutation,
 		convexTasks,
 	} = useKanbanData();
+
+	const { contextSafe } = useGSAP({ scope: boardRef });
+
+
+
+	const triggerShockwave = contextSafe((originElement: HTMLElement, originId: string) => {
+		const rect = originElement.getBoundingClientRect();
+		const centerX = rect.left + rect.width / 2;
+		const centerY = rect.top + rect.height / 2;
+		dispatchShockwave(centerX, centerY, originId);
+	});
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
 
@@ -98,8 +116,10 @@ export default function KanbanBoard() {
 		}
 	};
 
-	const deleteTask = async (id: string) => {
+	const deleteTask = async (id: string, e: React.MouseEvent) => {
 		const toastKey = `delete-task-${id}`;
+		const clickedCard = (e.target as HTMLElement).closest("[data-task-card]") as HTMLElement;
+
 		sileo.error({
 			id: toastKey,
 			title: "¿Eliminar nota?",
@@ -115,33 +135,158 @@ export default function KanbanBoard() {
 				title: "Eliminar",
 				onClick: () => {
 					sileo.dismiss(toastKey);
-					removeTaskMutation({ id: id as Id<"tasks"> })
-						.then(() => {
-							sileo.success({
-								title: "Nota eliminada",
-								description: "La nota adhesiva se ha eliminado correctamente.",
-								fill: "#130f26",
-								styles: {
-									title: "text-purple-200 font-extrabold",
-									description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-								},
+					
+					const runDeletion = () => {
+						removeTaskMutation({ id: id as Id<"tasks"> })
+							.then(() => {
+								sileo.success({
+									title: "Nota eliminada",
+									description: "La nota adhesiva se ha eliminado correctamente.",
+									fill: "#130f26",
+									styles: {
+										title: "text-purple-200 font-extrabold",
+										description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+									},
+								});
+							})
+							.catch((err) => {
+								console.error("Error deleting task:", err);
+								sileo.error({
+									title: "Error al eliminar",
+									description: "No se pudo eliminar la nota. Intenta de nuevo.",
+									fill: "#260f1c",
+									styles: {
+										title: "text-red-200 font-extrabold",
+										description: "text-red-300/80 text-xs font-semibold mt-0.5",
+									},
+								});
 							});
-						})
-						.catch((e) => {
-							console.error("Error deleting task:", e);
-							sileo.error({
-								title: "Error al eliminar",
-								description: "No se pudo eliminar la nota. Intenta de nuevo.",
-								fill: "#260f1c",
-								styles: {
-									title: "text-red-200 font-extrabold",
-									description: "text-red-300/80 text-xs font-semibold mt-0.5",
-								},
-							});
+					};
+
+					if (clickedCard) {
+						gsap.to(clickedCard, {
+							scale: 0.1,
+							opacity: 0,
+							duration: 0.16,
+							ease: "power2.in",
+							onComplete: runDeletion,
 						});
+						setTimeout(() => {
+							triggerShockwave(clickedCard, id);
+						}, 80);
+					} else {
+						runDeletion();
+					}
 				},
 			},
 		} as any);
+	};
+
+	const completeTask = async (id: string, e: React.MouseEvent) => {
+		const task = (convexTasks as Doc<"tasks">[])?.find((t) => t._id === id);
+		if (!task) return;
+		const title = task.title;
+		const description = task.description;
+		const priority = task.priority;
+		const column = task.column;
+		const projectId = task.projectId;
+		const isRitual = task.isRitual;
+
+		const toastKey = `complete-task-${id}`;
+		const clickedCard = (e.target as HTMLElement).closest("[data-task-card]") as HTMLElement;
+
+		// 1. Show Sileo toast confirmation immediately
+		sileo.success({
+			id: toastKey,
+			title: "¡Tarea Realizada!",
+			description: `Felicidades, has finalizado "${title}" con éxito.`,
+			fill: "#130f26",
+			duration: 8000,
+			styles: {
+				title: "text-purple-200 font-extrabold",
+				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
+			},
+			button: {
+				title: "Deshacer",
+				onClick: async () => {
+					sileo.dismiss(toastKey);
+					try {
+						await createTaskMutation({
+							title,
+							description,
+							priority: priority as any,
+							column,
+							projectId,
+							isRitual,
+						});
+						sileo.success({
+							title: "Tarea restaurada",
+							description: `Se ha vuelto a agregar "${title}".`,
+							fill: "#130f26",
+							styles: {
+								title: "text-purple-200 font-extrabold",
+								description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+							},
+						});
+					} catch (err) {
+						console.error("Error undoing task completion:", err);
+					}
+				},
+			},
+		} as any);
+
+		const runDbRemoval = async () => {
+			try {
+				await removeTaskMutation({ id: id as Id<"tasks"> });
+			} catch (err) {
+				console.error("Error completing task:", err);
+				sileo.dismiss(toastKey);
+				sileo.error({
+					title: "Error al completar",
+					description: "No se pudo marcar la tarea como realizada. Intenta de nuevo.",
+					fill: "#260f1c",
+					styles: {
+						title: "text-red-200 font-extrabold",
+						description: "text-red-300/80 text-xs font-semibold mt-0.5",
+					},
+				});
+			}
+		};
+
+		// 2. Trigger exit animation and shockwave halfway through after Sileo toast appears
+		setTimeout(() => {
+			if (clickedCard) {
+				gsap.to(clickedCard, {
+					scale: 0.1,
+					opacity: 0,
+					duration: 0.16,
+					ease: "power2.in",
+					onComplete: runDbRemoval,
+				});
+				setTimeout(() => {
+					triggerShockwave(clickedCard, id);
+
+					// Launch confetti burst from completed card center in sync with shockwave
+					const rect = clickedCard.getBoundingClientRect();
+					const originX = (rect.left + rect.width / 2) / window.innerWidth;
+					const originY = (rect.top + rect.height / 2) / window.innerHeight;
+
+					confetti({
+						particleCount: 45,
+						spread: 70,
+						origin: { x: originX, y: originY },
+						colors: ["#39fc23", "#a78bfa", "#3b82f6", "#f59e0b", "#ec4899"],
+						ticks: 180,
+						gravity: 1.1,
+						scalar: 0.85,
+						disableForReducedMotion: true,
+					});
+				}, 80);
+			} else {
+				runDbRemoval();
+			}
+		}, 30);
 	};
 
 	const handleAddCardSubmit = async (
@@ -367,7 +512,7 @@ export default function KanbanBoard() {
 	};
 
 	return (
-		<main className="page-wrap px-4 py-8 max-w-[92rem]">
+		<main ref={boardRef} className="page-wrap px-4 py-8 max-w-[92rem] relative">
 			{/* Projects Tab-Capsules & Search Toolbar */}
 			<section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<ProjectsBar
@@ -404,6 +549,7 @@ export default function KanbanBoard() {
 							onMoveTask={moveTask}
 							onEditTask={setEditingTask}
 							onDeleteTask={deleteTask}
+							onCompleteTask={completeTask}
 						/>
 					);
 				})}

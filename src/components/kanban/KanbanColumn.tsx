@@ -1,5 +1,6 @@
 import { CheckCircle, Plus } from "lucide-react";
 import TaskCard from "./TaskCard";
+import ShockwaveWrapper from "./ShockwaveWrapper";
 import type { Project, Task } from "../../types/kanban";
 
 interface ColumnConfig {
@@ -21,7 +22,8 @@ interface KanbanColumnProps {
 	onFocusClick: (id: string) => void;
 	onMoveTask: (id: string, direction: "forward" | "backward") => void;
 	onEditTask: (task: Task) => void;
-	onDeleteTask: (id: string) => void;
+	onDeleteTask: (id: string, e: React.MouseEvent) => void;
+	onCompleteTask: (id: string, e: React.MouseEvent) => void;
 }
 
 export default function KanbanColumn({
@@ -37,6 +39,7 @@ export default function KanbanColumn({
 	onMoveTask,
 	onEditTask,
 	onDeleteTask,
+	onCompleteTask,
 }: KanbanColumnProps) {
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop columns container */
@@ -79,18 +82,20 @@ export default function KanbanColumn({
 						);
 
 						return (
-							<TaskCard
-								key={task.id}
-								task={task}
-								projectOfTask={projectOfTask}
-								currentProjectId={currentProjectId}
-								colId={col.id}
-								onDragStart={() => onDragStart(task.id)}
-								onFocusClick={() => onFocusClick(task.id)}
-								onMoveTask={(dir) => onMoveTask(task.id, dir)}
-								onEditTask={() => onEditTask(task)}
-								onDeleteTask={() => onDeleteTask(task.id)}
-							/>
+							<ShockwaveWrapper key={task.id} id={task.id}>
+								<TaskCard
+									task={task}
+									projectOfTask={projectOfTask}
+									currentProjectId={currentProjectId}
+									colId={col.id}
+									onDragStart={() => onDragStart(task.id)}
+									onFocusClick={() => onFocusClick(task.id)}
+									onMoveTask={(dir) => onMoveTask(task.id, dir)}
+									onEditTask={() => onEditTask(task)}
+									onDeleteTask={(e) => onDeleteTask(task.id, e)}
+									onCompleteTask={(e) => onCompleteTask(task.id, e)}
+								/>
+							</ShockwaveWrapper>
 						);
 					})
 				) : (

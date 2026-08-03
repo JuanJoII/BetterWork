@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Clock, Edit, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Edit, Trash2 } from "lucide-react";
 import type { Project, Task } from "../../types/kanban";
 
 interface TaskCardProps {
@@ -10,7 +10,8 @@ interface TaskCardProps {
 	onFocusClick: () => void;
 	onMoveTask: (direction: "forward" | "backward") => void;
 	onEditTask: () => void;
-	onDeleteTask: () => void;
+	onDeleteTask: (e: React.MouseEvent) => void;
+	onCompleteTask: (e: React.MouseEvent) => void;
 }
 
 export default function TaskCard({
@@ -23,12 +24,15 @@ export default function TaskCard({
 	onMoveTask,
 	onEditTask,
 	onDeleteTask,
+	onCompleteTask,
 }: TaskCardProps) {
 	const isRitual = !!task.isRitual;
 
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: draggable task card */
 		<div
+			data-task-card
+			data-ritual={isRitual}
 			draggable
 			onDragStart={onDragStart}
 			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm ${
@@ -159,9 +163,26 @@ export default function TaskCard({
 						>
 							<Edit className="h-3.5 w-3.5" />
 						</button>
+						{colId === "finalizado" && (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									onCompleteTask(e);
+								}}
+								className="p-1 rounded-lg hover:bg-green-500/20 ml-0.5 transition cursor-pointer"
+								style={{ color: "#39fc23" }}
+								title="Completar Tarea"
+							>
+								<Check className="h-3.5 w-3.5" />
+							</button>
+						)}
 						<button
 							type="button"
-							onClick={onDeleteTask}
+							onClick={(e) => {
+								e.stopPropagation();
+								onDeleteTask(e);
+							}}
 							className="p-1 rounded-lg hover:bg-red-500/20 text-red-400/80 hover:text-red-400 ml-0.5 transition"
 							title="Eliminar"
 						>
