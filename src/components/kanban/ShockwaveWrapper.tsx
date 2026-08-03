@@ -33,9 +33,9 @@ export default function ShockwaveWrapper({ id, children }: ShockwaveWrapperProps
 			const dy = cardCenterY - y;
 			const distance = Math.sqrt(dx * dx + dy * dy);
 
-			const maxDistance = 800;
+			const maxDistance = 900;
 			if (distance < maxDistance && distance > 0) {
-				const force = (1 - distance / maxDistance) * 30;
+				const force = (1 - distance / maxDistance) * 40;
 				const angle = Math.atan2(dy, dx);
 				const forceX = Math.cos(angle) * force;
 				const forceY = Math.sin(angle) * force;
@@ -43,18 +43,18 @@ export default function ShockwaveWrapper({ id, children }: ShockwaveWrapperProps
 				// Kill any running animations to avoid overlapping conflicts
 				gsap.killTweensOf(cardHtml);
 
-				// Fast outward explosion push, followed by a springy elastic settle
+				// Subtle outward explosion push, followed by a smooth elastic settle
 				const tl = gsap.timeline();
 				tl.to(cardHtml, {
 					x: forceX,
 					y: forceY,
-					duration: 0.07,
+					duration: 0.08,
 					ease: "power2.out",
 				}).to(cardHtml, {
 					x: 0,
 					y: 0,
 					duration: 0.45,
-					ease: "elastic.out(0.85, 0.6)",
+					ease: "elastic.out(0.85, 0.55)",
 				});
 			}
 		};

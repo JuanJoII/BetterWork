@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import confetti from "canvas-confetti";
 
 gsap.registerPlugin(useGSAP);
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
@@ -163,14 +164,16 @@ export default function KanbanBoard() {
 					};
 
 					if (clickedCard) {
-						triggerShockwave(clickedCard, id);
 						gsap.to(clickedCard, {
-							scale: 0.3,
+							scale: 0.1,
 							opacity: 0,
-							duration: 0.25,
-							ease: "back.in(1.7)",
+							duration: 0.16,
+							ease: "power2.in",
 							onComplete: runDeletion,
 						});
+						setTimeout(() => {
+							triggerShockwave(clickedCard, id);
+						}, 80);
 					} else {
 						runDeletion();
 					}
@@ -192,50 +195,53 @@ export default function KanbanBoard() {
 		const toastKey = `complete-task-${id}`;
 		const clickedCard = (e.target as HTMLElement).closest("[data-task-card]") as HTMLElement;
 
-		const runCompletion = async () => {
+		// 1. Show Sileo toast confirmation immediately
+		sileo.success({
+			id: toastKey,
+			title: "¡Tarea Realizada!",
+			description: `Felicidades, has finalizado "${title}" con éxito.`,
+			fill: "#130f26",
+			duration: 8000,
+			styles: {
+				title: "text-purple-200 font-extrabold",
+				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
+			},
+			button: {
+				title: "Deshacer",
+				onClick: async () => {
+					sileo.dismiss(toastKey);
+					try {
+						await createTaskMutation({
+							title,
+							description,
+							priority: priority as any,
+							column,
+							projectId,
+							isRitual,
+						});
+						sileo.success({
+							title: "Tarea restaurada",
+							description: `Se ha vuelto a agregar "${title}".`,
+							fill: "#130f26",
+							styles: {
+								title: "text-purple-200 font-extrabold",
+								description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+							},
+						});
+					} catch (err) {
+						console.error("Error undoing task completion:", err);
+					}
+				},
+			},
+		} as any);
+
+		const runDbRemoval = async () => {
 			try {
 				await removeTaskMutation({ id: id as Id<"tasks"> });
-				sileo.success({
-					id: toastKey,
-					title: "¡Tarea Realizada!",
-					description: `Felicidades, has finalizado "${title}" con éxito.`,
-					fill: "#130f26",
-					duration: 8000,
-					styles: {
-						title: "text-purple-200 font-extrabold",
-						description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-						button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
-					},
-					button: {
-						title: "Deshacer",
-						onClick: async () => {
-							sileo.dismiss(toastKey);
-							try {
-								await createTaskMutation({
-									title,
-									description,
-									priority: priority as any,
-									column,
-									projectId,
-									isRitual,
-								});
-								sileo.success({
-									title: "Tarea restaurada",
-									description: `Se ha vuelto a agregar "${title}".`,
-									fill: "#130f26",
-									styles: {
-										title: "text-purple-200 font-extrabold",
-										description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-									},
-								});
-							} catch (err) {
-								console.error("Error undoing task completion:", err);
-							}
-						},
-					},
-				} as any);
 			} catch (err) {
 				console.error("Error completing task:", err);
+				sileo.dismiss(toastKey);
 				sileo.error({
 					title: "Error al completar",
 					description: "No se pudo marcar la tarea como realizada. Intenta de nuevo.",
@@ -248,18 +254,39 @@ export default function KanbanBoard() {
 			}
 		};
 
-		if (clickedCard) {
-			triggerShockwave(clickedCard, id);
-			gsap.to(clickedCard, {
-				scale: 0.3,
-				opacity: 0,
-				duration: 0.25,
-				ease: "back.in(1.7)",
-				onComplete: runCompletion,
-			});
-		} else {
-			runCompletion();
-		}
+		// 2. Trigger exit animation and shockwave halfway through after Sileo toast appears
+		setTimeout(() => {
+			if (clickedCard) {
+				gsap.to(clickedCard, {
+					scale: 0.1,
+					opacity: 0,
+					duration: 0.16,
+					ease: "power2.in",
+					onComplete: runDbRemoval,
+				});
+				setTimeout(() => {
+					triggerShockwave(clickedCard, id);
+
+					// Launch confetti burst from completed card center in sync with shockwave
+					const rect = clickedCard.getBoundingClientRect();
+					const originX = (rect.left + rect.width / 2) / window.innerWidth;
+					const originY = (rect.top + rect.height / 2) / window.innerHeight;
+
+					confetti({
+						particleCount: 45,
+						spread: 70,
+						origin: { x: originX, y: originY },
+						colors: ["#39fc23", "#a78bfa", "#3b82f6", "#f59e0b", "#ec4899"],
+						ticks: 180,
+						gravity: 1.1,
+						scalar: 0.85,
+						disableForReducedMotion: true,
+					});
+				}, 80);
+			} else {
+				runDbRemoval();
+			}
+		}, 30);
 	};
 
 	const handleAddCardSubmit = async (
