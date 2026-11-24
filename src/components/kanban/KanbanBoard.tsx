@@ -55,7 +55,34 @@ export default function KanbanBoard() {
 		convexTasks,
 	} = useKanbanData();
 
-	const { contextSafe } = useGSAP({ scope: boardRef });
+	const { contextSafe } = useGSAP(
+		() => {
+			const mm = gsap.matchMedia();
+
+			mm.add("(prefers-reduced-motion: no-preference)", () => {
+				gsap.fromTo(
+					"[data-kanban-column]",
+					{
+						autoAlpha: 0,
+						y: -18,
+						clipPath: "inset(0% 0% 100% 0% round 1.5rem)",
+					},
+					{
+						autoAlpha: 1,
+						y: 0,
+						clipPath: "inset(0% 0% 0% 0% round 1.5rem)",
+						duration: 0.65,
+						stagger: 0.1,
+						ease: "power3.out",
+						clearProps: "clipPath,transform,opacity,visibility",
+					},
+				);
+			});
+
+			return () => mm.revert();
+		},
+		{ scope: boardRef },
+	);
 
 	const triggerShockwave = contextSafe(
 		(originElement: HTMLElement, originId: string) => {

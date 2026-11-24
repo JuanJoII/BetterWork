@@ -44,6 +44,7 @@ export default function KanbanColumn({
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop columns container */
 		<div
+			data-kanban-column
 			onDragOver={onDragOver}
 			onDrop={onDrop}
 			className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[520px] lg:min-h-[calc(100vh-9.5rem)] w-full"
