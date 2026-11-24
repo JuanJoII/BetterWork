@@ -11,8 +11,18 @@ import ProjectsSidebar from "./ProjectsSidebar";
 
 const SAMPLE_PROJECTS: Project[] = [
 	{ id: "p1", name: "General", createdAt: "2026-11-01T00:00:00Z" },
-	{ id: "p2", name: "Backend API", createdAt: "2026-11-02T00:00:00Z" },
-	{ id: "p3", name: "Diseño UI", createdAt: "2026-11-03T00:00:00Z" },
+	{
+		id: "p2",
+		name: "Backend API",
+		icon: "lucide:code",
+		createdAt: "2026-11-02T00:00:00Z",
+	},
+	{
+		id: "p3",
+		name: "Diseño UI",
+		icon: "emoji:🎨",
+		createdAt: "2026-11-03T00:00:00Z",
+	},
 	{ id: "p4", name: "Marketing", createdAt: "2026-11-04T00:00:00Z" },
 	{ id: "p5", name: "Infraestructura", createdAt: "2026-11-05T00:00:00Z" },
 ];
@@ -77,24 +87,46 @@ describe("ProjectsSidebar", () => {
 		expect(setCurrentProjectId).toHaveBeenCalledWith("p5");
 	});
 
-	it("opens an anchored popover from Nuevo Proyecto and creates a project on submit", async () => {
+	it("opens ¿Qué vas a crear? popover and supports selecting a Lucide icon", async () => {
 		renderSidebar();
 
 		fireEvent.click(screen.getByRole("button", { name: /Nuevo Proyecto/i }));
 		expect(
-			screen.getByRole("dialog", { name: "Crear nuevo proyecto" }),
+			screen.getByRole("dialog", { name: "¿Qué vas a crear?" }),
 		).toBeTruthy();
 
 		const input = screen.getByLabelText("Nombre del proyecto");
 		fireEvent.change(input, { target: { value: "Roadmap Q4" } });
+		fireEvent.click(screen.getByRole("button", { name: "Icono Cohete" }));
 		fireEvent.click(screen.getByRole("button", { name: "Crear" }));
 
 		await waitFor(() => {
-			expect(onCreateProject).toHaveBeenCalledWith("Roadmap Q4");
+			expect(onCreateProject).toHaveBeenCalledWith(
+				"Roadmap Q4",
+				"lucide:rocket",
+			);
 		});
 		expect(
-			screen.queryByRole("dialog", { name: "Crear nuevo proyecto" }),
+			screen.queryByRole("dialog", { name: "¿Qué vas a crear?" }),
 		).toBeNull();
+	});
+
+	it("supports choosing a curated or custom emoji in the create popover", async () => {
+		renderSidebar();
+
+		fireEvent.click(screen.getByRole("button", { name: /Nuevo Proyecto/i }));
+		fireEvent.change(screen.getByLabelText("Nombre del proyecto"), {
+			target: { value: "Estudio" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Emojis" }));
+		fireEvent.change(screen.getByLabelText("Emoji personalizado"), {
+			target: { value: "🦊" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Crear" }));
+
+		await waitFor(() => {
+			expect(onCreateProject).toHaveBeenCalledWith("Estudio", "emoji:🦊");
+		});
 	});
 
 	it("deletes the currently active project via the footer Trash button", () => {
@@ -132,7 +164,7 @@ describe("ProjectsSidebar", () => {
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
 	});
 
-	it("collapses, cycles projects via wheel anywhere on compact sidebar, and expands back", () => {
+	it("collapses, renders emoji icon in compact rail, cycles projects via wheel, and expands back", () => {
 		renderSidebar({ currentProjectId: "p2" });
 
 		fireEvent.click(
@@ -142,8 +174,8 @@ describe("ProjectsSidebar", () => {
 			"true",
 		);
 		expect(
-			screen.getByRole("button", { name: "Expandir barra lateral" }),
-		).toBeTruthy();
+			screen.getByRole("button", { name: "Diseño UI" }).textContent,
+		).toContain("🎨");
 
 		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
 		fireEvent.wheel(sidebar, { deltaY: 100 });

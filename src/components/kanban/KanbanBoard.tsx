@@ -408,12 +408,13 @@ export default function KanbanBoard() {
 		}
 	};
 
-	const handleCreateProject = async (name: string) => {
+	const handleCreateProject = async (name: string, icon?: string) => {
 		const trimmed = name.trim();
 		if (!trimmed) return;
 		try {
 			const newId = await createProjectMutation({
 				name: trimmed,
+				...(icon ? { icon } : {}),
 			});
 			setCurrentProjectId(newId);
 			sileo.success({

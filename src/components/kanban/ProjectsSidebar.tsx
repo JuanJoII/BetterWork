@@ -1,6 +1,4 @@
 import {
-	Check,
-	FolderPlus,
 	LayoutGrid,
 	PanelLeftClose,
 	PanelLeftOpen,
@@ -12,6 +10,12 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "../../types/kanban";
 import ArcList, { type ArcListItem } from "./ArcList";
+import ProjectIcon, {
+	CURATED_EMOJIS,
+	CURATED_LUCIDE_ICONS,
+	formatEmojiIcon,
+	formatLucideIcon,
+} from "./ProjectIcon";
 import SearchBar from "./SearchBar";
 
 interface ProjectsSidebarProps {
@@ -22,7 +26,7 @@ interface ProjectsSidebarProps {
 	setSearchQuery: (value: string) => void;
 	totalTaskCount: number;
 	taskCountByProject: Record<string, number>;
-	onCreateProject: (name: string) => Promise<void>;
+	onCreateProject: (name: string, icon?: string) => Promise<void>;
 	handleDeleteProject: (id: string, name: string) => void;
 }
 
@@ -43,6 +47,9 @@ export default function ProjectsSidebar({
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [newProjectName, setNewProjectName] = useState("");
+	const [selectedIcon, setSelectedIcon] = useState<string>("");
+	const [iconTab, setIconTab] = useState<"icons" | "emojis">("icons");
+	const [customEmoji, setCustomEmoji] = useState("");
 	const [isCreating, setIsCreating] = useState(false);
 
 	const desktopSidebarRef = useRef<HTMLElement>(null);
@@ -135,6 +142,7 @@ export default function ProjectsSidebar({
 			...projects.map((proj) => ({
 				id: proj.id,
 				title: proj.name,
+				icon: proj.icon,
 				badge: taskCountByProject[proj.id] ?? 0,
 			})),
 		];
@@ -155,6 +163,7 @@ export default function ProjectsSidebar({
 
 	const activeProjectName = arcItems[activeIndex]?.title ?? "Tablero General";
 	const activeProjectCount = arcItems[activeIndex]?.badge ?? totalTaskCount;
+	const activeProjectIcon = arcItems[activeIndex]?.icon;
 
 	const triggerDeleteActiveProject = () => {
 		if (!canDeleteActiveProject || !activeProject) return;
@@ -163,7 +172,20 @@ export default function ProjectsSidebar({
 
 	const handleOpenCreate = () => {
 		setNewProjectName("");
+		setSelectedIcon("");
+		setCustomEmoji("");
+		setIconTab("icons");
 		setIsCreateOpen((prev) => !prev);
+	};
+
+	const handleCustomEmojiChange = (val: string) => {
+		setCustomEmoji(val);
+		const trimmed = val.trim();
+		if (trimmed) {
+			setSelectedIcon(formatEmojiIcon(trimmed));
+		} else if (selectedIcon.startsWith("emoji:")) {
+			setSelectedIcon("");
+		}
 	};
 
 	const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -173,8 +195,10 @@ export default function ProjectsSidebar({
 
 		setIsCreating(true);
 		try {
-			await onCreateProject(trimmed);
+			await onCreateProject(trimmed, selectedIcon || undefined);
 			setNewProjectName("");
+			setSelectedIcon("");
+			setCustomEmoji("");
 			setIsCreateOpen(false);
 			setIsMobileOpen(false);
 		} finally {
@@ -247,22 +271,19 @@ export default function ProjectsSidebar({
 
 		const positionClasses =
 			placement === "right"
-				? "left-full bottom-0 ml-3 w-64"
-				: "left-0 bottom-full mb-2.5 w-full min-w-[14.5rem]";
+				? "left-full bottom-0 ml-3 w-72"
+				: "left-0 bottom-full mb-2.5 w-72 max-w-[calc(100vw-2rem)]";
 
 		return (
 			<div
 				role="dialog"
-				aria-label="Crear nuevo proyecto"
-				className={`absolute z-50 ${positionClasses} rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in`}
+				aria-label="¿Qué vas a crear?"
+				className={`absolute z-50 ${positionClasses} rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in`}
 			>
-				<div className="mb-2.5 flex items-center justify-between gap-2">
-					<div className="flex items-center gap-1.5 text-yellow-300">
-						<FolderPlus className="h-3.5 w-3.5" />
-						<span className="text-[11px] font-black uppercase tracking-wider">
-							Nuevo Proyecto
-						</span>
-					</div>
+				<div className="mb-3 flex items-center justify-between gap-2">
+					<h3 className="display-title m-0 text-sm font-black text-yellow-300">
+						¿Qué vas a crear?
+					</h3>
 					<button
 						type="button"
 						onClick={() => setIsCreateOpen(false)}
@@ -273,19 +294,137 @@ export default function ProjectsSidebar({
 					</button>
 				</div>
 
-				<form onSubmit={handleCreateSubmit} className="flex flex-col gap-2.5">
-					<input
-						ref={createInputRef}
-						type="text"
-						value={newProjectName}
-						onChange={(e) => setNewProjectName(e.target.value)}
-						placeholder="Nombre del proyecto..."
-						aria-label="Nombre del proyecto"
-						maxLength={48}
-						className="w-full rounded-xl border border-yellow-500/25 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-yellow-100 placeholder:text-slate-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20"
-					/>
+				<form onSubmit={handleCreateSubmit} className="flex flex-col gap-3">
+					{/* Project name input with live selected icon preview */}
+					<div className="flex items-center gap-2 rounded-xl border border-yellow-500/25 bg-slate-900/80 px-3 py-2 focus-within:border-yellow-400 focus-within:ring-2 focus-within:ring-yellow-400/20">
+						{selectedIcon && (
+							<ProjectIcon
+								icon={selectedIcon}
+								className="h-4 w-4 text-yellow-300"
+								emojiClassName="text-base leading-none"
+							/>
+						)}
+						<input
+							ref={createInputRef}
+							type="text"
+							value={newProjectName}
+							onChange={(e) => setNewProjectName(e.target.value)}
+							placeholder="Nombre del proyecto..."
+							aria-label="Nombre del proyecto"
+							maxLength={48}
+							className="w-full min-w-0 bg-transparent text-xs font-semibold text-yellow-100 placeholder:text-slate-400 focus:outline-none"
+						/>
+					</div>
 
-					<div className="flex items-center justify-end gap-1.5">
+					{/* Optional Icon / Emoji Picker */}
+					<div className="flex flex-col gap-2">
+						<div className="flex items-center justify-between gap-2">
+							<div className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-slate-900/60 p-0.5">
+								<button
+									type="button"
+									onClick={() => setIconTab("icons")}
+									className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold transition cursor-pointer ${
+										iconTab === "icons"
+											? "bg-yellow-300 text-slate-950"
+											: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+									}`}
+								>
+									Iconos
+								</button>
+								<button
+									type="button"
+									onClick={() => setIconTab("emojis")}
+									className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold transition cursor-pointer ${
+										iconTab === "emojis"
+											? "bg-yellow-300 text-slate-950"
+											: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+									}`}
+								>
+									Emojis
+								</button>
+							</div>
+
+							{selectedIcon && (
+								<button
+									type="button"
+									onClick={() => {
+										setSelectedIcon("");
+										setCustomEmoji("");
+									}}
+									className="text-[10px] font-bold text-[var(--sea-ink-soft)] transition hover:text-yellow-300 cursor-pointer"
+								>
+									Quitar icono
+								</button>
+							)}
+						</div>
+
+						{iconTab === "icons" ? (
+							<div className="grid grid-cols-8 gap-1">
+								{CURATED_LUCIDE_ICONS.map(({ key, label, Icon }) => {
+									const token = formatLucideIcon(key);
+									const isPicked = selectedIcon === token;
+									return (
+										<button
+											key={key}
+											type="button"
+											onClick={() => {
+												setCustomEmoji("");
+												setSelectedIcon(isPicked ? "" : token);
+											}}
+											aria-label={`Icono ${label}`}
+											title={label}
+											className={`flex h-7 w-7 items-center justify-center rounded-lg border transition cursor-pointer ${
+												isPicked
+													? "border-yellow-400 bg-yellow-300 text-slate-950"
+													: "border-transparent bg-slate-900/60 text-slate-300 hover:border-yellow-500/30 hover:text-yellow-200"
+											}`}
+										>
+											<Icon className="h-3.5 w-3.5" />
+										</button>
+									);
+								})}
+							</div>
+						) : (
+							<div className="flex flex-col gap-2">
+								<div className="grid grid-cols-8 gap-1">
+									{CURATED_EMOJIS.map((emoji) => {
+										const token = formatEmojiIcon(emoji);
+										const isPicked = selectedIcon === token;
+										return (
+											<button
+												key={emoji}
+												type="button"
+												onClick={() => {
+													setCustomEmoji("");
+													setSelectedIcon(isPicked ? "" : token);
+												}}
+												aria-label={`Emoji ${emoji}`}
+												className={`flex h-7 w-7 items-center justify-center rounded-lg border text-sm transition cursor-pointer ${
+													isPicked
+														? "border-yellow-400 bg-yellow-300/20 scale-105"
+														: "border-transparent bg-slate-900/60 hover:border-yellow-500/30 hover:bg-slate-800/80"
+												}`}
+											>
+												{emoji}
+											</button>
+										);
+									})}
+								</div>
+
+								<input
+									type="text"
+									value={customEmoji}
+									onChange={(e) => handleCustomEmojiChange(e.target.value)}
+									placeholder="O escribe/pega tu propio emoji..."
+									aria-label="Emoji personalizado"
+									maxLength={8}
+									className="w-full rounded-lg border border-[var(--line)] bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-yellow-100 placeholder:text-slate-500 focus:border-yellow-400/60 focus:outline-none"
+								/>
+							</div>
+						)}
+					</div>
+
+					<div className="flex items-center justify-end gap-1.5 pt-0.5">
 						<button
 							type="button"
 							onClick={() => setIsCreateOpen(false)}
@@ -296,10 +435,9 @@ export default function ProjectsSidebar({
 						<button
 							type="submit"
 							disabled={!newProjectName.trim() || isCreating}
-							className="inline-flex items-center gap-1 rounded-full bg-yellow-300 px-3.5 py-1 text-[11px] font-black text-slate-950 transition hover:bg-yellow-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+							className="rounded-full bg-yellow-300 px-4 py-1 text-[11px] font-black text-slate-950 transition hover:bg-yellow-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
 						>
-							<Check className="h-3 w-3" />
-							<span>{isCreating ? "Creando..." : "Crear"}</span>
+							{isCreating ? "Creando..." : "Crear"}
 						</button>
 					</div>
 				</form>
@@ -318,6 +456,13 @@ export default function ProjectsSidebar({
 					className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/80 px-3.5 py-1.5 text-xs font-extrabold text-[var(--sea-ink)] backdrop-blur-md transition hover:border-yellow-400/40 cursor-pointer shrink-0"
 				>
 					<PanelLeftOpen className="h-4 w-4 text-yellow-400" />
+					{activeProjectIcon && (
+						<ProjectIcon
+							icon={activeProjectIcon}
+							className="h-3.5 w-3.5 text-yellow-300"
+							emojiClassName="text-xs leading-none"
+						/>
+					)}
 					<span className="max-w-[10rem] truncate">{activeProjectName}</span>
 					<span className="rounded-full bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-black text-yellow-300 leading-none">
 						{activeProjectCount}
@@ -501,7 +646,15 @@ export default function ProjectsSidebar({
 												: "border-yellow-500/20 bg-yellow-500/5 text-yellow-200 hover:border-yellow-400/40 hover:bg-yellow-400/15"
 										}`}
 									>
-										{initial}
+										{proj.icon ? (
+											<ProjectIcon
+												icon={proj.icon}
+												className="h-4 w-4"
+												emojiClassName="text-sm leading-none"
+											/>
+										) : (
+											initial
+										)}
 									</button>
 								);
 							})}

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import ProjectIcon from "./ProjectIcon";
 
 export interface ArcListItem {
 	id: string;
 	title: string;
+	icon?: string;
 	subtitle?: string;
 	badge?: string | number;
 }
@@ -187,21 +189,38 @@ export default function ArcList({
 								title={item.title}
 								className="group relative flex w-full min-w-0 items-center justify-between gap-2 pb-1.5 pt-1 text-left cursor-pointer"
 							>
-								<div className="min-w-0 flex-1">
-									<span
-										className={`block truncate transition-colors ${
-											isActive
-												? "display-title text-[17px] font-black text-yellow-300"
-												: "text-sm font-bold text-slate-300 group-hover:text-yellow-100"
-										}`}
-									>
-										{item.title}
-									</span>
-									{subtitles && item.subtitle && (
-										<span className="block truncate text-[11px] font-semibold text-[var(--sea-ink-soft)]">
-											{item.subtitle}
-										</span>
+								<div className="min-w-0 flex-1 flex items-center gap-2">
+									{item.icon && (
+										<ProjectIcon
+											icon={item.icon}
+											className={
+												isActive
+													? "h-4 w-4 text-yellow-300"
+													: "h-3.5 w-3.5 text-slate-400 group-hover:text-yellow-200"
+											}
+											emojiClassName={
+												isActive
+													? "text-base leading-none"
+													: "text-sm leading-none"
+											}
+										/>
 									)}
+									<div className="min-w-0 flex-1">
+										<span
+											className={`block truncate transition-colors ${
+												isActive
+													? "display-title text-[17px] font-black text-yellow-300"
+													: "text-sm font-bold text-slate-300 group-hover:text-yellow-100"
+											}`}
+										>
+											{item.title}
+										</span>
+										{subtitles && item.subtitle && (
+											<span className="block truncate text-[11px] font-semibold text-[var(--sea-ink-soft)]">
+												{item.subtitle}
+											</span>
+										)}
+									</div>
 								</div>
 
 								{item.badge !== undefined && (

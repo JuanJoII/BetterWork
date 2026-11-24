@@ -17,7 +17,10 @@ export const list = query({
 });
 
 export const create = mutation({
-  args: { name: v.string() },
+  args: {
+    name: v.string(),
+    icon: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -26,6 +29,7 @@ export const create = mutation({
     const id = await ctx.db.insert("projects", {
       userId,
       name: args.name,
+      ...(args.icon ? { icon: args.icon } : {}),
       createdAt: new Date().toISOString(),
     });
     return id;

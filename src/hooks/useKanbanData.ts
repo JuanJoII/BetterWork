@@ -33,6 +33,7 @@ export function useKanbanData() {
 			convexProjects?.map((p: Doc<"projects">) => ({
 				id: p._id,
 				name: p.name,
+				icon: p.icon,
 				createdAt: p.createdAt,
 			})) || []
 		);
