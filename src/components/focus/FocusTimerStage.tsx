@@ -1,8 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import {
-	ArrowLeft,
 	CheckCircle,
-	Clock,
 	Pause,
 	Play,
 	RotateCcw,
@@ -12,6 +9,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
 
 interface FocusTimerStageProps {
@@ -91,6 +89,9 @@ export default function FocusTimerStage({
 	};
 
 	const isDaily = !!activeTask?.isRitual;
+	const headerTitle = activeTask
+		? `Focus en ${activeTask.title}`
+		: "Focus en ...";
 
 	return (
 		<section
@@ -100,21 +101,39 @@ export default function FocusTimerStage({
 			onDragOver={handleDragOver}
 			onDragLeave={handleDragLeave}
 			onDrop={handleDrop}
-			className={`island-shell dot-grid relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] transition-all duration-300 ${
+			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 ${
 				isDragOver
-					? "border-yellow-400/90 shadow-[0_0_0_2px_rgba(250,204,21,0.35),0_0_45px_rgba(250,204,21,0.18)]"
+					? "border-yellow-400/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.28),0_0_0_2px_rgba(250,204,21,0.35),0_0_50px_rgba(250,204,21,0.22)]"
 					: isDraggingTask
-						? "border-dashed border-yellow-400/55"
-						: "border-[var(--line)]"
+						? "border-dashed border-yellow-400/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_24px_60px_rgba(2,6,23,0.5)]"
+						: "border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-1px_1px_rgba(192,132,252,0.12),0_24px_60px_rgba(2,6,23,0.55)]"
 			}`}
 		>
-			{/* Subtle ambient glows */}
-			<div className="pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(234,179,8,0.12),transparent_65%)]" />
-			<div className="pointer-events-none absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.16),transparent_65%)]" />
+			{/* Liquid Glass Specular Highlights & Brand Ambient Gradients */}
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-purple-500/[0.05]"
+			/>
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+			/>
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.24),rgba(234,179,8,0.06)_48%,transparent_72%)] blur-2xl"
+			/>
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute -bottom-28 -left-24 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.28),rgba(124,58,237,0.08)_50%,transparent_72%)] blur-2xl"
+			/>
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute right-1/4 top-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(255,0,182,0.14),transparent_70%)] blur-3xl"
+			/>
 
 			{/* Interactive Drop Overlay when dragging over the timer stage */}
 			{isDragOver && (
-				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-400/80 bg-slate-950/75 backdrop-blur-xs">
+				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-400/80 bg-slate-950/70 backdrop-blur-md">
 					<div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.28)]">
 						<Target className="h-7 w-7" />
 					</div>
@@ -127,30 +146,17 @@ export default function FocusTimerStage({
 				</div>
 			)}
 
-			{/* Top Header Row */}
-			<div className="relative z-10 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-4">
-				<div className="flex items-center gap-2.5">
-					<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-400/12 text-yellow-300 border border-yellow-400/25">
-						<Clock className="h-5 w-5" />
-					</div>
-					<div>
-						<span className="island-kicker block text-[10px]">
-							Sesión Activa
-						</span>
-						<h1 className="display-title m-0 text-lg font-black text-[var(--sea-ink)]">
-							Focus
-						</h1>
-					</div>
-				</div>
-
-				<Link
-					to="/"
-					className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--surface-strong)] px-3.5 py-1.5 text-xs font-bold text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:text-[var(--sea-ink)] transition no-underline"
+			{/* Minimal GradientText Header */}
+			<header className="relative z-10 mb-6 flex items-center justify-center border-b border-white/10 pb-5 text-center">
+				<GradientText
+					colors={["#fde047", "#c084fc", "#ec4899", "#facc15"]}
+					animationSpeed={7}
+					showBorder={false}
+					className="text-2xl sm:text-3xl font-black tracking-tight leading-tight max-w-full cursor-default backdrop-blur-none"
 				>
-					<ArrowLeft className="h-3.5 w-3.5" />
-					<span>Tablero</span>
-				</Link>
-			</div>
+					<h1 className="m-0 font-serif font-black px-2">{headerTitle}</h1>
+				</GradientText>
+			</header>
 
 			{/* Center Content: Active Task Card + Timer */}
 			<div className="relative z-10 flex flex-1 flex-col items-center justify-center py-2">
@@ -159,10 +165,10 @@ export default function FocusTimerStage({
 						{/* Active Sticky Note Card */}
 						<div
 							data-active-focus-card
-							className={`relative mb-8 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm transition-colors ${
+							className={`relative mb-8 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${
 								isDaily
-									? "border-purple-500/35 bg-purple-950/25 text-purple-100/90"
-									: "border-yellow-500/25 bg-yellow-950/25 text-yellow-100/90"
+									? "border-purple-500/35 bg-purple-950/30 text-purple-100/90"
+									: "border-yellow-500/25 bg-yellow-950/30 text-yellow-100/90"
 							}`}
 						>
 							{/* Tech-tape overlay */}
@@ -269,7 +275,7 @@ export default function FocusTimerStage({
 									cx="96"
 									cy="96"
 									r={circleRadius}
-									className="stroke-[var(--line)] fill-none"
+									className="stroke-white/12 fill-none"
 									strokeWidth="6"
 								/>
 								<circle
@@ -287,7 +293,7 @@ export default function FocusTimerStage({
 								<span className="font-mono text-4xl font-black tracking-tight tabular-nums text-[var(--sea-ink)]">
 									{formatTime(secondsRemaining)}
 								</span>
-								<span className="mt-1 text-[10px] font-black uppercase tracking-widest text-yellow-400/80">
+								<span className="mt-1 text-[10px] font-black uppercase tracking-widest text-yellow-400/85">
 									{timerRunning ? "En curso" : "Listo"}
 								</span>
 							</div>
@@ -296,7 +302,7 @@ export default function FocusTimerStage({
 						{/* Timer Controls */}
 						<div className="flex w-full flex-col items-center gap-5">
 							{/* Duration presets */}
-							<div className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--bg-base)]/80 p-1">
+							<div className="flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
 								{DURATION_PRESETS.map((mins) => (
 									<button
 										key={mins}
@@ -336,7 +342,7 @@ export default function FocusTimerStage({
 								<button
 									type="button"
 									onClick={onResetTimer}
-									className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)] text-[var(--sea-ink-soft)] hover:border-yellow-400/40 hover:text-[var(--sea-ink)] transition-colors cursor-pointer"
+									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:bg-white/10 hover:text-[var(--sea-ink)] transition-colors cursor-pointer backdrop-blur-md"
 									title="Reiniciar"
 									aria-label="Reiniciar temporizador"
 								>
@@ -346,7 +352,7 @@ export default function FocusTimerStage({
 								<button
 									type="button"
 									onClick={onSkipTimer}
-									className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)] text-[var(--sea-ink-soft)] hover:border-yellow-400/40 hover:text-[var(--sea-ink)] transition-colors cursor-pointer"
+									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:bg-white/10 hover:text-[var(--sea-ink)] transition-colors cursor-pointer backdrop-blur-md"
 									title="Finalizar sesión ahora"
 									aria-label="Finalizar sesión ahora"
 								>
@@ -357,8 +363,8 @@ export default function FocusTimerStage({
 					</div>
 				) : (
 					/* Empty Drop-Zone Invitation */
-					<div className="flex w-full max-w-md flex-col items-center justify-center rounded-3xl border-2 border-dashed border-yellow-500/25 bg-slate-950/35 px-8 py-14 text-center">
-						<div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-yellow-300">
+					<div className="flex w-full max-w-md flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.03] px-8 py-14 text-center backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+						<div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/12 text-yellow-300 shadow-[0_0_24px_rgba(250,204,21,0.15)]">
 							<Target className="h-7 w-7" />
 						</div>
 						<h2 className="display-title m-0 text-lg font-black text-[var(--sea-ink)]">
@@ -373,7 +379,7 @@ export default function FocusTimerStage({
 			</div>
 
 			{/* Footer Stats */}
-			<div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-[var(--line)] pt-4 text-xs font-bold text-[var(--sea-ink-soft)]">
+			<div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-4 text-xs font-bold text-[var(--sea-ink-soft)]">
 				<span>Sesiones completadas: {completedSessions}</span>
 				<span aria-hidden="true">•</span>
 				<span>Tiempo enfocado: {completedSessions * timerDuration} min</span>

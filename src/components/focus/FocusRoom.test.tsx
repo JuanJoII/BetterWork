@@ -149,9 +149,10 @@ describe("FocusRoom", () => {
 		).toBeTruthy();
 	});
 
-	it("loads a dragged task onto the timer drop zone and moves pendiente tasks to en-proceso", async () => {
+	it("loads a dragged task onto the timer drop zone, updates GradientText title, and moves pendiente tasks to en-proceso", async () => {
 		render(<FocusRoom />);
 
+		expect(screen.getByRole("heading", { name: "Focus en ..." })).toBeTruthy();
 		expect(screen.getByText("Arrastra una tarea aquí")).toBeTruthy();
 
 		const timerZone = screen.getByLabelText("Zona de temporizador Focus");
@@ -170,6 +171,9 @@ describe("FocusRoom", () => {
 			});
 		});
 
+		expect(
+			screen.getByRole("heading", { name: "Focus en Diseñar endpoints" }),
+		).toBeTruthy();
 		expect(screen.getByText("25:00")).toBeTruthy();
 		expect(screen.getByRole("button", { name: /Comenzar/i })).toBeTruthy();
 		expect(window.localStorage.getItem("kairos_active_task_id")).toBe("t1");
