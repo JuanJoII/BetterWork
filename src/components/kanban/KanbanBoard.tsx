@@ -55,7 +55,22 @@ export default function KanbanBoard() {
 		convexTasks,
 	} = useKanbanData();
 
-	const { contextSafe } = useGSAP(
+	const { contextSafe } = useGSAP({ scope: boardRef });
+
+	const triggerShockwave = contextSafe(
+		(originElement: HTMLElement, originId: string) => {
+			const rect = originElement.getBoundingClientRect();
+			const centerX = rect.left + rect.width / 2;
+			const centerY = rect.top + rect.height / 2;
+			dispatchShockwave(centerX, centerY, originId);
+		},
+	);
+
+	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
+	const previousProjectIdRef = useRef<string>(currentProjectId);
+
+	// Re-run top-to-bottom column reveal on mount and every project switch
+	useGSAP(
 		() => {
 			const mm = gsap.matchMedia();
 
@@ -71,9 +86,10 @@ export default function KanbanBoard() {
 						autoAlpha: 1,
 						y: 0,
 						clipPath: "inset(0% 0% 0% 0% round 1.5rem)",
-						duration: 0.65,
-						stagger: 0.1,
+						duration: 0.55,
+						stagger: 0.08,
 						ease: "power3.out",
+						overwrite: "auto",
 						clearProps: "clipPath,transform,opacity,visibility",
 					},
 				);
@@ -81,20 +97,12 @@ export default function KanbanBoard() {
 
 			return () => mm.revert();
 		},
-		{ scope: boardRef },
-	);
-
-	const triggerShockwave = contextSafe(
-		(originElement: HTMLElement, originId: string) => {
-			const rect = originElement.getBoundingClientRect();
-			const centerX = rect.left + rect.width / 2;
-			const centerY = rect.top + rect.height / 2;
-			dispatchShockwave(centerX, centerY, originId);
+		{
+			scope: boardRef,
+			dependencies: [currentProjectId],
+			revertOnUpdate: true,
 		},
 	);
-
-	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
-	const previousProjectIdRef = useRef<string>(currentProjectId);
 
 	// Always scroll back to the top of the page when switching projects
 	useEffect(() => {
