@@ -1,8 +1,13 @@
-import { useEffect, useMemo } from "react";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useEffect, useMemo, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 import type { Project, Task } from "../types/kanban";
+import { getTodayDateKey } from "../utils/date";
+
+function normalizeTitle(title: string): string {
+	return title.trim().toLowerCase();
+}
 
 export function useKanbanData() {
 	const { isLoading, isAuthenticated } = useConvexAuth();
@@ -16,10 +21,13 @@ export function useKanbanData() {
 	const createTaskMutation = useMutation(api.tasks.create);
 	const updateTaskMutation = useMutation(api.tasks.update);
 	const updateColumnMutation = useMutation(api.tasks.updateColumn);
+	const completeTaskMutation = useMutation(api.tasks.complete);
+	const undoCompleteTaskMutation = useMutation(api.tasks.undoComplete);
 	const removeTaskMutation = useMutation(api.tasks.remove);
 	const removeProjectMutation = useMutation(api.projects.remove);
+	const syncDailysMutation = useMutation(api.rituals.syncForDate);
 
-	// Map Convex data to local types for backwards compatibility with child components
+	// Map Convex data to local types for child components
 	const projects = useMemo<Project[]>(() => {
 		return (
 			convexProjects?.map((p: Doc<"projects">) => ({
@@ -40,6 +48,7 @@ export function useKanbanData() {
 				column: t.column as Task["column"],
 				projectId: t.projectId,
 				isRitual: t.isRitual,
+				ritualId: t.ritualId,
 				createdAt: t.createdAt,
 			})) || []
 		);
@@ -64,60 +73,76 @@ export function useKanbanData() {
 		}
 	}, [isLoading, isAuthenticated, convexProjects, createProjectMutation]);
 
-	// Startup Daily Rituals synchronization in Convex
+	const inFlightSyncKeyRef = useRef<string | null>(null);
+
+	// Server-authoritative daily synchronization in Convex
 	useEffect(() => {
-		if (!convexRituals || !convexTasks || !convexProjects) return;
-
-		const syncMissingRituals = async () => {
-			for (const temp of convexRituals as Doc<"rituals">[]) {
-				const hasTask = (convexTasks as Doc<"tasks">[]).some(
-					(t: Doc<"tasks">) => t.isRitual && t.title === temp.title,
-				);
-				if (!hasTask) {
-					try {
-						// Find first project as fallback for ritual tasks
-						const mainProj = convexProjects[0] as Doc<"projects">;
-						if (mainProj) {
-							await createTaskMutation({
-								title: temp.title,
-								description: temp.description,
-								priority: "medium",
-								column: "pendiente",
-								projectId: mainProj._id,
-								isRitual: true,
-							});
-						}
-					} catch (e) {
-						console.error("Error syncing ritual:", e);
-					}
-				}
-			}
-		};
-
-		syncMissingRituals();
-
-		// Reset completed rituals back to "pendiente" if the day changed
-		const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
-		const lastSync = localStorage.getItem("kairos_last_sync_date");
-		if (lastSync !== today) {
-			const resetCompletedRituals = async () => {
-				for (const t of (convexTasks || []) as Doc<"tasks">[]) {
-					if (t.isRitual && t.column === "finalizado") {
-						try {
-							await updateColumnMutation({
-								id: t._id,
-								column: "pendiente",
-							});
-						} catch (e) {
-							console.error("Error resetting ritual task:", e);
-						}
-					}
-				}
-				localStorage.setItem("kairos_last_sync_date", today);
-			};
-			resetCompletedRituals();
+		if (
+			isLoading ||
+			!isAuthenticated ||
+			!convexRituals ||
+			!convexTasks ||
+			!convexProjects ||
+			convexProjects.length === 0 ||
+			convexRituals.length === 0
+		) {
+			return;
 		}
-	}, [convexRituals, convexTasks, convexProjects, createTaskMutation, updateColumnMutation]);
+
+		const today = getTodayDateKey();
+		const needsSync = (convexRituals as Doc<"rituals">[]).some((ritual) => {
+			if (ritual.lastCompletedDate === today) {
+				return false;
+			}
+
+			const targetTitle = normalizeTitle(ritual.title);
+			const matchingTasks = (convexTasks as Doc<"tasks">[]).filter(
+				(t) =>
+					t.ritualId === ritual._id ||
+					(t.isRitual &&
+						!t.ritualId &&
+						normalizeTitle(t.title) === targetTitle),
+			);
+
+			if (matchingTasks.length === 0) {
+				return true;
+			}
+
+			const isNewDay = ritual.lastSyncedDate !== today;
+			if (isNewDay && matchingTasks.some((t) => t.column === "finalizado")) {
+				return true;
+			}
+
+			return false;
+		});
+
+		if (!needsSync) {
+			return;
+		}
+
+		const syncKey = `${today}:${convexRituals.length}:${convexTasks.length}`;
+		if (inFlightSyncKeyRef.current === syncKey) {
+			return;
+		}
+
+		inFlightSyncKeyRef.current = syncKey;
+		syncDailysMutation({ localDate: today })
+			.catch((e) => {
+				console.error("Error syncing dailys:", e);
+			})
+			.finally(() => {
+				if (inFlightSyncKeyRef.current === syncKey) {
+					inFlightSyncKeyRef.current = null;
+				}
+			});
+	}, [
+		isLoading,
+		isAuthenticated,
+		convexRituals,
+		convexTasks,
+		convexProjects,
+		syncDailysMutation,
+	]);
 
 	return {
 		projects,
@@ -126,6 +151,8 @@ export function useKanbanData() {
 		createTaskMutation,
 		updateTaskMutation,
 		updateColumnMutation,
+		completeTaskMutation,
+		undoCompleteTaskMutation,
 		removeTaskMutation,
 		removeProjectMutation,
 		convexTasks,
