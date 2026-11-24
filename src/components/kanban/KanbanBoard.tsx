@@ -14,8 +14,7 @@ import { getTodayDateKey } from "../../utils/date";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
-import ProjectsBar from "./ProjectsBar";
-import SearchBar from "./SearchBar";
+import ProjectsSidebar from "./ProjectsSidebar";
 import { dispatchShockwave } from "./ShockwaveWrapper";
 
 const COLUMNS = [
@@ -93,6 +92,19 @@ export default function KanbanBoard() {
 			return matchesSearch && matchesProject;
 		});
 	}, [tasks, searchQuery, currentProjectId, projects]);
+
+	// Active task counts per project for the sidebar
+	const taskCountByProject = useMemo(() => {
+		const counts: Record<string, number> = {};
+		const fallbackProjectId = projects[0]?.id;
+		for (const task of tasks) {
+			const targetId = task.projectId || fallbackProjectId;
+			if (targetId) {
+				counts[targetId] = (counts[targetId] ?? 0) + 1;
+			}
+		}
+		return counts;
+	}, [tasks, projects]);
 
 	// Handlers
 	const moveTask = async (id: string, direction: "forward" | "backward") => {
@@ -559,48 +571,53 @@ export default function KanbanBoard() {
 	};
 
 	return (
-		<main ref={boardRef} className="page-wrap px-4 py-8 max-w-[92rem] relative">
-			{/* Projects Tab-Capsules & Search Toolbar */}
-			<section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<ProjectsBar
+		<main
+			ref={boardRef}
+			className="mx-auto w-[calc(100%-2rem)] max-w-[96rem] py-6 relative"
+		>
+			<div className="flex flex-col lg:flex-row gap-6 items-start">
+				{/* LEFT SIDEBAR: SEARCH + PROJECTS */}
+				<ProjectsSidebar
 					projects={projects}
 					currentProjectId={currentProjectId}
 					setCurrentProjectId={setCurrentProjectId}
+					searchQuery={searchQuery}
+					setSearchQuery={setSearchQuery}
+					totalTaskCount={tasks.length}
+					taskCountByProject={taskCountByProject}
 					handleCreateProject={handleCreateProject}
 					handleDeleteProject={handleDeleteProject}
 				/>
 
-				<SearchBar value={searchQuery} onChange={setSearchQuery} />
-			</section>
+				{/* THREE-COLUMN KANBAN BOARD */}
+				<section className="grid grid-cols-1 gap-5 md:grid-cols-3 flex-1 min-w-0 w-full">
+					{COLUMNS.map((col) => {
+						const colTasks = filteredTasks.filter((t) => t.column === col.id);
 
-			{/* THREE-COLUMN KANBAN BOARD */}
-			<section className="grid grid-cols-1 gap-6 md:grid-cols-3 w-full">
-				{COLUMNS.map((col) => {
-					const colTasks = filteredTasks.filter((t) => t.column === col.id);
-
-					return (
-						<KanbanColumn
-							key={col.id}
-							column={col}
-							tasks={colTasks}
-							projects={projects}
-							currentProjectId={currentProjectId}
-							onDragOver={handleDragOver}
-							onDrop={() => handleDrop(col.id)}
-							onAddCard={() => {
-								setModalColumn(col.id);
-								setShowAddModal(true);
-							}}
-							onDragStart={handleDragStart}
-							onFocusClick={handleFocusClick}
-							onMoveTask={moveTask}
-							onEditTask={setEditingTask}
-							onDeleteTask={deleteTask}
-							onCompleteTask={completeTask}
-						/>
-					);
-				})}
-			</section>
+						return (
+							<KanbanColumn
+								key={col.id}
+								column={col}
+								tasks={colTasks}
+								projects={projects}
+								currentProjectId={currentProjectId}
+								onDragOver={handleDragOver}
+								onDrop={() => handleDrop(col.id)}
+								onAddCard={() => {
+									setModalColumn(col.id);
+									setShowAddModal(true);
+								}}
+								onDragStart={handleDragStart}
+								onFocusClick={handleFocusClick}
+								onMoveTask={moveTask}
+								onEditTask={setEditingTask}
+								onDeleteTask={deleteTask}
+								onCompleteTask={completeTask}
+							/>
+						);
+					})}
+				</section>
+			</div>
 
 			{/* CREATE CARD DRAW MODAL */}
 			<CreateTaskModal
