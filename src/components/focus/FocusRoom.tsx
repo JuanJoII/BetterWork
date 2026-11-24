@@ -1,17 +1,18 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
 import { playCompletionChime } from "../../utils/audio";
 import FocusTaskPanel, { type FocusStatusFilter } from "./FocusTaskPanel";
-import FocusTimerStage from "./FocusTimerStage";
+import FocusTimerStage, { type FocusClockMode } from "./FocusTimerStage";
 
 gsap.registerPlugin(useGSAP);
 
 const ACTIVE_TASK_STORAGE_KEY = "kairos_active_task_id";
+const FOCUS_MODE_STORAGE_KEY = "kairos_focus_mode";
 
 export default function FocusRoom() {
 	const workspaceRef = useRef<HTMLDivElement>(null);
@@ -33,11 +34,22 @@ export default function FocusRoom() {
 		return "";
 	});
 
-	// Timer states
+	// Clock mode: countdown timer vs count-up stopwatch
+	const [clockMode, setClockMode] = useState<FocusClockMode>(() => {
+		if (typeof window !== "undefined") {
+			const saved = window.localStorage.getItem(FOCUS_MODE_STORAGE_KEY);
+			if (saved === "timer" || saved === "stopwatch") return saved;
+		}
+		return "timer";
+	});
+
+	// Timer & stopwatch states
 	const [timerDuration, setTimerDuration] = useState<number>(25);
 	const [secondsRemaining, setSecondsRemaining] = useState<number>(25 * 60);
+	const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 	const [timerRunning, setTimerRunning] = useState<boolean>(false);
 	const [completedSessions, setCompletedSessions] = useState<number>(0);
+	const [totalFocusedSeconds, setTotalFocusedSeconds] = useState<number>(0);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	// Smooth GPU-only top-to-bottom panel entrance (avoids backdrop-filter + clipPath flicker)
@@ -122,6 +134,13 @@ export default function FocusRoom() {
 		}
 	}, [activeTaskId]);
 
+	// Persist preferred Focus clock mode
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			window.localStorage.setItem(FOCUS_MODE_STORAGE_KEY, clockMode);
+		}
+	}, [clockMode]);
+
 	const activeTask = useMemo(() => {
 		if (!activeTaskId) return null;
 		return tasks.find((t) => t.id === activeTaskId) ?? null;
@@ -157,35 +176,77 @@ export default function FocusRoom() {
 		});
 	}, [tasks, projects, searchQuery, selectedProjectId, statusFilter]);
 
-	// Timer countdown tick
-	useEffect(() => {
-		if (timerRunning) {
-			timerRef.current = setInterval(() => {
-				setSecondsRemaining((prev) => {
-					if (prev <= 1) {
-						setTimerRunning(false);
-						playCompletionChime();
-						setCompletedSessions((c) => c + 1);
+	const completeActiveSession = useCallback(
+		(focusedSecondsForSession: number) => {
+			setTimerRunning(false);
+			playCompletionChime();
+			setCompletedSessions((c) => c + 1);
+			if (focusedSecondsForSession > 0) {
+				setTotalFocusedSeconds((prev) => prev + focusedSecondsForSession);
+			}
+			setSecondsRemaining(timerDuration * 60);
+			setElapsedSeconds(0);
 
-						if (activeTask && activeTask.column !== "finalizado") {
-							updateColumnMutation({
-								id: activeTask.id as Id<"tasks">,
-								column: "finalizado",
-							}).catch((e) => console.error("Error completing task:", e));
-						}
-						return timerDuration * 60;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-		} else if (timerRef.current) {
-			clearInterval(timerRef.current);
+			if (activeTask && activeTask.column !== "finalizado") {
+				updateColumnMutation({
+					id: activeTask.id as Id<"tasks">,
+					column: "finalizado",
+				}).catch((e) => console.error("Error completing task:", e));
+			}
+
+			sileo.success({
+				title: "Sesión Focus completada",
+				description: activeTask
+					? `"${activeTask.title}" registrada en tu progreso.`
+					: "Tu sesión de enfoque ha sido registrada.",
+				fill: "#130f26",
+				styles: {
+					title: "text-purple-200 font-extrabold",
+					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+		},
+		[activeTask, timerDuration, updateColumnMutation],
+	);
+
+	// Clock interval tick (countdown for timer, count-up for stopwatch)
+	useEffect(() => {
+		if (!timerRunning) {
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
+			return;
 		}
 
+		timerRef.current = setInterval(() => {
+			if (clockMode === "timer") {
+				setSecondsRemaining((prev) => Math.max(0, prev - 1));
+			} else {
+				setElapsedSeconds((prev) => prev + 1);
+			}
+		}, 1000);
+
 		return () => {
-			if (timerRef.current) clearInterval(timerRef.current);
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+				timerRef.current = null;
+			}
 		};
-	}, [timerRunning, timerDuration, activeTask, updateColumnMutation]);
+	}, [timerRunning, clockMode]);
+
+	// Auto-complete when countdown reaches 0
+	useEffect(() => {
+		if (clockMode === "timer" && timerRunning && secondsRemaining === 0) {
+			completeActiveSession(timerDuration * 60);
+		}
+	}, [
+		clockMode,
+		timerRunning,
+		secondsRemaining,
+		timerDuration,
+		completeActiveSession,
+	]);
 
 	const loadTaskIntoTimer = async (taskId: string) => {
 		if (!taskId) return;
@@ -195,6 +256,7 @@ export default function FocusRoom() {
 		setActiveTaskId(targetTask.id);
 		setTimerRunning(false);
 		setSecondsRemaining(timerDuration * 60);
+		setElapsedSeconds(0);
 		setDraggingTaskId(null);
 
 		if (targetTask.column === "pendiente") {
@@ -210,7 +272,10 @@ export default function FocusRoom() {
 
 		sileo.success({
 			title: "Tarea cargada en Focus",
-			description: `"${targetTask.title}" está lista para cronometrar.`,
+			description:
+				clockMode === "stopwatch"
+					? `"${targetTask.title}" está lista en el cronómetro.`
+					: `"${targetTask.title}" está lista en el temporizador.`,
 			fill: "#130f26",
 			styles: {
 				title: "text-purple-200 font-extrabold",
@@ -230,6 +295,7 @@ export default function FocusRoom() {
 	const handleClearActiveTask = () => {
 		setTimerRunning(false);
 		setSecondsRemaining(timerDuration * 60);
+		setElapsedSeconds(0);
 		setActiveTaskId("");
 	};
 
@@ -254,10 +320,39 @@ export default function FocusRoom() {
 		}
 	};
 
+	const handleChangeClockMode = (nextMode: FocusClockMode) => {
+		if (nextMode === clockMode) return;
+		setTimerRunning(false);
+		setClockMode(nextMode);
+		setSecondsRemaining(timerDuration * 60);
+		setElapsedSeconds(0);
+	};
+
 	const handleChangeDuration = (minutes: number) => {
 		setTimerDuration(minutes);
 		setSecondsRemaining(minutes * 60);
 		setTimerRunning(false);
+	};
+
+	const handleResetClock = () => {
+		setTimerRunning(false);
+		if (clockMode === "stopwatch") {
+			setElapsedSeconds(0);
+		} else {
+			setSecondsRemaining(timerDuration * 60);
+		}
+	};
+
+	const handleFinishSession = () => {
+		if (clockMode === "stopwatch") {
+			if (elapsedSeconds <= 0) return;
+			completeActiveSession(elapsedSeconds);
+			return;
+		}
+		const elapsedInTimer = Math.max(0, timerDuration * 60 - secondsRemaining);
+		completeActiveSession(
+			elapsedInTimer > 0 ? elapsedInTimer : timerDuration * 60,
+		);
 	};
 
 	return (
@@ -286,23 +381,21 @@ export default function FocusRoom() {
 					activeTask={activeTask}
 					activeProject={activeProject}
 					isDraggingTask={draggingTaskId !== null}
+					clockMode={clockMode}
 					timerDuration={timerDuration}
 					secondsRemaining={secondsRemaining}
+					elapsedSeconds={elapsedSeconds}
 					timerRunning={timerRunning}
 					completedSessions={completedSessions}
+					totalFocusedSeconds={totalFocusedSeconds}
 					onDropTask={handleDropTask}
 					onClearActiveTask={handleClearActiveTask}
 					onMarkFinished={(task) => void handleMarkFinished(task)}
+					onChangeClockMode={handleChangeClockMode}
 					onChangeDuration={handleChangeDuration}
 					onToggleRunning={() => setTimerRunning((prev) => !prev)}
-					onResetTimer={() => {
-						setTimerRunning(false);
-						setSecondsRemaining(timerDuration * 60);
-					}}
-					onSkipTimer={() => {
-						setTimerRunning(false);
-						setSecondsRemaining(1);
-					}}
+					onResetTimer={handleResetClock}
+					onFinishSession={handleFinishSession}
 				/>
 			</div>
 		</main>

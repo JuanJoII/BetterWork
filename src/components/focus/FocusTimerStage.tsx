@@ -1,10 +1,12 @@
 import {
+	Check,
 	CheckCircle,
+	Hourglass,
 	Pause,
 	Play,
 	RotateCcw,
-	SkipForward,
 	Target,
+	Timer,
 	X,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -13,55 +15,95 @@ import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
 import LiquidGlassBackground from "./LiquidGlassBackground";
 
+export type FocusClockMode = "timer" | "stopwatch";
+
 interface FocusTimerStageProps {
 	activeTask: Task | null;
 	activeProject?: Project;
 	isDraggingTask: boolean;
+	clockMode: FocusClockMode;
 	timerDuration: number;
 	secondsRemaining: number;
+	elapsedSeconds: number;
 	timerRunning: boolean;
 	completedSessions: number;
+	totalFocusedSeconds: number;
 	onDropTask: (taskId: string) => void;
 	onClearActiveTask: () => void;
 	onMarkFinished: (task: Task) => void;
+	onChangeClockMode: (mode: FocusClockMode) => void;
 	onChangeDuration: (minutes: number) => void;
 	onToggleRunning: () => void;
 	onResetTimer: () => void;
-	onSkipTimer: () => void;
+	onFinishSession: () => void;
 }
 
 const DURATION_PRESETS = [25, 45, 60] as const;
+
+function formatClock(secs: number): string {
+	const safeSecs = Math.max(0, Math.floor(secs));
+	const hours = Math.floor(safeSecs / 3600);
+	const mins = Math.floor((safeSecs % 3600) / 60);
+	const rem = safeSecs % 60;
+	if (hours > 0) {
+		return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${rem.toString().padStart(2, "0")}`;
+	}
+	return `${mins.toString().padStart(2, "0")}:${rem.toString().padStart(2, "0")}`;
+}
+
+function formatFocusedTotal(totalSeconds: number): string {
+	const safeSecs = Math.max(0, Math.floor(totalSeconds));
+	if (safeSecs === 0) return "0 min";
+	if (safeSecs < 60) return `${safeSecs} s`;
+	const hours = Math.floor(safeSecs / 3600);
+	const mins = Math.floor((safeSecs % 3600) / 60);
+	const rem = safeSecs % 60;
+	if (hours > 0) {
+		return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
+	}
+	return rem > 0 ? `${mins} min ${rem} s` : `${mins} min`;
+}
 
 export default function FocusTimerStage({
 	activeTask,
 	activeProject,
 	isDraggingTask,
+	clockMode,
 	timerDuration,
 	secondsRemaining,
+	elapsedSeconds,
 	timerRunning,
 	completedSessions,
+	totalFocusedSeconds,
 	onDropTask,
 	onClearActiveTask,
 	onMarkFinished,
+	onChangeClockMode,
 	onChangeDuration,
 	onToggleRunning,
 	onResetTimer,
-	onSkipTimer,
+	onFinishSession,
 }: FocusTimerStageProps) {
 	const [isDragOver, setIsDragOver] = useState(false);
 	const dragDepthRef = useRef(0);
 
-	const formatTime = (secs: number) => {
-		const mins = Math.floor(secs / 60);
-		const rem = secs % 60;
-		return `${mins.toString().padStart(2, "0")}:${rem.toString().padStart(2, "0")}`;
-	};
+	const isStopwatch = clockMode === "stopwatch";
+	const displayedSeconds = isStopwatch ? elapsedSeconds : secondsRemaining;
+	const hasHours = displayedSeconds >= 3600;
+	const hasProgress = isStopwatch
+		? elapsedSeconds > 0
+		: secondsRemaining < timerDuration * 60;
 
 	const circleRadius = 78;
 	const circleCircumference = 2 * Math.PI * circleRadius;
-	const progressPercentage = (secondsRemaining / (timerDuration * 60)) * 100;
+	const progressRatio = isStopwatch
+		? elapsedSeconds === 0
+			? 0
+			: (elapsedSeconds % 60) / 60 || 1
+		: secondsRemaining / (timerDuration * 60);
 	const strokeDashoffset =
-		circleCircumference - (progressPercentage / 100) * circleCircumference;
+		circleCircumference - progressRatio * circleCircumference;
+	const skipRingTransition = isStopwatch && elapsedSeconds % 60 === 1;
 
 	const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
 		e.preventDefault();
@@ -94,6 +136,20 @@ export default function FocusTimerStage({
 		? `Focus en ${activeTask.title}`
 		: "Focus en ...";
 
+	const statusLabel = timerRunning
+		? isStopwatch
+			? "Cronometrando"
+			: "En curso"
+		: hasProgress
+			? "En pausa"
+			: "Listo";
+
+	const primaryButtonLabel = timerRunning
+		? "Pausar"
+		: hasProgress
+			? "Reanudar"
+			: "Comenzar";
+
 	return (
 		<section
 			data-focus-panel
@@ -115,15 +171,12 @@ export default function FocusTimerStage({
 			{/* Interactive Drop Overlay when dragging over the timer stage */}
 			{isDragOver && (
 				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-400/80 bg-slate-950/70 backdrop-blur-md">
-					<div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_30px_rgba(250,204,21,0.28)]">
-						<Target className="h-7 w-7" />
+					<div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_36px_rgba(250,204,21,0.32)]">
+						<Target className="h-10 w-10" />
 					</div>
-					<p className="display-title m-0 text-lg font-black text-yellow-300">
+					<p className="display-title m-0 text-2xl sm:text-3xl font-black tracking-tight text-yellow-300">
 						Suelta la nota aquí
 					</p>
-					<span className="mt-1 text-xs font-semibold text-slate-300">
-						Se cargará en el temporizador para iniciar Focus
-					</span>
 				</div>
 			)}
 
@@ -139,14 +192,14 @@ export default function FocusTimerStage({
 				</GradientText>
 			</header>
 
-			{/* Center Content: Active Task Card + Timer */}
+			{/* Center Content: Active Task Card + Mode Switcher + Clock */}
 			<div className="relative z-10 flex flex-1 flex-col items-center justify-center py-2">
 				{activeTask ? (
 					<div className="flex w-full flex-col items-center text-center">
 						{/* Active Sticky Note Card */}
 						<div
 							data-active-focus-card
-							className={`relative mb-8 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${
+							className={`relative mb-6 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${
 								isDaily
 									? "border-purple-500/35 bg-purple-950/30 text-purple-100/90"
 									: "border-yellow-500/25 bg-yellow-950/30 text-yellow-100/90"
@@ -248,10 +301,62 @@ export default function FocusTimerStage({
 							</div>
 						</div>
 
-						{/* Circular SVG Timer */}
-						<div className="relative mb-8 flex items-center justify-center">
+						{/* Mode Switcher: Temporizador vs Cronómetro */}
+						<div
+							role="tablist"
+							aria-label="Modo de tiempo"
+							className="mb-6 inline-flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md"
+						>
+							<button
+								type="button"
+								role="tab"
+								aria-selected={!isStopwatch}
+								disabled={timerRunning}
+								title={
+									timerRunning
+										? "Pausa para cambiar de modo"
+										: "Cuenta regresiva con duración fija"
+								}
+								onClick={() => onChangeClockMode("timer")}
+								className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+									!isStopwatch
+										? "bg-yellow-300 text-slate-950 shadow-sm"
+										: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+								}`}
+							>
+								<Hourglass className="h-3.5 w-3.5" />
+								<span>Temporizador</span>
+							</button>
+							<button
+								type="button"
+								role="tab"
+								aria-selected={isStopwatch}
+								disabled={timerRunning}
+								title={
+									timerRunning
+										? "Pausa para cambiar de modo"
+										: "Cuenta ascendente de tiempo libre"
+								}
+								onClick={() => onChangeClockMode("stopwatch")}
+								className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+									isStopwatch
+										? "bg-purple-400 text-slate-950 shadow-sm"
+										: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+								}`}
+							>
+								<Timer className="h-3.5 w-3.5" />
+								<span>Cronómetro</span>
+							</button>
+						</div>
+
+						{/* Circular SVG Clock */}
+						<div className="relative mb-6 flex items-center justify-center">
 							<svg className="h-48 w-48 rotate-[-90deg]" role="presentation">
-								<title>Progreso del Temporizador</title>
+								<title>
+									{isStopwatch
+										? "Progreso del Cronómetro"
+										: "Progreso del Temporizador"}
+								</title>
 								<circle
 									cx="96"
 									cy="96"
@@ -263,7 +368,13 @@ export default function FocusTimerStage({
 									cx="96"
 									cy="96"
 									r={circleRadius}
-									className="stroke-[#eab308] fill-none transition-all duration-300"
+									className={`fill-none ${
+										isStopwatch ? "stroke-purple-400" : "stroke-[#eab308]"
+									} ${
+										skipRingTransition
+											? "transition-none"
+											: "transition-[stroke-dashoffset,stroke] duration-300"
+									}`}
 									strokeWidth="7"
 									strokeDasharray={circleCircumference}
 									strokeDashoffset={strokeDashoffset}
@@ -271,35 +382,45 @@ export default function FocusTimerStage({
 								/>
 							</svg>
 							<div className="absolute flex flex-col items-center">
-								<span className="font-mono text-4xl font-black tracking-tight tabular-nums text-[var(--sea-ink)]">
-									{formatTime(secondsRemaining)}
+								<span
+									className={`font-mono font-black tracking-tight tabular-nums text-[var(--sea-ink)] ${
+										hasHours ? "text-3xl" : "text-4xl"
+									}`}
+								>
+									{formatClock(displayedSeconds)}
 								</span>
-								<span className="mt-1 text-[10px] font-black uppercase tracking-widest text-yellow-400/85">
-									{timerRunning ? "En curso" : "Listo"}
+								<span
+									className={`mt-1 text-[10px] font-black uppercase tracking-widest ${
+										isStopwatch ? "text-purple-300/90" : "text-yellow-400/85"
+									}`}
+								>
+									{statusLabel}
 								</span>
 							</div>
 						</div>
 
-						{/* Timer Controls */}
-						<div className="flex w-full flex-col items-center gap-5">
-							{/* Duration presets */}
-							<div className="flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
-								{DURATION_PRESETS.map((mins) => (
-									<button
-										key={mins}
-										type="button"
-										onClick={() => onChangeDuration(mins)}
-										disabled={timerRunning}
-										className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-											timerDuration === mins
-												? "bg-yellow-300 text-slate-950 shadow-sm"
-												: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
-										}`}
-									>
-										{mins} min
-									</button>
-								))}
-							</div>
+						{/* Clock Controls */}
+						<div className="flex w-full flex-col items-center gap-4">
+							{/* Duration presets (Timer mode only) */}
+							{!isStopwatch && (
+								<div className="flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
+									{DURATION_PRESETS.map((mins) => (
+										<button
+											key={mins}
+											type="button"
+											onClick={() => onChangeDuration(mins)}
+											disabled={timerRunning}
+											className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+												timerDuration === mins
+													? "bg-yellow-300 text-slate-950 shadow-sm"
+													: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
+											}`}
+										>
+											{mins} min
+										</button>
+									))}
+								</div>
+							)}
 
 							{/* Primary playback controls */}
 							<div className="flex items-center gap-3">
@@ -309,7 +430,9 @@ export default function FocusTimerStage({
 									className={`flex h-12 min-w-36 items-center justify-center gap-2 rounded-full px-6 text-sm font-black transition-all active:scale-95 shadow-md cursor-pointer ${
 										timerRunning
 											? "bg-amber-500 text-slate-950 hover:bg-amber-400"
-											: "bg-yellow-300 text-slate-950 hover:bg-yellow-200 shadow-yellow-500/20"
+											: isStopwatch
+												? "bg-purple-400 text-slate-950 hover:bg-purple-300 shadow-purple-500/25"
+												: "bg-yellow-300 text-slate-950 hover:bg-yellow-200 shadow-yellow-500/20"
 									}`}
 								>
 									{timerRunning ? (
@@ -317,27 +440,32 @@ export default function FocusTimerStage({
 									) : (
 										<Play className="h-4.5 w-4.5" />
 									)}
-									<span>{timerRunning ? "Pausar" : "Comenzar"}</span>
+									<span>{primaryButtonLabel}</span>
 								</button>
 
 								<button
 									type="button"
 									onClick={onResetTimer}
 									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:bg-white/10 hover:text-[var(--sea-ink)] transition-colors cursor-pointer backdrop-blur-md"
-									title="Reiniciar"
-									aria-label="Reiniciar temporizador"
+									title={isStopwatch ? "Reiniciar cronómetro" : "Reiniciar"}
+									aria-label={
+										isStopwatch
+											? "Reiniciar cronómetro"
+											: "Reiniciar temporizador"
+									}
 								>
 									<RotateCcw className="h-4.5 w-4.5" />
 								</button>
 
 								<button
 									type="button"
-									onClick={onSkipTimer}
-									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:bg-white/10 hover:text-[var(--sea-ink)] transition-colors cursor-pointer backdrop-blur-md"
-									title="Finalizar sesión ahora"
+									onClick={onFinishSession}
+									disabled={isStopwatch && elapsedSeconds === 0}
+									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-emerald-400/50 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors cursor-pointer backdrop-blur-md disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/15 disabled:hover:bg-white/5 disabled:hover:text-[var(--sea-ink-soft)]"
+									title="Finalizar y registrar sesión"
 									aria-label="Finalizar sesión ahora"
 								>
-									<SkipForward className="h-4.5 w-4.5" />
+									<Check className="h-4.5 w-4.5" />
 								</button>
 							</div>
 						</div>
@@ -353,7 +481,7 @@ export default function FocusTimerStage({
 						</h2>
 						<p className="mt-2 mb-0 text-xs leading-relaxed font-medium text-[var(--sea-ink-soft)]">
 							Toma cualquier nota del panel izquierdo y suéltala en este espacio
-							(o haz clic sobre ella) para iniciar tu cronómetro de Focus.
+							(o haz clic sobre ella) para iniciar tu sesión de Focus.
 						</p>
 					</div>
 				)}
@@ -363,7 +491,7 @@ export default function FocusTimerStage({
 			<div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-4 text-xs font-bold text-[var(--sea-ink-soft)]">
 				<span>Sesiones completadas: {completedSessions}</span>
 				<span aria-hidden="true">•</span>
-				<span>Tiempo enfocado: {completedSessions * timerDuration} min</span>
+				<span>Tiempo enfocado: {formatFocusedTotal(totalFocusedSeconds)}</span>
 			</div>
 		</section>
 	);

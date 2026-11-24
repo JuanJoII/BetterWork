@@ -1,4 +1,5 @@
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -177,5 +178,63 @@ describe("FocusRoom", () => {
 		expect(screen.getByText("25:00")).toBeTruthy();
 		expect(screen.getByRole("button", { name: /Comenzar/i })).toBeTruthy();
 		expect(window.localStorage.getItem("kairos_active_task_id")).toBe("t1");
+	});
+
+	it("shows a clean drag-over overlay without subtitle", () => {
+		render(<FocusRoom />);
+
+		const timerZone = screen.getByLabelText("Zona de temporizador Focus");
+		fireEvent.dragEnter(timerZone);
+
+		expect(screen.getByText("Suelta la nota aquí")).toBeTruthy();
+		expect(
+			screen.queryByText(/Se cargará en el temporizador para iniciar Focus/i),
+		).toBeNull();
+	});
+
+	it("lets the user switch between Temporizador and Cronómetro, counts up, and records focused time on finish", async () => {
+		vi.useFakeTimers();
+		try {
+			window.localStorage.setItem("kairos_active_task_id", "t2");
+			render(<FocusRoom />);
+
+			// Starts in Temporizador mode with presets visible
+			expect(screen.getByText("25:00")).toBeTruthy();
+			expect(screen.getByRole("button", { name: "25 min" })).toBeTruthy();
+
+			// Switch to Cronómetro mode
+			fireEvent.click(screen.getByRole("tab", { name: /Cronómetro/i }));
+			expect(screen.getByText("00:00")).toBeTruthy();
+			expect(screen.queryByRole("button", { name: "25 min" })).toBeNull();
+			expect(window.localStorage.getItem("kairos_focus_mode")).toBe(
+				"stopwatch",
+			);
+
+			// Finish button disabled at 00:00 in stopwatch mode
+			const finishBtn = screen.getByRole("button", {
+				name: "Finalizar sesión ahora",
+			}) as HTMLButtonElement;
+			expect(finishBtn.disabled).toBe(true);
+
+			// Start counting up
+			fireEvent.click(screen.getByRole("button", { name: /Comenzar/i }));
+			act(() => {
+				vi.advanceTimersByTime(3000);
+			});
+			expect(screen.getByText("00:03")).toBeTruthy();
+			expect(finishBtn.disabled).toBe(false);
+
+			// Finish session and record time
+			fireEvent.click(finishBtn);
+			expect(screen.getByText("Sesiones completadas: 1")).toBeTruthy();
+			expect(screen.getByText("Tiempo enfocado: 3 s")).toBeTruthy();
+			expect(screen.getByText("00:00")).toBeTruthy();
+			expect(mockUpdateColumn).toHaveBeenCalledWith({
+				id: "t2",
+				column: "finalizado",
+			});
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
