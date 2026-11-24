@@ -5,20 +5,15 @@ import { sileo } from "sileo";
 import { api } from "../../../convex/_generated/api";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import type { Daily } from "../../types/kanban";
-import {
-	isDailyCompletedToday,
-	unmarkDailyCompletedToday,
-} from "../../utils/dailyCompletion";
+import { getTodayDateKey } from "../../utils/date";
 
 export default function DailysBoard() {
 	const convexDailys = useQuery(api.rituals.list);
-	const convexTasks = useQuery(api.tasks.list);
-	const convexProjects = useQuery(api.projects.list);
 
 	const createDailyMutation = useMutation(api.rituals.create);
 	const removeDailyMutation = useMutation(api.rituals.remove);
-	const createTaskMutation = useMutation(api.tasks.create);
-	const removeTaskMutation = useMutation(api.tasks.remove);
+
+	const today = getTodayDateKey();
 
 	const dailys = useMemo<Daily[]>(() => {
 		return (
@@ -26,6 +21,8 @@ export default function DailysBoard() {
 				id: d._id,
 				title: d.title,
 				description: d.description,
+				lastCompletedDate: d.lastCompletedDate,
+				lastSyncedDate: d.lastSyncedDate,
 				createdAt: d.createdAt,
 			})) || []
 		);
@@ -40,26 +37,11 @@ export default function DailysBoard() {
 		if (!newTitle.trim()) return;
 
 		try {
-			unmarkDailyCompletedToday(newTitle.trim());
-
-			// Create daily template in Convex
 			await createDailyMutation({
 				title: newTitle.trim(),
 				description: newDesc.trim(),
+				localDate: getTodayDateKey(),
 			});
-
-			// Find a default project to assign the task to
-			const mainProj = convexProjects?.[0];
-			if (mainProj) {
-				await createTaskMutation({
-					title: newTitle.trim(),
-					description: newDesc.trim(),
-					priority: "medium",
-					column: "pendiente",
-					projectId: mainProj._id,
-					isRitual: true,
-				});
-			}
 
 			sileo.success({
 				title: "¡Daily Añadido!",
@@ -97,19 +79,7 @@ export default function DailysBoard() {
 				onClick: () => {
 					sileo.dismiss(toastKey);
 					removeDailyMutation({ id: id as Id<"rituals"> })
-						.then(async () => {
-							unmarkDailyCompletedToday(title);
-
-							// Also remove the task instance of this daily if it exists
-							if (convexTasks) {
-								const matchingTasks = (convexTasks as Doc<"tasks">[]).filter(
-									(t: Doc<"tasks">) => t.isRitual && t.title === title,
-								);
-								for (const task of matchingTasks) {
-									await removeTaskMutation({ id: task._id });
-								}
-							}
-
+						.then(() => {
 							sileo.error({
 								title: "Daily Eliminado",
 								description: `"${title}" ha sido removido de tu rutina diaria.`,
@@ -182,55 +152,59 @@ export default function DailysBoard() {
 				{/* Daily Cards Grid */}
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
 					{dailys.length > 0 ? (
-						dailys.map((daily) => (
-							<div
-								key={daily.id}
-								className="relative rounded-2xl border border-purple-500/30 bg-purple-950/15 p-5 flex flex-col justify-between transition-all duration-300 shadow-sm text-purple-100/90"
-							>
-								{/* Tech-tape overlay */}
-								<div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 bg-purple-500/20 border-x border-purple-400/40 shadow-sm backdrop-blur-[2px] z-10" />
+						dailys.map((daily) => {
+							const completedToday = daily.lastCompletedDate === today;
 
-								<div>
-									{/* Note meta bar */}
-									<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
-										<span className="font-black text-purple-400">
-											Hábito Diario
-										</span>
-										<div className="flex items-center gap-1.5">
-											{isDailyCompletedToday(daily.title) && (
-												<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-black">
-													<Check className="h-3 w-3" />
-													Completado hoy
-												</span>
-											)}
-											<span className="px-2 py-0.5 rounded border border-purple-500/40 bg-purple-500/20 text-purple-300 font-black animate-pulse">
-												DAILY
+							return (
+								<div
+									key={daily.id}
+									className="relative rounded-2xl border border-purple-500/30 bg-purple-950/15 p-5 flex flex-col justify-between transition-all duration-300 shadow-sm text-purple-100/90"
+								>
+									{/* Tech-tape overlay */}
+									<div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 bg-purple-500/20 border-x border-purple-400/40 shadow-sm backdrop-blur-[2px] z-10" />
+
+									<div>
+										{/* Note meta bar */}
+										<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+											<span className="font-black text-purple-400">
+												Hábito Diario
 											</span>
+											<div className="flex items-center gap-1.5">
+												{completedToday && (
+													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-black">
+														<Check className="h-3 w-3" />
+														Completado hoy
+													</span>
+												)}
+												<span className="px-2 py-0.5 rounded border border-purple-500/40 bg-purple-500/20 text-purple-300 font-black animate-pulse">
+													DAILY
+												</span>
+											</div>
 										</div>
+
+										<h3 className="m-0 text-base font-black leading-snug text-purple-300">
+											{daily.title}
+										</h3>
+
+										<p className="mt-2 mb-4 text-xs leading-relaxed opacity-85 font-medium text-slate-300">
+											{daily.description}
+										</p>
 									</div>
 
-									<h3 className="m-0 text-base font-black leading-snug text-purple-300">
-										{daily.title}
-									</h3>
-
-									<p className="mt-2 mb-4 text-xs leading-relaxed opacity-85 font-medium text-slate-300">
-										{daily.description}
-									</p>
+									{/* Delete Action Footer */}
+									<div className="border-t border-purple-500/10 pt-3.5 flex items-center justify-end text-purple-400/75">
+										<button
+											type="button"
+											onClick={() => handleDeleteDaily(daily.id, daily.title)}
+											className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400/80 hover:text-red-400 transition cursor-pointer"
+											title="Eliminar Daily"
+										>
+											<Trash2 className="h-4 w-4" />
+										</button>
+									</div>
 								</div>
-
-								{/* Delete Action Footer */}
-								<div className="border-t border-purple-500/10 pt-3.5 flex items-center justify-end text-purple-400/75">
-									<button
-										type="button"
-										onClick={() => handleDeleteDaily(daily.id, daily.title)}
-										className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400/80 hover:text-red-400 transition cursor-pointer"
-										title="Eliminar Daily"
-									>
-										<Trash2 className="h-4 w-4" />
-									</button>
-								</div>
-							</div>
-						))
+							);
+						})
 					) : (
 						<div className="col-span-1 sm:col-span-2 flex flex-col items-center justify-center py-16 text-center text-[var(--sea-ink-soft)] border border-dashed border-[var(--line)] rounded-2xl opacity-60">
 							<Zap className="h-8 w-8 opacity-30 mb-2" />

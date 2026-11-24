@@ -9,6 +9,8 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as completedTasks from "../completedTasks.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as projects from "../projects.js";
 import type * as rituals from "../rituals.js";
@@ -22,6 +24,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  completedTasks: typeof completedTasks;
+  crons: typeof crons;
   http: typeof http;
   projects: typeof projects;
   rituals: typeof rituals;

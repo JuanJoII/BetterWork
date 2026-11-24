@@ -10,10 +10,7 @@ gsap.registerPlugin(useGSAP);
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
-import {
-	markDailyCompletedToday,
-	unmarkDailyCompletedToday,
-} from "../../utils/dailyCompletion";
+import { getTodayDateKey } from "../../utils/date";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
@@ -52,6 +49,8 @@ export default function KanbanBoard() {
 		createTaskMutation,
 		updateTaskMutation,
 		updateColumnMutation,
+		completeTaskMutation,
+		undoCompleteTaskMutation,
 		removeTaskMutation,
 		removeProjectMutation,
 		convexTasks,
@@ -198,10 +197,6 @@ export default function KanbanBoard() {
 		const task = (convexTasks as Doc<"tasks">[])?.find((t) => t._id === id);
 		if (!task) return;
 		const title = task.title;
-		const description = task.description;
-		const priority = task.priority;
-		const column = task.column;
-		const projectId = task.projectId;
 		const isRitual = task.isRitual;
 
 		const toastKey = `complete-task-${id}`;
@@ -209,10 +204,44 @@ export default function KanbanBoard() {
 			"[data-task-card]",
 		) as HTMLElement;
 
-		// Mark daily as completed for today before removing so sync won't recreate it until tomorrow
-		if (isRitual) {
-			markDailyCompletedToday(title);
-		}
+		let undoRequested = false;
+		let completionPromise: Promise<{
+			completedTaskId: Id<"completedTasks">;
+		} | null> | null = null;
+
+		const restoreVisualCard = () => {
+			if (clickedCard) {
+				gsap.killTweensOf(clickedCard);
+				gsap.set(clickedCard, { scale: 1, opacity: 1 });
+			}
+		};
+
+		const runDbCompletion = () => {
+			if (undoRequested) {
+				restoreVisualCard();
+				return;
+			}
+
+			completionPromise = completeTaskMutation({
+				id: id as Id<"tasks">,
+				localDate: getTodayDateKey(),
+			}).catch((err) => {
+				console.error("Error completing task:", err);
+				restoreVisualCard();
+				sileo.dismiss(toastKey);
+				sileo.error({
+					title: "Error al completar",
+					description:
+						"No se pudo marcar la tarea como realizada. Intenta de nuevo.",
+					fill: "#260f1c",
+					styles: {
+						title: "text-red-200 font-extrabold",
+						description: "text-red-300/80 text-xs font-semibold mt-0.5",
+					},
+				});
+				return null;
+			});
+		};
 
 		// 1. Show Sileo toast confirmation immediately
 		sileo.success({
@@ -231,18 +260,20 @@ export default function KanbanBoard() {
 			button: {
 				title: "Deshacer",
 				onClick: async () => {
+					undoRequested = true;
 					sileo.dismiss(toastKey);
-					if (isRitual) {
-						unmarkDailyCompletedToday(title);
+
+					if (!completionPromise) {
+						restoreVisualCard();
+						return;
 					}
+
 					try {
-						await createTaskMutation({
-							title,
-							description,
-							priority: priority as any,
-							column,
-							projectId,
-							isRitual,
+						const result = await completionPromise;
+						if (!result?.completedTaskId) return;
+
+						await undoCompleteTaskMutation({
+							completedTaskId: result.completedTaskId,
 						});
 						sileo.success({
 							title: "Tarea restaurada",
@@ -258,41 +289,24 @@ export default function KanbanBoard() {
 					}
 				},
 			},
-		} as any);
-
-		const runDbRemoval = async () => {
-			try {
-				await removeTaskMutation({ id: id as Id<"tasks"> });
-			} catch (err) {
-				if (isRitual) {
-					unmarkDailyCompletedToday(title);
-				}
-				console.error("Error completing task:", err);
-				sileo.dismiss(toastKey);
-				sileo.error({
-					title: "Error al completar",
-					description:
-						"No se pudo marcar la tarea como realizada. Intenta de nuevo.",
-					fill: "#260f1c",
-					styles: {
-						title: "text-red-200 font-extrabold",
-						description: "text-red-300/80 text-xs font-semibold mt-0.5",
-					},
-				});
-			}
-		};
+		} as Parameters<typeof sileo.success>[0]);
 
 		// 2. Trigger exit animation and shockwave halfway through after Sileo toast appears
 		setTimeout(() => {
+			if (undoRequested) {
+				restoreVisualCard();
+				return;
+			}
 			if (clickedCard) {
 				gsap.to(clickedCard, {
 					scale: 0.1,
 					opacity: 0,
 					duration: 0.16,
 					ease: "power2.in",
-					onComplete: runDbRemoval,
+					onComplete: runDbCompletion,
 				});
 				setTimeout(() => {
+					if (undoRequested) return;
 					triggerShockwave(clickedCard, id);
 
 					// Launch confetti burst from completed card center in sync with shockwave
@@ -312,7 +326,7 @@ export default function KanbanBoard() {
 					});
 				}, 80);
 			} else {
-				runDbRemoval();
+				runDbCompletion();
 			}
 		}, 30);
 	};
@@ -363,6 +377,7 @@ export default function KanbanBoard() {
 				column: updatedTask.column,
 				projectId: updatedTask.projectId as Id<"projects">,
 				isRitual: updatedTask.isRitual,
+				ritualId: updatedTask.ritualId as Id<"rituals"> | undefined,
 			});
 			setEditingTask(null);
 		} catch (e) {
