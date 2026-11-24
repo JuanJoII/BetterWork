@@ -40,7 +40,7 @@ export default function FocusRoom() {
 	const [completedSessions, setCompletedSessions] = useState<number>(0);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-	// Top-to-bottom panel entrance (consistent with KanbanBoard)
+	// Smooth GPU-only top-to-bottom panel entrance (avoids backdrop-filter + clipPath flicker)
 	useGSAP(
 		() => {
 			if (
@@ -56,17 +56,17 @@ export default function FocusRoom() {
 					"[data-focus-panel]",
 					{
 						autoAlpha: 0,
-						y: -18,
-						clipPath: "inset(0% 0% 100% 0% round 1.5rem)",
+						y: -24,
+						scale: 0.985,
 					},
 					{
 						autoAlpha: 1,
 						y: 0,
-						clipPath: "inset(0% 0% 0% 0% round 1.5rem)",
-						duration: 0.58,
+						scale: 1,
+						duration: 0.62,
 						stagger: 0.1,
 						ease: "power3.out",
-						clearProps: "clipPath,transform,opacity,visibility",
+						clearProps: "transform,opacity,visibility",
 					},
 				);
 			});

@@ -11,6 +11,7 @@ import { useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
 import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
+import LiquidGlassBackground from "./LiquidGlassBackground";
 
 interface FocusTimerStageProps {
 	activeTask: Task | null;
@@ -101,7 +102,7 @@ export default function FocusTimerStage({
 			onDragOver={handleDragOver}
 			onDragLeave={handleDragLeave}
 			onDrop={handleDrop}
-			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 ${
+			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-[border-color,box-shadow] duration-300 ${
 				isDragOver
 					? "border-yellow-400/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.28),0_0_0_2px_rgba(250,204,21,0.35),0_0_50px_rgba(250,204,21,0.22)]"
 					: isDraggingTask
@@ -109,27 +110,7 @@ export default function FocusTimerStage({
 						: "border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-1px_1px_rgba(192,132,252,0.12),0_24px_60px_rgba(2,6,23,0.55)]"
 			}`}
 		>
-			{/* Liquid Glass Specular Highlights & Brand Ambient Gradients */}
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-purple-500/[0.05]"
-			/>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
-			/>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.24),rgba(234,179,8,0.06)_48%,transparent_72%)] blur-2xl"
-			/>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute -bottom-28 -left-24 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,0.28),rgba(124,58,237,0.08)_50%,transparent_72%)] blur-2xl"
-			/>
-			<div
-				aria-hidden="true"
-				className="pointer-events-none absolute right-1/4 top-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(255,0,182,0.14),transparent_70%)] blur-3xl"
-			/>
+			<LiquidGlassBackground />
 
 			{/* Interactive Drop Overlay when dragging over the timer stage */}
 			{isDragOver && (

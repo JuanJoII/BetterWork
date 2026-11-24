@@ -308,7 +308,7 @@ export default function FocusTaskPanel({
 			)}
 
 			{/* Draggable Kanban-style Task Cards */}
-			<div className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto kanban-scroll pt-2 pr-1">
+			<div className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto kanban-scroll px-1 pt-3 pb-6">
 				{tasks.length > 0 ? (
 					tasks.map((task) => {
 						const isDaily = !!task.isRitual;
@@ -344,8 +344,8 @@ export default function FocusTaskPanel({
 								} ${
 									isActive
 										? isDaily
-											? "ring-2 ring-purple-400/75 shadow-[0_0_24px_rgba(168,85,247,0.18)]"
-											: "ring-2 ring-yellow-400/75 shadow-[0_0_24px_rgba(250,204,21,0.16)]"
+											? "shadow-[0_16px_26px_-10px_rgba(168,85,247,0.55)]"
+											: "shadow-[0_16px_26px_-10px_rgba(250,204,21,0.48)]"
 										: ""
 								} ${isDragging ? "opacity-45 scale-[0.98]" : ""}`}
 							>
