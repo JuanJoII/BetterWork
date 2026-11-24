@@ -42,15 +42,7 @@ describe("ProjectsSidebar", () => {
 			/>,
 		);
 
-	it("shows the active board name as heading and omits redundant Proyectos/Espacio de trabajo subtitles", () => {
-		renderSidebar({ currentProjectId: "p2" });
-
-		expect(screen.getByRole("heading", { name: "Backend API" })).toBeTruthy();
-		expect(screen.queryByText("Espacio de trabajo")).toBeNull();
-		expect(screen.queryByText("Proyectos")).toBeNull();
-	});
-
-	it("lists all projects vertically as pills without hiding items past 3", () => {
+	it("renders all projects in the arc list without hiding items past 3 or arrow buttons", () => {
 		renderSidebar();
 
 		expect(screen.getAllByText("Tablero General").length).toBeGreaterThan(0);
@@ -58,25 +50,41 @@ describe("ProjectsSidebar", () => {
 			expect(screen.getByText(project.name)).toBeTruthy();
 		}
 		expect(screen.queryByText("Más")).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: "Proyecto anterior" }),
+		).toBeNull();
+		expect(
+			screen.queryByRole("button", { name: "Siguiente proyecto" }),
+		).toBeNull();
 	});
 
-	it("selects a project, creates a project, and deletes only non-General projects", () => {
-		renderSidebar();
+	it("selects a project on click, cycles projects with wheel scroll, and creates/deletes projects", () => {
+		renderSidebar({ currentProjectId: "p4" });
 
 		fireEvent.click(screen.getByText("Backend API"));
 		expect(setCurrentProjectId).toHaveBeenCalledWith("p2");
 
-		expect(
-			screen.queryByRole("button", { name: "Eliminar proyecto General" }),
-		).toBeNull();
-
+		// Active non-General project shows delete button
 		fireEvent.click(
 			screen.getByRole("button", { name: "Eliminar proyecto Marketing" }),
 		);
 		expect(handleDeleteProject).toHaveBeenCalledWith("p4", "Marketing");
 
+		// Wheel down advances from p4 (index 4) to p5 (index 5)
+		const selector = screen.getByLabelText("Selector de proyectos");
+		fireEvent.wheel(selector, { deltaY: 100 });
+		expect(setCurrentProjectId).toHaveBeenCalledWith("p5");
+
 		fireEvent.click(screen.getByRole("button", { name: /Nuevo Proyecto/i }));
 		expect(handleCreateProject).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not allow deleting the General project even when active", () => {
+		renderSidebar({ currentProjectId: "p1" });
+
+		expect(
+			screen.queryByRole("button", { name: "Eliminar proyecto General" }),
+		).toBeNull();
 	});
 
 	it("integrates SearchBar inside the sidebar and forwards changes", () => {
