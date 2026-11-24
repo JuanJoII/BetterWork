@@ -1,11 +1,9 @@
 import {
-	LayoutGrid,
-	PanelLeftClose,
-	PanelLeftOpen,
-	Plus,
-	Trash2,
-	X,
-} from "lucide-react";
+	PanelLeftClose as PanelLeftCloseNode,
+	PanelLeftOpen as PanelLeftOpenNode,
+} from "lucide";
+import { LayoutGrid, PanelLeftOpen, Plus, Trash2, X } from "lucide-react";
+import { MorphIcon } from "morphicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "../../types/kanban";
 import {
@@ -586,28 +584,46 @@ export default function ProjectsSidebar({
 						: "w-52 xl:w-56 gap-3 py-1"
 				}`}
 			>
+				{/* Top Row: Persistent Collapse/Expand MorphIcon + Morphing Search Trigger */}
+				<div
+					className={`flex ${
+						isCollapsed
+							? "flex-col items-center gap-2.5"
+							: "w-full flex-row-reverse items-center justify-between gap-2"
+					}`}
+				>
+					<button
+						type="button"
+						onClick={toggleCollapsed}
+						aria-label={
+							isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"
+						}
+						title={
+							isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"
+						}
+						className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer shrink-0"
+					>
+						<MorphIcon
+							icon={isCollapsed ? PanelLeftOpenNode : PanelLeftCloseNode}
+							size={16}
+							strokeWidth={2}
+							spring="snappy"
+							reducedMotion="user"
+							className="h-4 w-4"
+						/>
+					</button>
+
+					<SearchBar
+						value={searchQuery}
+						onChange={setSearchQuery}
+						expandable
+						expanded={isCompactSearchOpen}
+						onExpandedChange={handleCompactSearchChange}
+					/>
+				</div>
+
 				{isCollapsed ? (
 					<>
-						<div className="flex flex-col items-center gap-2.5">
-							<button
-								type="button"
-								onClick={toggleCollapsed}
-								aria-label="Expandir barra lateral"
-								title="Expandir barra lateral"
-								className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer"
-							>
-								<PanelLeftOpen className="h-4 w-4" />
-							</button>
-
-							<SearchBar
-								value={searchQuery}
-								onChange={setSearchQuery}
-								expandable
-								expanded={isCompactSearchOpen}
-								onExpandedChange={handleCompactSearchChange}
-							/>
-						</div>
-
 						<nav
 							aria-label="Selector compacto de proyectos"
 							className="flex flex-1 min-h-0 flex-col items-center justify-center gap-1.5 overflow-y-auto kanban-scroll py-2"
@@ -692,26 +708,6 @@ export default function ProjectsSidebar({
 					</>
 				) : (
 					<>
-						{/* Top Row: Morphing Search Trigger + Collapse */}
-						<div className="flex items-center justify-between gap-2">
-							<SearchBar
-								value={searchQuery}
-								onChange={setSearchQuery}
-								expandable
-								expanded={isCompactSearchOpen}
-								onExpandedChange={handleCompactSearchChange}
-							/>
-							<button
-								type="button"
-								onClick={toggleCollapsed}
-								aria-label="Colapsar barra lateral"
-								title="Colapsar barra lateral"
-								className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer shrink-0"
-							>
-								<PanelLeftClose className="h-4 w-4" />
-							</button>
-						</div>
-
 						{/* Full-height Curved Arc List (wheel is handled cleanly at the sidebar level) */}
 						<ArcList
 							items={arcItems}
