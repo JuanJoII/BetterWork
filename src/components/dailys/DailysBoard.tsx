@@ -108,7 +108,7 @@ export default function DailysBoard() {
 	};
 
 	return (
-		<main className="page-wrap px-4 py-8 max-w-4xl mx-auto">
+		<main className="page-wrap px-4 pt-12 pb-0 max-w-4xl mx-auto">
 			{/* Explanation Area */}
 			<section className="mb-8 rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-md p-6 shadow-sm relative">
 				<div className="flex items-center gap-3 mb-3">

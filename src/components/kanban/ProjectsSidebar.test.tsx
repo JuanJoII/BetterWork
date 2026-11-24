@@ -101,8 +101,8 @@ describe("ProjectsSidebar", () => {
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
 	});
 
-	it("collapses and expands the desktop sidebar rail and persists preference", () => {
-		renderSidebar();
+	it("collapses, cycles projects via wheel in compact mode, and expands back", () => {
+		renderSidebar({ currentProjectId: "p2" });
 
 		fireEvent.click(
 			screen.getByRole("button", { name: "Colapsar barra lateral" }),
@@ -113,6 +113,11 @@ describe("ProjectsSidebar", () => {
 		expect(
 			screen.getByRole("button", { name: "Expandir barra lateral" }),
 		).toBeTruthy();
+
+		// Wheel down in compact rail advances from p2 (index 2) to p3 (index 3)
+		const compactNav = screen.getByLabelText("Selector compacto de proyectos");
+		fireEvent.wheel(compactNav, { deltaY: 100 });
+		expect(setCurrentProjectId).toHaveBeenCalledWith("p3");
 
 		fireEvent.click(
 			screen.getByRole("button", { name: "Expandir barra lateral" }),

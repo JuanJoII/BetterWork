@@ -40,6 +40,9 @@ export default function ProjectsSidebar({
 	const [isCollapsed, setIsCollapsed] = useState(false);
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 	const desktopSearchRef = useRef<HTMLInputElement>(null);
+	const collapsedNavRef = useRef<HTMLElement>(null);
+	const collapsedWheelAccRef = useRef(0);
+	const collapsedLastStepRef = useRef(0);
 
 	useEffect(() => {
 		try {
@@ -116,6 +119,62 @@ export default function ProjectsSidebar({
 		if (!canDeleteActiveProject || !activeProject) return;
 		handleDeleteProject(activeProject.id, activeProject.name);
 	};
+
+	const latestCollapsedRef = useRef({
+		arcItems,
+		activeIndex,
+		setCurrentProjectId,
+	});
+	latestCollapsedRef.current = {
+		arcItems,
+		activeIndex,
+		setCurrentProjectId,
+	};
+
+	// Enable smooth wheel project cycling in collapsed compact sidebar mode
+	useEffect(() => {
+		if (!isCollapsed) return;
+		const el = collapsedNavRef.current;
+		if (!el) return;
+
+		const handleCollapsedWheel = (e: WheelEvent) => {
+			const {
+				arcItems: items,
+				activeIndex: currentIdx,
+				setCurrentProjectId: selectProject,
+			} = latestCollapsedRef.current;
+
+			if (items.length <= 1) return;
+
+			e.preventDefault();
+
+			const now = Date.now();
+			if (now - collapsedLastStepRef.current < 130) {
+				return;
+			}
+
+			collapsedWheelAccRef.current += e.deltaY;
+			if (Math.abs(collapsedWheelAccRef.current) >= 24) {
+				const direction = collapsedWheelAccRef.current > 0 ? 1 : -1;
+				collapsedWheelAccRef.current = 0;
+
+				const nextIdx = Math.min(
+					Math.max(currentIdx + direction, 0),
+					items.length - 1,
+				);
+
+				if (nextIdx !== currentIdx) {
+					collapsedLastStepRef.current = now;
+					selectProject(items[nextIdx].id);
+				}
+			}
+		};
+
+		el.addEventListener("wheel", handleCollapsedWheel, { passive: false });
+		return () => {
+			el.removeEventListener("wheel", handleCollapsedWheel);
+		};
+	}, [isCollapsed]);
 
 	return (
 		<>
@@ -230,9 +289,9 @@ export default function ProjectsSidebar({
 			{/* DESKTOP FULL-HEIGHT BORDERLESS ARC SIDEBAR */}
 			<aside
 				aria-label="Barra lateral de proyectos"
-				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-24 h-[calc(100vh-7.5rem)] transition-all duration-300 ${
+				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-28 h-[calc(100vh-9.5rem)] transition-all duration-300 ${
 					isCollapsed
-						? "w-12 items-center gap-2.5 py-2"
+						? "w-12 items-center gap-2.5 py-1"
 						: "w-52 xl:w-56 gap-3 py-1"
 				}`}
 			>
@@ -266,7 +325,11 @@ export default function ProjectsSidebar({
 							</button>
 						</div>
 
-						<div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-1.5 overflow-y-auto kanban-scroll py-2">
+						<nav
+							ref={collapsedNavRef}
+							aria-label="Selector compacto de proyectos"
+							className="flex flex-1 min-h-0 flex-col items-center justify-center gap-1.5 overflow-y-auto kanban-scroll py-2"
+						>
 							<button
 								type="button"
 								onClick={() => handleProjectSelect("all")}
@@ -301,7 +364,7 @@ export default function ProjectsSidebar({
 									</button>
 								);
 							})}
-						</div>
+						</nav>
 
 						<div className="flex flex-col items-center gap-2">
 							<button

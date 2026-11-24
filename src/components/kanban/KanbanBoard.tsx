@@ -573,7 +573,7 @@ export default function KanbanBoard() {
 	return (
 		<main
 			ref={boardRef}
-			className="mx-auto w-[calc(100%-2rem)] max-w-[96rem] py-6 relative"
+			className="mx-auto w-[calc(100%-2rem)] max-w-[96rem] pt-12 pb-0 relative"
 		>
 			<div className="flex flex-col lg:flex-row gap-6 items-start">
 				{/* LEFT SIDEBAR: SEARCH + PROJECTS */}
