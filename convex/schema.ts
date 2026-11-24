@@ -7,6 +7,7 @@ export default defineSchema({
 	projects: defineTable({
 		userId: v.id("users"),
 		name: v.string(),
+		icon: v.optional(v.string()),
 		createdAt: v.string(),
 	})
 		.index("by_userId", ["userId"])

@@ -2,7 +2,7 @@ import { useGSAP } from "@gsap/react";
 import { useNavigate } from "@tanstack/react-router";
 import confetti from "canvas-confetti";
 import gsap from "gsap";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
 
 gsap.registerPlugin(useGSAP);
@@ -14,8 +14,7 @@ import { getTodayDateKey } from "../../utils/date";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
-import ProjectsBar from "./ProjectsBar";
-import SearchBar from "./SearchBar";
+import ProjectsSidebar from "./ProjectsSidebar";
 import { dispatchShockwave } from "./ShockwaveWrapper";
 
 const COLUMNS = [
@@ -68,6 +67,52 @@ export default function KanbanBoard() {
 	);
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
+	const previousProjectIdRef = useRef<string>(currentProjectId);
+
+	// Re-run top-to-bottom column reveal on mount and every project switch
+	useGSAP(
+		() => {
+			const mm = gsap.matchMedia();
+
+			mm.add("(prefers-reduced-motion: no-preference)", () => {
+				gsap.fromTo(
+					"[data-kanban-column]",
+					{
+						autoAlpha: 0,
+						y: -18,
+						clipPath: "inset(0% 0% 100% 0% round 1.5rem)",
+					},
+					{
+						autoAlpha: 1,
+						y: 0,
+						clipPath: "inset(0% 0% 0% 0% round 1.5rem)",
+						duration: 0.55,
+						stagger: 0.08,
+						ease: "power3.out",
+						overwrite: "auto",
+						clearProps: "clipPath,transform,opacity,visibility",
+					},
+				);
+			});
+
+			return () => mm.revert();
+		},
+		{
+			scope: boardRef,
+			dependencies: [currentProjectId],
+			revertOnUpdate: true,
+		},
+	);
+
+	// Always scroll back to the top of the page when switching projects
+	useEffect(() => {
+		if (previousProjectIdRef.current !== currentProjectId) {
+			previousProjectIdRef.current = currentProjectId;
+			if (typeof window !== "undefined") {
+				window.scrollTo({ top: 0, behavior: "auto" });
+			}
+		}
+	}, [currentProjectId]);
 
 	// Filter Configurations
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -93,6 +138,19 @@ export default function KanbanBoard() {
 			return matchesSearch && matchesProject;
 		});
 	}, [tasks, searchQuery, currentProjectId, projects]);
+
+	// Active task counts per project for the sidebar
+	const taskCountByProject = useMemo(() => {
+		const counts: Record<string, number> = {};
+		const fallbackProjectId = projects[0]?.id;
+		for (const task of tasks) {
+			const targetId = task.projectId || fallbackProjectId;
+			if (targetId) {
+				counts[targetId] = (counts[targetId] ?? 0) + 1;
+			}
+		}
+		return counts;
+	}, [tasks, projects]);
 
 	// Handlers
 	const moveTask = async (id: string, direction: "forward" | "backward") => {
@@ -385,85 +443,37 @@ export default function KanbanBoard() {
 		}
 	};
 
-	const handleCreateProject = () => {
-		const toastId = sileo.action({
-			title: "Nuevo Proyecto",
-			fill: "#130f26",
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
-			},
-			description: (
-				<div className="flex flex-col gap-2 mt-2">
-					<input
-						type="text"
-						id="toast-proj-name"
-						placeholder="Nombre del proyecto..."
-						className="w-full rounded-lg bg-slate-950/40 border border-yellow-500/20 px-3 py-1.5 text-xs text-yellow-100 placeholder-yellow-100/40 font-semibold focus:outline-none focus:border-yellow-400"
-						onKeyDown={async (e) => {
-							if (e.key === "Enter") {
-								const val = (e.target as HTMLInputElement).value;
-								if (val.trim()) {
-									try {
-										const newId = await createProjectMutation({
-											name: val.trim(),
-										});
-										setCurrentProjectId(newId);
-										sileo.dismiss(toastId);
-										sileo.success({
-											title: "Proyecto creado",
-											description: `Se ha creado el proyecto "${val.trim()}"`,
-											fill: "#130f26",
-											styles: {
-												title: "text-purple-200 font-extrabold",
-												description:
-													"text-purple-300/80 text-xs font-semibold mt-0.5",
-											},
-										});
-									} catch (err) {
-										console.error(err);
-									}
-								}
-							}
-						}}
-					/>
-					<div className="text-[9px] text-yellow-500/60 font-semibold">
-						Escribe el nombre y presiona Enter
-					</div>
-				</div>
-			),
-			duration: null,
-			button: {
-				title: "Crear",
-				onClick: async () => {
-					const input = document.getElementById(
-						"toast-proj-name",
-					) as HTMLInputElement;
-					if (input?.value.trim()) {
-						const val = input.value.trim();
-						try {
-							const newId = await createProjectMutation({
-								name: val,
-							});
-							setCurrentProjectId(newId);
-							sileo.dismiss(toastId);
-							sileo.success({
-								title: "Proyecto creado",
-								description: `Se ha creado el proyecto "${val}"`,
-								fill: "#130f26",
-								styles: {
-									title: "text-purple-200 font-extrabold",
-									description:
-										"text-purple-300/80 text-xs font-semibold mt-0.5",
-								},
-							});
-						} catch (err) {
-							console.error(err);
-						}
-					}
+	const handleCreateProject = async (name: string, icon?: string) => {
+		const trimmed = name.trim();
+		if (!trimmed) return;
+		try {
+			const newId = await createProjectMutation({
+				name: trimmed,
+				...(icon ? { icon } : {}),
+			});
+			setCurrentProjectId(newId);
+			sileo.success({
+				title: "Proyecto creado",
+				description: `Se ha creado el proyecto "${trimmed}"`,
+				fill: "#130f26",
+				styles: {
+					title: "text-purple-200 font-extrabold",
+					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
 				},
-			},
-		});
+			});
+		} catch (err) {
+			console.error(err);
+			sileo.error({
+				title: "Error al crear proyecto",
+				description: "No se pudo crear el proyecto. Intenta de nuevo.",
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			throw err;
+		}
 	};
 
 	const handleDeleteProject = (projectId: string, projectName: string) => {
@@ -559,48 +569,53 @@ export default function KanbanBoard() {
 	};
 
 	return (
-		<main ref={boardRef} className="page-wrap px-4 py-8 max-w-[92rem] relative">
-			{/* Projects Tab-Capsules & Search Toolbar */}
-			<section className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<ProjectsBar
+		<main
+			ref={boardRef}
+			className="mx-auto w-[calc(100%-2rem)] max-w-[96rem] pt-12 pb-0 relative"
+		>
+			<div className="flex flex-col lg:flex-row gap-6 items-start">
+				{/* LEFT SIDEBAR: SEARCH + PROJECTS */}
+				<ProjectsSidebar
 					projects={projects}
 					currentProjectId={currentProjectId}
 					setCurrentProjectId={setCurrentProjectId}
-					handleCreateProject={handleCreateProject}
+					searchQuery={searchQuery}
+					setSearchQuery={setSearchQuery}
+					totalTaskCount={tasks.length}
+					taskCountByProject={taskCountByProject}
+					onCreateProject={handleCreateProject}
 					handleDeleteProject={handleDeleteProject}
 				/>
 
-				<SearchBar value={searchQuery} onChange={setSearchQuery} />
-			</section>
+				{/* THREE-COLUMN KANBAN BOARD */}
+				<section className="grid grid-cols-1 gap-5 md:grid-cols-3 flex-1 min-w-0 w-full">
+					{COLUMNS.map((col) => {
+						const colTasks = filteredTasks.filter((t) => t.column === col.id);
 
-			{/* THREE-COLUMN KANBAN BOARD */}
-			<section className="grid grid-cols-1 gap-6 md:grid-cols-3 w-full">
-				{COLUMNS.map((col) => {
-					const colTasks = filteredTasks.filter((t) => t.column === col.id);
-
-					return (
-						<KanbanColumn
-							key={col.id}
-							column={col}
-							tasks={colTasks}
-							projects={projects}
-							currentProjectId={currentProjectId}
-							onDragOver={handleDragOver}
-							onDrop={() => handleDrop(col.id)}
-							onAddCard={() => {
-								setModalColumn(col.id);
-								setShowAddModal(true);
-							}}
-							onDragStart={handleDragStart}
-							onFocusClick={handleFocusClick}
-							onMoveTask={moveTask}
-							onEditTask={setEditingTask}
-							onDeleteTask={deleteTask}
-							onCompleteTask={completeTask}
-						/>
-					);
-				})}
-			</section>
+						return (
+							<KanbanColumn
+								key={col.id}
+								column={col}
+								tasks={colTasks}
+								projects={projects}
+								currentProjectId={currentProjectId}
+								onDragOver={handleDragOver}
+								onDrop={() => handleDrop(col.id)}
+								onAddCard={() => {
+									setModalColumn(col.id);
+									setShowAddModal(true);
+								}}
+								onDragStart={handleDragStart}
+								onFocusClick={handleFocusClick}
+								onMoveTask={moveTask}
+								onEditTask={setEditingTask}
+								onDeleteTask={deleteTask}
+								onCompleteTask={completeTask}
+							/>
+						);
+					})}
+				</section>
+			</div>
 
 			{/* CREATE CARD DRAW MODAL */}
 			<CreateTaskModal

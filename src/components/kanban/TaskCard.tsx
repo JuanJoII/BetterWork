@@ -7,6 +7,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import type { Project, Task } from "../../types/kanban";
+import ProjectIcon from "./ProjectIcon";
 
 interface TaskCardProps {
 	task: Task;
@@ -98,7 +99,16 @@ export default function TaskCard({
 							isRitual ? "text-purple-400/75" : "text-yellow-500/70"
 						}`}
 					>
-						<span>📁</span> <span>{projectOfTask.name}</span>
+						{projectOfTask.icon ? (
+							<ProjectIcon
+								icon={projectOfTask.icon}
+								className="h-3 w-3"
+								emojiClassName="text-[11px] leading-none"
+							/>
+						) : (
+							<span>📁</span>
+						)}{" "}
+						<span>{projectOfTask.name}</span>
 					</div>
 				)}
 			</div>

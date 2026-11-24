@@ -1,7 +1,7 @@
 import { CheckCircle, Plus } from "lucide-react";
-import TaskCard from "./TaskCard";
-import ShockwaveWrapper from "./ShockwaveWrapper";
 import type { Project, Task } from "../../types/kanban";
+import ShockwaveWrapper from "./ShockwaveWrapper";
+import TaskCard from "./TaskCard";
 
 interface ColumnConfig {
 	readonly id: string;
@@ -44,9 +44,10 @@ export default function KanbanColumn({
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop columns container */
 		<div
+			data-kanban-column
 			onDragOver={onDragOver}
 			onDrop={onDrop}
-			className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[600px] w-full"
+			className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[520px] lg:min-h-[calc(100vh-9.5rem)] w-full"
 		>
 			{/* Column Header */}
 			<div className="mb-4 flex items-center justify-between border-b border-[var(--line)] pb-4">
@@ -77,9 +78,7 @@ export default function KanbanColumn({
 			<div className="flex flex-1 flex-col gap-5">
 				{colTasks.length > 0 ? (
 					colTasks.map((task) => {
-						const projectOfTask = projects.find(
-							(p) => p.id === task.projectId,
-						);
+						const projectOfTask = projects.find((p) => p.id === task.projectId);
 
 						return (
 							<ShockwaveWrapper key={task.id} id={task.id}>
