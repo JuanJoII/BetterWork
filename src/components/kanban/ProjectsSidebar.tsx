@@ -684,15 +684,21 @@ export default function ProjectsSidebar({
 					</>
 				) : (
 					<>
-						{/* Top Row: Search + Collapse */}
-						<div className="flex items-center gap-1.5">
-							<SearchBar value={searchQuery} onChange={setSearchQuery} />
+						{/* Top Row: Morphing Search Trigger + Collapse */}
+						<div className="flex items-center justify-between gap-2">
+							<SearchBar
+								value={searchQuery}
+								onChange={setSearchQuery}
+								expandable
+								expanded={isCompactSearchOpen}
+								onExpandedChange={handleCompactSearchChange}
+							/>
 							<button
 								type="button"
 								onClick={toggleCollapsed}
 								aria-label="Colapsar barra lateral"
 								title="Colapsar barra lateral"
-								className="rounded-xl p-1.5 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] cursor-pointer shrink-0"
+								className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer shrink-0"
 							>
 								<PanelLeftClose className="h-4 w-4" />
 							</button>

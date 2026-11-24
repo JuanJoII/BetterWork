@@ -101,7 +101,7 @@ export default function SearchBar({
 								: "text-[var(--sea-ink-soft)] hover:text-yellow-300"
 						}`}
 					>
-						<Search className="h-[17px] w-[17px]" strokeWidth={2.25} />
+						<Search className="h-3.5 w-3.5" strokeWidth={2} />
 						{!isExpanded && hasQuery && (
 							<span
 								aria-hidden="true"
@@ -146,12 +146,12 @@ export default function SearchBar({
 			className={`group flex h-9 w-full items-center gap-2 rounded-full border border-yellow-500/20 bg-slate-900/75 px-3.5 backdrop-blur-md transition-[border-color,box-shadow,background-color] duration-200 hover:border-yellow-400/35 focus-within:border-yellow-400/75 focus-within:bg-slate-950/90 focus-within:shadow-[0_0_0_3px_rgba(250,204,21,0.16),0_8px_24px_rgba(250,204,21,0.2)] ${className}`.trim()}
 		>
 			<Search
-				className={`h-[17px] w-[17px] shrink-0 transition-colors duration-200 ${
+				className={`h-3.5 w-3.5 shrink-0 transition-colors duration-200 ${
 					hasQuery
 						? "text-yellow-300"
 						: "text-[var(--sea-ink-soft)] group-focus-within:text-yellow-300"
 				}`}
-				strokeWidth={2.25}
+				strokeWidth={2}
 				aria-hidden="true"
 			/>
 			<input

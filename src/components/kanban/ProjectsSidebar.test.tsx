@@ -156,12 +156,21 @@ describe("ProjectsSidebar", () => {
 		expect(deleteGeneralBtn.disabled).toBe(true);
 	});
 
-	it("integrates SearchBar inside the sidebar and forwards changes", () => {
+	it("expands search from the magnifying glass in expanded sidebar and contracts on Enter", () => {
 		renderSidebar();
 
+		const searchBtn = screen.getByRole("button", { name: "Buscar notas" });
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("false");
+
+		fireEvent.click(searchBtn);
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("true");
+
 		const inputs = screen.getAllByPlaceholderText("Buscar notas...");
-		fireEvent.change(inputs[0], { target: { value: "convex" } });
+		fireEvent.change(inputs[1], { target: { value: "convex" } });
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
+
+		fireEvent.keyDown(inputs[1], { key: "Enter" });
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("false");
 	});
 
 	it("collapses, expands search directly from magnifying glass and contracts on Enter", () => {
