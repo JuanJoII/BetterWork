@@ -52,7 +52,7 @@ export default function Header() {
 							className="nav-link"
 							activeProps={{ className: "nav-link is-active" }}
 						>
-							Concentración
+							Focus
 						</Link>
 						<Link
 							to="/dailys"
@@ -79,7 +79,7 @@ export default function Header() {
 							className="nav-link"
 							activeProps={{ className: "nav-link is-active" }}
 						>
-							Concentrarme
+							Focus
 						</Link>
 						<Link
 							to="/dailys"
@@ -127,9 +127,9 @@ export default function Header() {
 										<strong>Finalizado</strong>.
 									</li>
 									<li>
-										Haz clic en <strong>"Focus"</strong> (icono de cronómetro)
-										en cualquier tarjeta para abrir la sesión de Deep Work en la
-										ruta exclusiva.
+										Pulsa <strong>"Focus"</strong> en una tarjeta o arrastra
+										cualquier tarea al temporizador dentro de la vista{" "}
+										<strong>Focus</strong> para iniciar tu sesión.
 									</li>
 									<li>
 										Arrastra las notas adhesivas directamente, o haz clic en las
