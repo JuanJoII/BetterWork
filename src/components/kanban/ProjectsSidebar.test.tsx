@@ -42,7 +42,15 @@ describe("ProjectsSidebar", () => {
 			/>,
 		);
 
-	it("lists all projects vertically without hiding items past 3 and displays counts", () => {
+	it("shows the active board name as heading and omits redundant Proyectos/Espacio de trabajo subtitles", () => {
+		renderSidebar({ currentProjectId: "p2" });
+
+		expect(screen.getByRole("heading", { name: "Backend API" })).toBeTruthy();
+		expect(screen.queryByText("Espacio de trabajo")).toBeNull();
+		expect(screen.queryByText("Proyectos")).toBeNull();
+	});
+
+	it("lists all projects vertically as pills without hiding items past 3", () => {
 		renderSidebar();
 
 		expect(screen.getAllByText("Tablero General").length).toBeGreaterThan(0);

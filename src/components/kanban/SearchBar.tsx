@@ -17,9 +17,11 @@ export default function SearchBar({
 	inputRef,
 }: SearchBarProps) {
 	return (
-		<div className={`relative w-full ${className}`.trim()}>
+		<div
+			className={`flex w-full items-center gap-2 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--surface-strong)_88%,white_12%)] px-3 py-1.5 transition focus-within:border-[color-mix(in_oklab,var(--lagoon-deep)_58%,var(--line))] focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--lagoon)_24%,transparent)] ${className}`.trim()}
+		>
 			<Search
-				className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--sea-ink-soft)]"
+				className="h-3.5 w-3.5 shrink-0 text-[var(--sea-ink-soft)]"
 				aria-hidden="true"
 			/>
 			<input
@@ -29,14 +31,14 @@ export default function SearchBar({
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				aria-label={placeholder}
-				className="demo-input w-full py-2 pl-9 pr-8 text-xs font-semibold"
+				className="w-full min-w-0 bg-transparent text-xs font-semibold text-[var(--sea-ink)] placeholder:text-[var(--sea-ink-soft)] focus:outline-none"
 			/>
 			{value && (
 				<button
 					type="button"
 					onClick={() => onChange("")}
 					aria-label="Limpiar búsqueda"
-					className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[var(--sea-ink-soft)] transition hover:text-[var(--sea-ink)] cursor-pointer"
+					className="shrink-0 rounded-md p-0.5 text-[var(--sea-ink-soft)] transition hover:text-[var(--sea-ink)] cursor-pointer"
 				>
 					<X className="h-3.5 w-3.5" />
 				</button>
