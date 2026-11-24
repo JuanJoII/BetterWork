@@ -249,7 +249,7 @@ export default function FocusRoom() {
 	]);
 
 	const loadTaskIntoTimer = async (taskId: string) => {
-		if (!taskId) return;
+		if (!taskId || timerRunning) return;
 		const targetTask = tasks.find((t) => t.id === taskId);
 		if (!targetTask) return;
 
@@ -285,14 +285,16 @@ export default function FocusRoom() {
 	};
 
 	const handleDropTask = (droppedId: string) => {
-		const targetId = droppedId || draggingTaskId || "";
 		setDraggingTaskId(null);
+		if (timerRunning) return;
+		const targetId = droppedId || draggingTaskId || "";
 		if (targetId) {
 			void loadTaskIntoTimer(targetId);
 		}
 	};
 
 	const handleClearActiveTask = () => {
+		if (timerRunning) return;
 		setTimerRunning(false);
 		setSecondsRemaining(timerDuration * 60);
 		setElapsedSeconds(0);
@@ -321,7 +323,7 @@ export default function FocusRoom() {
 	};
 
 	const handleChangeClockMode = (nextMode: FocusClockMode) => {
-		if (nextMode === clockMode) return;
+		if (nextMode === clockMode || timerRunning) return;
 		setTimerRunning(false);
 		setClockMode(nextMode);
 		setSecondsRemaining(timerDuration * 60);
@@ -329,9 +331,16 @@ export default function FocusRoom() {
 	};
 
 	const handleChangeDuration = (minutes: number) => {
-		setTimerDuration(minutes);
-		setSecondsRemaining(minutes * 60);
+		if (timerRunning) return;
+		const clampedMinutes = Math.max(1, Math.min(180, Math.round(minutes)));
+		setTimerDuration(clampedMinutes);
+		setSecondsRemaining(clampedMinutes * 60);
 		setTimerRunning(false);
+	};
+
+	const handleToggleRunning = () => {
+		setDraggingTaskId(null);
+		setTimerRunning((prev) => !prev);
 	};
 
 	const handleResetClock = () => {
@@ -366,6 +375,7 @@ export default function FocusRoom() {
 					projects={projects}
 					activeTaskId={activeTaskId}
 					draggingTaskId={draggingTaskId}
+					isLocked={timerRunning}
 					searchQuery={searchQuery}
 					onSearchChange={setSearchQuery}
 					selectedProjectId={selectedProjectId}
@@ -393,7 +403,7 @@ export default function FocusRoom() {
 					onMarkFinished={(task) => void handleMarkFinished(task)}
 					onChangeClockMode={handleChangeClockMode}
 					onChangeDuration={handleChangeDuration}
-					onToggleRunning={() => setTimerRunning((prev) => !prev)}
+					onToggleRunning={handleToggleRunning}
 					onResetTimer={handleResetClock}
 					onFinishSession={handleFinishSession}
 				/>

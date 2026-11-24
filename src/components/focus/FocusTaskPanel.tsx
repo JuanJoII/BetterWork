@@ -17,6 +17,7 @@ interface FocusTaskPanelProps {
 	projects: Project[];
 	activeTaskId: string;
 	draggingTaskId: string | null;
+	isLocked: boolean;
 	searchQuery: string;
 	onSearchChange: (value: string) => void;
 	selectedProjectId: string;
@@ -46,6 +47,7 @@ export default function FocusTaskPanel({
 	projects,
 	activeTaskId,
 	draggingTaskId,
+	isLocked,
 	searchQuery,
 	onSearchChange,
 	selectedProjectId,
@@ -110,8 +112,14 @@ export default function FocusTaskPanel({
 					<h2 className="display-title m-0 text-lg font-black tracking-tight text-[var(--sea-ink)]">
 						Tareas
 					</h2>
-					<span className="text-xs font-bold text-[var(--sea-ink-soft)]">
-						Arrastra una nota al temporizador
+					<span
+						className={`text-xs font-bold ${
+							isLocked ? "text-amber-300/85" : "text-[var(--sea-ink-soft)]"
+						}`}
+					>
+						{isLocked
+							? "Pausa el reloj para cambiar de tarea"
+							: "Arrastra una nota al temporizador"}
 					</span>
 				</div>
 				<span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-yellow-400/20 px-1.5 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
@@ -321,26 +329,49 @@ export default function FocusTaskPanel({
 							<div
 								key={task.id}
 								role="button"
-								tabIndex={0}
-								draggable
+								tabIndex={isLocked ? -1 : 0}
+								draggable={!isLocked}
+								aria-disabled={isLocked}
+								title={
+									isLocked ? "Pausa el reloj para cambiar de tarea" : undefined
+								}
 								onDragStart={(e) => {
+									if (isLocked) {
+										e.preventDefault();
+										return;
+									}
 									e.dataTransfer.setData("text/plain", task.id);
 									e.dataTransfer.effectAllowed = "move";
 									onDragStartTask(task.id);
 								}}
 								onDragEnd={onDragEndTask}
-								onClick={() => onSelectTask(task.id)}
+								onClick={() => {
+									if (!isLocked) onSelectTask(task.id);
+								}}
 								onKeyDown={(e) => {
+									if (isLocked) return;
 									if (e.key === "Enter" || e.key === " ") {
 										e.preventDefault();
 										onSelectTask(task.id);
 									}
 								}}
 								aria-pressed={isActive}
-								className={`group relative rounded-2xl border p-4 text-left transition-all duration-200 cursor-grab active:cursor-grabbing select-none ${
+								className={`group relative rounded-2xl border p-4 text-left transition-all duration-200 select-none ${
+									isLocked
+										? "cursor-not-allowed"
+										: "cursor-grab active:cursor-grabbing"
+								} ${
 									isDaily
-										? "border-purple-500/30 bg-purple-950/20 hover:border-purple-400/55 hover:bg-purple-950/30 text-purple-100/90"
-										: "border-yellow-500/20 bg-yellow-950/20 hover:border-yellow-400/45 hover:bg-yellow-950/30 text-yellow-100/90"
+										? "border-purple-500/30 bg-purple-950/20 text-purple-100/90"
+										: "border-yellow-500/20 bg-yellow-950/20 text-yellow-100/90"
+								} ${
+									!isLocked
+										? isDaily
+											? "hover:border-purple-400/55 hover:bg-purple-950/30"
+											: "hover:border-yellow-400/45 hover:bg-yellow-950/30"
+										: !isActive
+											? "opacity-60"
+											: ""
 								} ${
 									isActive
 										? isDaily
@@ -365,7 +396,13 @@ export default function FocusTaskPanel({
 											isDaily ? "text-purple-400" : "text-yellow-400/75"
 										}`}
 									>
-										<GripVertical className="h-3.5 w-3.5 opacity-55 group-hover:opacity-100 transition-opacity" />
+										<GripVertical
+											className={`h-3.5 w-3.5 transition-opacity ${
+												isLocked
+													? "opacity-20"
+													: "opacity-55 group-hover:opacity-100"
+											}`}
+										/>
 										<span>
 											{isDaily ? "Hábito Diario" : `Prioridad ${task.priority}`}
 										</span>

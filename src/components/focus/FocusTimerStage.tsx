@@ -4,12 +4,13 @@ import {
 	Hourglass,
 	Pause,
 	Play,
+	Plus,
 	RotateCcw,
 	Target,
 	Timer,
 	X,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
 import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
@@ -85,7 +86,16 @@ export default function FocusTimerStage({
 	onFinishSession,
 }: FocusTimerStageProps) {
 	const [isDragOver, setIsDragOver] = useState(false);
+	const [isCustomOpen, setIsCustomOpen] = useState(false);
+	const [customMinutesInput, setCustomMinutesInput] = useState("");
 	const dragDepthRef = useRef(0);
+	const customInputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (isCustomOpen && !timerRunning) {
+			customInputRef.current?.focus();
+		}
+	}, [isCustomOpen, timerRunning]);
 
 	const isStopwatch = clockMode === "stopwatch";
 	const displayedSeconds = isStopwatch ? elapsedSeconds : secondsRemaining;
@@ -93,6 +103,12 @@ export default function FocusTimerStage({
 	const hasProgress = isStopwatch
 		? elapsedSeconds > 0
 		: secondsRemaining < timerDuration * 60;
+	const isCustomDurationActive = !DURATION_PRESETS.includes(
+		timerDuration as (typeof DURATION_PRESETS)[number],
+	);
+	const showDragOver = isDragOver && !timerRunning;
+	const showDraggingHint = isDraggingTask && !timerRunning;
+	const showCustomEditor = isCustomOpen && !timerRunning;
 
 	const circleRadius = 78;
 	const circleCircumference = 2 * Math.PI * circleRadius;
@@ -106,17 +122,24 @@ export default function FocusTimerStage({
 	const skipRingTransition = isStopwatch && elapsedSeconds % 60 === 1;
 
 	const handleDragEnter = (e: React.DragEvent<HTMLElement>) => {
+		if (timerRunning) return;
 		e.preventDefault();
 		dragDepthRef.current += 1;
 		setIsDragOver(true);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+		if (timerRunning) return;
 		e.preventDefault();
 		e.dataTransfer.dropEffect = "move";
 	};
 
 	const handleDragLeave = () => {
+		if (timerRunning) {
+			dragDepthRef.current = 0;
+			setIsDragOver(false);
+			return;
+		}
 		dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
 		if (dragDepthRef.current === 0) {
 			setIsDragOver(false);
@@ -124,11 +147,26 @@ export default function FocusTimerStage({
 	};
 
 	const handleDrop = (e: React.DragEvent<HTMLElement>) => {
-		e.preventDefault();
 		dragDepthRef.current = 0;
 		setIsDragOver(false);
+		if (timerRunning) return;
+		e.preventDefault();
 		const droppedId = e.dataTransfer.getData("text/plain");
 		onDropTask(droppedId);
+	};
+
+	const handleOpenCustomDuration = () => {
+		if (timerRunning) return;
+		setCustomMinutesInput(isCustomDurationActive ? String(timerDuration) : "");
+		setIsCustomOpen(true);
+	};
+
+	const handleCustomDurationSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		const parsed = Number.parseInt(customMinutesInput.trim(), 10);
+		if (Number.isNaN(parsed) || parsed < 1) return;
+		onChangeDuration(Math.min(180, parsed));
+		setIsCustomOpen(false);
 	};
 
 	const isDaily = !!activeTask?.isRitual;
@@ -159,9 +197,9 @@ export default function FocusTimerStage({
 			onDragLeave={handleDragLeave}
 			onDrop={handleDrop}
 			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-[border-color,box-shadow] duration-300 ${
-				isDragOver
+				showDragOver
 					? "border-yellow-400/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.28),0_0_0_2px_rgba(250,204,21,0.35),0_0_50px_rgba(250,204,21,0.22)]"
-					: isDraggingTask
+					: showDraggingHint
 						? "border-dashed border-yellow-400/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_24px_60px_rgba(2,6,23,0.5)]"
 						: "border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-1px_1px_rgba(192,132,252,0.12),0_24px_60px_rgba(2,6,23,0.55)]"
 			}`}
@@ -169,7 +207,7 @@ export default function FocusTimerStage({
 			<LiquidGlassBackground />
 
 			{/* Interactive Drop Overlay when dragging over the timer stage */}
-			{isDragOver && (
+			{showDragOver && (
 				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-400/80 bg-slate-950/70 backdrop-blur-md">
 					<div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_36px_rgba(250,204,21,0.32)]">
 						<Target className="h-10 w-10" />
@@ -238,9 +276,14 @@ export default function FocusTimerStage({
 									<button
 										type="button"
 										onClick={onClearActiveTask}
+										disabled={timerRunning}
 										aria-label="Quitar tarea del temporizador"
-										title="Cambiar tarea"
-										className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-100 cursor-pointer"
+										title={
+											timerRunning
+												? "Pausa el reloj para cambiar de tarea"
+												: "Cambiar tarea"
+										}
+										className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-100 cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
 									>
 										<X className="h-3.5 w-3.5" />
 									</button>
@@ -401,14 +444,17 @@ export default function FocusTimerStage({
 
 						{/* Clock Controls */}
 						<div className="flex w-full flex-col items-center gap-4">
-							{/* Duration presets (Timer mode only) */}
+							{/* Duration presets + custom duration (Timer mode only) */}
 							{!isStopwatch && (
-								<div className="flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
+								<div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
 									{DURATION_PRESETS.map((mins) => (
 										<button
 											key={mins}
 											type="button"
-											onClick={() => onChangeDuration(mins)}
+											onClick={() => {
+												setIsCustomOpen(false);
+												onChangeDuration(mins);
+											}}
 											disabled={timerRunning}
 											className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
 												timerDuration === mins
@@ -419,6 +465,71 @@ export default function FocusTimerStage({
 											{mins} min
 										</button>
 									))}
+
+									{isCustomDurationActive && !showCustomEditor && (
+										<button
+											type="button"
+											onClick={handleOpenCustomDuration}
+											disabled={timerRunning}
+											title="Editar tiempo personalizado"
+											className="rounded-full bg-yellow-300 px-4 py-1.5 text-xs font-extrabold text-slate-950 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+										>
+											{timerDuration} min
+										</button>
+									)}
+
+									{showCustomEditor ? (
+										<form
+											onSubmit={handleCustomDurationSubmit}
+											className="inline-flex items-center gap-1 pl-1"
+										>
+											<input
+												ref={customInputRef}
+												type="number"
+												min={1}
+												max={180}
+												inputMode="numeric"
+												aria-label="Minutos personalizados"
+												placeholder="min"
+												value={customMinutesInput}
+												onChange={(e) => setCustomMinutesInput(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === "Escape") {
+														setIsCustomOpen(false);
+													}
+												}}
+												className="w-14 rounded-full border border-yellow-400/50 bg-slate-900/90 px-2.5 py-1 text-center font-mono text-xs font-black text-yellow-200 outline-none focus:border-yellow-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+											/>
+											<button
+												type="submit"
+												aria-label="Aplicar tiempo personalizado"
+												title="Aplicar"
+												className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-slate-950 transition hover:bg-yellow-200 cursor-pointer"
+											>
+												<Check className="h-3.5 w-3.5" />
+											</button>
+											<button
+												type="button"
+												onClick={() => setIsCustomOpen(false)}
+												aria-label="Cancelar tiempo personalizado"
+												title="Cancelar"
+												className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/10 hover:text-slate-100 cursor-pointer"
+											>
+												<X className="h-3.5 w-3.5" />
+											</button>
+										</form>
+									) : (
+										<button
+											type="button"
+											onClick={handleOpenCustomDuration}
+											disabled={timerRunning}
+											aria-label="Tiempo personalizado"
+											title="Tiempo personalizado (1 a 180 min)"
+											className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--sea-ink-soft)] transition-all hover:bg-white/10 hover:text-yellow-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+										>
+											<Plus className="h-3.5 w-3.5" />
+										</button>
+									)}
 								</div>
 							)}
 
