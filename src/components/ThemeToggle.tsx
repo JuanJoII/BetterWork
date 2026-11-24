@@ -1,4 +1,5 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide";
+import { MorphIcon } from "morphicons/react";
 import { useEffect, useState } from "react";
 
 type ThemeMode = "light" | "dark" | "auto";
@@ -17,7 +18,10 @@ function getInitialMode(): ThemeMode {
 }
 
 function applyThemeMode(mode: ThemeMode) {
-	const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	const prefersDark =
+		typeof window !== "undefined" && typeof window.matchMedia === "function"
+			? window.matchMedia("(prefers-color-scheme: dark)").matches
+			: true;
 	const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode;
 
 	document.documentElement.classList.remove("light", "dark");
@@ -42,7 +46,7 @@ export default function ThemeToggle() {
 	}, []);
 
 	useEffect(() => {
-		if (mode !== "auto") {
+		if (mode !== "auto" || typeof window.matchMedia !== "function") {
 			return;
 		}
 
@@ -70,21 +74,31 @@ export default function ThemeToggle() {
 				? "Tema: Oscuro. Haz clic para cambiar a Automático."
 				: "Tema: Claro. Haz clic para cambiar a Oscuro.";
 
+	const currentIcon = mode === "auto" ? Monitor : mode === "dark" ? Moon : Sun;
+
+	const iconTintClass =
+		mode === "light"
+			? "text-yellow-300 hover:text-yellow-200"
+			: mode === "dark"
+				? "text-purple-300 hover:text-purple-200"
+				: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]";
+
 	return (
 		<button
 			type="button"
 			onClick={toggleMode}
 			aria-label={label}
 			title={label}
-			className="rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] flex items-center justify-center"
+			className={`rounded-xl p-2 transition-colors duration-300 hover:bg-[var(--link-bg-hover)] flex items-center justify-center cursor-pointer ${iconTintClass}`}
 		>
-			{mode === "auto" ? (
-				<Monitor className="h-5 w-5" />
-			) : mode === "dark" ? (
-				<Moon className="h-5 w-5" />
-			) : (
-				<Sun className="h-5 w-5" />
-			)}
+			<MorphIcon
+				icon={currentIcon}
+				size={20}
+				strokeWidth={2}
+				spring="snappy"
+				reducedMotion="user"
+				className="h-5 w-5"
+			/>
 		</button>
 	);
 }
