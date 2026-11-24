@@ -164,7 +164,7 @@ describe("ProjectsSidebar", () => {
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
 	});
 
-	it("collapses, renders emoji icon in compact rail, cycles projects via wheel, and expands back", () => {
+	it("collapses, opens search popover without expanding, renders emoji icon, and cycles via wheel", () => {
 		renderSidebar({ currentProjectId: "p2" });
 
 		fireEvent.click(
@@ -177,7 +177,28 @@ describe("ProjectsSidebar", () => {
 			screen.getByRole("button", { name: "Diseño UI" }).textContent,
 		).toContain("🎨");
 
+		// Clicking search in compact mode opens popover WITHOUT expanding the sidebar
+		fireEvent.click(screen.getByRole("button", { name: "Buscar notas" }));
+		expect(screen.getByRole("dialog", { name: "Buscar notas" })).toBeTruthy();
+		expect(
+			screen.getByRole("button", { name: "Expandir barra lateral" }),
+		).toBeTruthy();
+
+		const dialogInput = screen
+			.getByRole("dialog", { name: "Buscar notas" })
+			.querySelector("input");
+		expect(dialogInput).toBeTruthy();
+		if (dialogInput) {
+			fireEvent.change(dialogInput, { target: { value: "urgente" } });
+		}
+		expect(setSearchQuery).toHaveBeenCalledWith("urgente");
+
+		// Close search popover with Escape, then wheel cycle works
+		fireEvent.keyDown(document, { key: "Escape" });
+		expect(screen.queryByRole("dialog", { name: "Buscar notas" })).toBeNull();
+
 		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
+		expect(sidebar.className).toContain("z-30");
 		fireEvent.wheel(sidebar, { deltaY: 100 });
 		expect(setCurrentProjectId).toHaveBeenCalledWith("p3");
 
