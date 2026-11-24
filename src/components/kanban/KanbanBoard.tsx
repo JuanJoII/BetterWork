@@ -124,6 +124,10 @@ export default function KanbanBoard() {
 
 	// Drag and Drop
 	const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+	const draggingTask = useMemo(
+		() => tasks.find((t) => t.id === draggingTaskId) ?? null,
+		[tasks, draggingTaskId],
+	);
 
 	// Filter tasks computed
 	const filteredTasks = useMemo(() => {
@@ -532,12 +536,19 @@ export default function KanbanBoard() {
 		setDraggingTaskId(id);
 	};
 
+	const handleDragEnd = () => {
+		setDraggingTaskId(null);
+	};
+
 	const handleDragOver = (e: React.DragEvent) => {
 		e.preventDefault();
 	};
 
 	const handleDrop = async (column: Task["column"]) => {
 		if (!draggingTaskId) return;
+		const dragged = tasks.find((t) => t.id === draggingTaskId);
+		setDraggingTaskId(null);
+		if (dragged && dragged.column === column) return;
 		try {
 			await updateColumnMutation({
 				id: draggingTaskId as Id<"tasks">,
@@ -546,7 +557,6 @@ export default function KanbanBoard() {
 		} catch (e) {
 			console.error(e);
 		}
-		setDraggingTaskId(null);
 	};
 
 	// Navigate to Focus route
@@ -599,6 +609,9 @@ export default function KanbanBoard() {
 								tasks={colTasks}
 								projects={projects}
 								currentProjectId={currentProjectId}
+								isDraggingFromOtherColumn={
+									draggingTask !== null && draggingTask.column !== col.id
+								}
 								onDragOver={handleDragOver}
 								onDrop={() => handleDrop(col.id)}
 								onAddCard={() => {
@@ -606,6 +619,7 @@ export default function KanbanBoard() {
 									setShowAddModal(true);
 								}}
 								onDragStart={handleDragStart}
+								onDragEnd={handleDragEnd}
 								onFocusClick={handleFocusClick}
 								onMoveTask={moveTask}
 								onEditTask={setEditingTask}

@@ -7,6 +7,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import {
+	GENERAL_BOARD_LABEL,
+	getProjectDisplayName,
+	isDefaultGeneralProject,
+} from "../../utils/projects";
 import ProjectIcon from "../kanban/ProjectIcon";
 import SearchBar from "../kanban/SearchBar";
 
@@ -206,45 +211,47 @@ export default function FocusTaskPanel({
 												: "border-transparent text-slate-300 hover:bg-white/5 hover:text-yellow-100"
 										}`}
 									>
-										<span>Todos los proyectos</span>
+										<span>{GENERAL_BOARD_LABEL}</span>
 										{selectedProjectId === "all" && (
 											<Check className="h-3.5 w-3.5 shrink-0" />
 										)}
 									</button>
 
-									{projects.map((proj) => {
-										const isSelected = selectedProjectId === proj.id;
-										return (
-											<button
-												key={proj.id}
-												type="button"
-												onClick={() => onProjectChange(proj.id)}
-												className={`flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-1.5 text-left text-xs font-bold transition cursor-pointer ${
-													isSelected
-														? "border-yellow-400/60 bg-yellow-300/15 text-yellow-300"
-														: "border-transparent text-slate-300 hover:bg-white/5 hover:text-yellow-100"
-												}`}
-											>
-												<span className="flex min-w-0 items-center gap-2">
-													{proj.icon ? (
-														<ProjectIcon
-															icon={proj.icon}
-															className="h-3.5 w-3.5"
-															emojiClassName="text-xs leading-none"
-														/>
-													) : (
-														<span aria-hidden="true" className="text-xs">
-															📁
-														</span>
+									{projects
+										.filter((proj) => !isDefaultGeneralProject(proj))
+										.map((proj) => {
+											const isSelected = selectedProjectId === proj.id;
+											return (
+												<button
+													key={proj.id}
+													type="button"
+													onClick={() => onProjectChange(proj.id)}
+													className={`flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-1.5 text-left text-xs font-bold transition cursor-pointer ${
+														isSelected
+															? "border-yellow-400/60 bg-yellow-300/15 text-yellow-300"
+															: "border-transparent text-slate-300 hover:bg-white/5 hover:text-yellow-100"
+													}`}
+												>
+													<span className="flex min-w-0 items-center gap-2">
+														{proj.icon ? (
+															<ProjectIcon
+																icon={proj.icon}
+																className="h-3.5 w-3.5"
+																emojiClassName="text-xs leading-none"
+															/>
+														) : (
+															<span aria-hidden="true" className="text-xs">
+																📁
+															</span>
+														)}
+														<span className="truncate">{proj.name}</span>
+													</span>
+													{isSelected && (
+														<Check className="h-3.5 w-3.5 shrink-0" />
 													)}
-													<span className="truncate">{proj.name}</span>
-												</span>
-												{isSelected && (
-													<Check className="h-3.5 w-3.5 shrink-0" />
-												)}
-											</button>
-										);
-									})}
+												</button>
+											);
+										})}
 								</div>
 							</div>
 
@@ -459,7 +466,9 @@ export default function FocusTaskPanel({
 											) : (
 												<span aria-hidden="true">📁</span>
 											)}
-											<span className="truncate">{projectOfTask.name}</span>
+											<span className="truncate">
+												{getProjectDisplayName(projectOfTask)}
+											</span>
 										</span>
 									) : (
 										<span />

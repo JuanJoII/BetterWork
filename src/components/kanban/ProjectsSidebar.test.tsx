@@ -59,11 +59,12 @@ describe("ProjectsSidebar", () => {
 			/>,
 		);
 
-	it("renders all projects in the arc list without inline X delete buttons or arrows", () => {
+	it("renders Tablero General without duplicating the default General project, and omits inline delete arrows", () => {
 		renderSidebar();
 
 		expect(screen.getAllByText("Tablero General").length).toBeGreaterThan(0);
-		for (const project of SAMPLE_PROJECTS) {
+		expect(screen.queryByText("General")).toBeNull();
+		for (const project of SAMPLE_PROJECTS.slice(1)) {
 			expect(screen.getByText(project.name)).toBeTruthy();
 		}
 		expect(screen.queryByText("Más")).toBeNull();

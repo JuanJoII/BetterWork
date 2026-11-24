@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import { getProjectDisplayName } from "../../utils/projects";
 import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
 import LiquidGlassBackground from "./LiquidGlassBackground";
@@ -320,7 +321,7 @@ export default function FocusTimerStage({
 										) : (
 											<span aria-hidden="true">📁</span>
 										)}
-										<span>{activeProject.name}</span>
+										<span>{getProjectDisplayName(activeProject)}</span>
 									</span>
 								) : (
 									<span />

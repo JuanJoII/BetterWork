@@ -1,4 +1,5 @@
-import { CheckCircle, Plus } from "lucide-react";
+import { CheckCircle, Clock, Plus, Zap } from "lucide-react";
+import { useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
 import ShockwaveWrapper from "./ShockwaveWrapper";
 import TaskCard from "./TaskCard";
@@ -15,10 +16,12 @@ interface KanbanColumnProps {
 	tasks: Task[];
 	projects: Project[];
 	currentProjectId: string;
+	isDraggingFromOtherColumn: boolean;
 	onDragOver: (e: React.DragEvent) => void;
 	onDrop: () => void;
 	onAddCard: () => void;
 	onDragStart: (id: string) => void;
+	onDragEnd: () => void;
 	onFocusClick: (id: string) => void;
 	onMoveTask: (id: string, direction: "forward" | "backward") => void;
 	onEditTask: (task: Task) => void;
@@ -26,29 +29,132 @@ interface KanbanColumnProps {
 	onCompleteTask: (id: string, e: React.MouseEvent) => void;
 }
 
+const COLUMN_OVERLAY_THEME = {
+	pendiente: {
+		Icon: Clock,
+		containerRing:
+			"border-purple-400/90 shadow-[0_0_0_2px_rgba(192,132,252,0.3),0_0_40px_rgba(192,132,252,0.18)]",
+		draggingHint: "border-dashed border-purple-400/55",
+		overlayBorder: "border-purple-400/80",
+		badge:
+			"border-purple-400/50 bg-purple-400/15 text-purple-300 shadow-[0_0_32px_rgba(192,132,252,0.32)]",
+		title: "text-purple-300",
+	},
+	"en-proceso": {
+		Icon: Zap,
+		containerRing:
+			"border-yellow-400/90 shadow-[0_0_0_2px_rgba(250,204,21,0.3),0_0_40px_rgba(250,204,21,0.18)]",
+		draggingHint: "border-dashed border-yellow-400/55",
+		overlayBorder: "border-yellow-400/80",
+		badge:
+			"border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_32px_rgba(250,204,21,0.32)]",
+		title: "text-yellow-300",
+	},
+	finalizado: {
+		Icon: CheckCircle,
+		containerRing:
+			"border-emerald-400/90 shadow-[0_0_0_2px_rgba(52,211,153,0.3),0_0_40px_rgba(52,211,153,0.18)]",
+		draggingHint: "border-dashed border-emerald-400/55",
+		overlayBorder: "border-emerald-400/80",
+		badge:
+			"border-emerald-400/50 bg-emerald-400/15 text-emerald-300 shadow-[0_0_32px_rgba(52,211,153,0.32)]",
+		title: "text-emerald-300",
+	},
+} as const;
+
 export default function KanbanColumn({
 	column: col,
 	tasks: colTasks,
 	projects,
 	currentProjectId,
+	isDraggingFromOtherColumn,
 	onDragOver,
 	onDrop,
 	onAddCard,
 	onDragStart,
+	onDragEnd,
 	onFocusClick,
 	onMoveTask,
 	onEditTask,
 	onDeleteTask,
 	onCompleteTask,
 }: KanbanColumnProps) {
+	const [isDragOver, setIsDragOver] = useState(false);
+	const dragDepthRef = useRef(0);
+
+	const showDropOverlay = isDragOver && isDraggingFromOtherColumn;
+	const overlayTheme =
+		COLUMN_OVERLAY_THEME[col.id as keyof typeof COLUMN_OVERLAY_THEME] ??
+		COLUMN_OVERLAY_THEME["en-proceso"];
+	const OverlayIcon = overlayTheme.Icon;
+
+	const handleDragEnter = (e: React.DragEvent) => {
+		if (!isDraggingFromOtherColumn) return;
+		e.preventDefault();
+		dragDepthRef.current += 1;
+		setIsDragOver(true);
+	};
+
+	const handleColumnDragOver = (e: React.DragEvent) => {
+		onDragOver(e);
+		if (isDraggingFromOtherColumn && !isDragOver) {
+			setIsDragOver(true);
+		}
+	};
+
+	const handleDragLeave = () => {
+		if (!isDraggingFromOtherColumn) {
+			dragDepthRef.current = 0;
+			setIsDragOver(false);
+			return;
+		}
+		dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+		if (dragDepthRef.current === 0) {
+			setIsDragOver(false);
+		}
+	};
+
+	const handleColumnDrop = (e: React.DragEvent) => {
+		e.preventDefault();
+		dragDepthRef.current = 0;
+		setIsDragOver(false);
+		onDrop();
+	};
+
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop columns container */
 		<div
 			data-kanban-column
-			onDragOver={onDragOver}
-			onDrop={onDrop}
-			className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[520px] lg:min-h-[calc(100vh-9.5rem)] w-full"
+			onDragEnter={handleDragEnter}
+			onDragOver={handleColumnDragOver}
+			onDragLeave={handleDragLeave}
+			onDrop={handleColumnDrop}
+			className={`relative overflow-hidden flex flex-col rounded-3xl border bg-[var(--surface-strong)]/75 backdrop-blur-sm p-5 shadow-sm dot-grid min-h-[520px] lg:min-h-[calc(100vh-9.5rem)] w-full transition-[border-color,box-shadow] duration-200 ${
+				showDropOverlay
+					? overlayTheme.containerRing
+					: isDraggingFromOtherColumn
+						? overlayTheme.draggingHint
+						: "border-[var(--line)]"
+			}`}
 		>
+			{/* Interactive Drop Overlay when dragging a task from another column */}
+			{showDropOverlay && (
+				<div
+					className={`pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed ${overlayTheme.overlayBorder} bg-slate-950/70 px-4 text-center backdrop-blur-md`}
+				>
+					<div
+						className={`mb-4 flex h-18 w-18 items-center justify-center rounded-full border ${overlayTheme.badge}`}
+					>
+						<OverlayIcon className="h-9 w-9" />
+					</div>
+					<p
+						className={`display-title m-0 text-xl sm:text-2xl font-black tracking-tight ${overlayTheme.title}`}
+					>
+						Mover a {col.title}
+					</p>
+				</div>
+			)}
+
 			{/* Column Header */}
 			<div className="mb-4 flex items-center justify-between border-b border-[var(--line)] pb-4">
 				<div>
@@ -88,6 +194,7 @@ export default function KanbanColumn({
 									currentProjectId={currentProjectId}
 									colId={col.id}
 									onDragStart={() => onDragStart(task.id)}
+									onDragEnd={onDragEnd}
 									onFocusClick={() => onFocusClick(task.id)}
 									onMoveTask={(dir) => onMoveTask(task.id, dir)}
 									onEditTask={() => onEditTask(task)}

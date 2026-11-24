@@ -8,6 +8,10 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "../../types/kanban";
+import {
+	GENERAL_BOARD_LABEL,
+	isDefaultGeneralProject,
+} from "../../utils/projects";
 import ArcList, { type ArcListItem } from "./ArcList";
 import ProjectIcon, {
 	CURATED_EMOJIS,
@@ -127,21 +131,26 @@ export default function ProjectsSidebar({
 		setIsMobileOpen(false);
 	};
 
+	const customProjects = useMemo(
+		() => projects.filter((proj) => !isDefaultGeneralProject(proj)),
+		[projects],
+	);
+
 	const arcItems = useMemo<ArcListItem[]>(() => {
 		return [
 			{
 				id: "all",
-				title: "Tablero General",
+				title: GENERAL_BOARD_LABEL,
 				badge: totalTaskCount,
 			},
-			...projects.map((proj) => ({
+			...customProjects.map((proj) => ({
 				id: proj.id,
 				title: proj.name,
 				icon: proj.icon,
 				badge: taskCountByProject[proj.id] ?? 0,
 			})),
 		];
-	}, [projects, totalTaskCount, taskCountByProject]);
+	}, [customProjects, totalTaskCount, taskCountByProject]);
 
 	const activeIndex = useMemo(() => {
 		const idx = arcItems.findIndex((item) => item.id === currentProjectId);
@@ -149,14 +158,13 @@ export default function ProjectsSidebar({
 	}, [arcItems, currentProjectId]);
 
 	const activeProject = useMemo(
-		() => projects.find((proj) => proj.id === currentProjectId) ?? null,
-		[projects, currentProjectId],
+		() => customProjects.find((proj) => proj.id === currentProjectId) ?? null,
+		[customProjects, currentProjectId],
 	);
 
-	const canDeleteActiveProject =
-		activeProject !== null && activeProject.name.toLowerCase() !== "general";
+	const canDeleteActiveProject = activeProject !== null;
 
-	const activeProjectName = arcItems[activeIndex]?.title ?? "Tablero General";
+	const activeProjectName = arcItems[activeIndex]?.title ?? GENERAL_BOARD_LABEL;
 	const activeProjectCount = arcItems[activeIndex]?.badge ?? totalTaskCount;
 	const activeProjectIcon = arcItems[activeIndex]?.icon;
 
@@ -618,7 +626,7 @@ export default function ProjectsSidebar({
 								<LayoutGrid className="h-3.5 w-3.5" />
 							</button>
 
-							{projects.map((proj) => {
+							{customProjects.map((proj) => {
 								const isSelected = currentProjectId === proj.id;
 								const initial = proj.name.trim().charAt(0).toUpperCase() || "P";
 								return (
