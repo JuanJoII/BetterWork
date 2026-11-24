@@ -59,11 +59,12 @@ describe("ProjectsSidebar", () => {
 			/>,
 		);
 
-	it("renders all projects in the arc list without inline X delete buttons or arrows", () => {
+	it("renders Tablero General without duplicating the default General project, and omits inline delete arrows", () => {
 		renderSidebar();
 
 		expect(screen.getAllByText("Tablero General").length).toBeGreaterThan(0);
-		for (const project of SAMPLE_PROJECTS) {
+		expect(screen.queryByText("General")).toBeNull();
+		for (const project of SAMPLE_PROJECTS.slice(1)) {
 			expect(screen.getByText(project.name)).toBeTruthy();
 		}
 		expect(screen.queryByText("Más")).toBeNull();
@@ -173,15 +174,25 @@ describe("ProjectsSidebar", () => {
 		expect(searchBtn.getAttribute("aria-expanded")).toBe("false");
 	});
 
-	it("collapses, expands search directly from magnifying glass and contracts on Enter", () => {
+	it("collapses, keeps the MorphIcon button mounted for morphing, and expands search directly from magnifying glass", () => {
 		renderSidebar({ currentProjectId: "p2" });
 
-		fireEvent.click(
-			screen.getByRole("button", { name: "Colapsar barra lateral" }),
-		);
+		const toggleBtn = screen.getByRole("button", {
+			name: "Colapsar barra lateral",
+		});
+		const morphSvgBefore = toggleBtn.querySelector("svg");
+		expect(morphSvgBefore).toBeTruthy();
+
+		fireEvent.click(toggleBtn);
 		expect(window.localStorage.getItem("kairos_sidebar_collapsed")).toBe(
 			"true",
 		);
+		// Same SVG stays mounted so morphicons animates PanelLeftClose -> PanelLeftOpen
+		expect(
+			screen
+				.getByRole("button", { name: "Expandir barra lateral" })
+				.querySelector("svg"),
+		).toBe(morphSvgBefore);
 		expect(
 			screen.getByRole("button", { name: "Diseño UI" }).textContent,
 		).toContain("🎨");

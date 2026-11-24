@@ -35,8 +35,15 @@ describe("Header", () => {
 		cleanup();
 	});
 
-	it("links to /dailys in both desktop and mobile navigation and removes Rituales", () => {
+	it("links to /focus and /dailys in both desktop and mobile navigation and removes old labels", () => {
 		render(<Header />);
+
+		const focusLinks = screen.getAllByRole("link", { name: "Focus" });
+		expect(focusLinks).toHaveLength(2);
+		for (const link of focusLinks) {
+			expect(link.getAttribute("href")).toBe("/focus");
+		}
+		expect(screen.queryByRole("link", { name: /Concentra/i })).toBeNull();
 
 		const dailysLinks = screen.getAllByRole("link", { name: "Dailys" });
 		expect(dailysLinks).toHaveLength(2);

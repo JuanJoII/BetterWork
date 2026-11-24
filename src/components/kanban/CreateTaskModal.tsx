@@ -1,6 +1,10 @@
 import { Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import {
+	getProjectDisplayName,
+	isDefaultGeneralProject,
+} from "../../utils/projects";
 
 interface CreateTaskModalProps {
 	isOpen: boolean;
@@ -30,12 +34,14 @@ export default function CreateTaskModal({
 	// Reset form fields on open
 	useEffect(() => {
 		if (isOpen) {
+			const defaultProject =
+				projects.find(isDefaultGeneralProject) ?? projects[0];
 			setTitle("");
 			setDesc("");
 			setPriority("medium");
 			setProjectId(
 				currentProjectId === "all"
-					? projects[0]?.id || "proj-1"
+					? defaultProject?.id || "proj-1"
 					: currentProjectId,
 			);
 		}
@@ -135,7 +141,7 @@ export default function CreateTaskModal({
 							>
 								{projects.map((proj) => (
 									<option key={proj.id} value={proj.id}>
-										{proj.name}
+										{getProjectDisplayName(proj)}
 									</option>
 								))}
 							</select>

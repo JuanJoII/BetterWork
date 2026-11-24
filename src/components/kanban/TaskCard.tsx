@@ -7,6 +7,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import type { Project, Task } from "../../types/kanban";
+import { getProjectDisplayName } from "../../utils/projects";
 import ProjectIcon from "./ProjectIcon";
 
 interface TaskCardProps {
@@ -15,6 +16,7 @@ interface TaskCardProps {
 	currentProjectId: string;
 	colId: string;
 	onDragStart: () => void;
+	onDragEnd?: () => void;
 	onFocusClick: () => void;
 	onMoveTask: (direction: "forward" | "backward") => void;
 	onEditTask: () => void;
@@ -28,6 +30,7 @@ export default function TaskCard({
 	currentProjectId,
 	colId,
 	onDragStart,
+	onDragEnd,
 	onFocusClick,
 	onMoveTask,
 	onEditTask,
@@ -42,7 +45,14 @@ export default function TaskCard({
 			data-task-card
 			data-ritual={isRitual}
 			draggable
-			onDragStart={onDragStart}
+			onDragStart={(e) => {
+				e.dataTransfer?.setData("text/plain", task.id);
+				if (e.dataTransfer) {
+					e.dataTransfer.effectAllowed = "move";
+				}
+				onDragStart();
+			}}
+			onDragEnd={onDragEnd}
 			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm ${
 				isRitual
 					? "border-purple-500/30 bg-purple-950/15 hover:border-purple-400/50 hover:bg-purple-950/25 hover:shadow-[0_16px_32px_rgba(168,85,247,0.06)] text-purple-100/90"
@@ -108,7 +118,7 @@ export default function TaskCard({
 						) : (
 							<span>📁</span>
 						)}{" "}
-						<span>{projectOfTask.name}</span>
+						<span>{getProjectDisplayName(projectOfTask)}</span>
 					</div>
 				)}
 			</div>

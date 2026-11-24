@@ -504,6 +504,66 @@ a {
   transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Subtle organic ambient drift for Focus liquid glass background */
+@keyframes liquid-drift-a {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-24px, 18px, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(14px, -12px, 0) scale(0.97);
+  }
+}
+
+@keyframes liquid-drift-b {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(26px, -20px, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(-14px, 14px, 0) scale(0.96);
+  }
+}
+
+@keyframes liquid-drift-c {
+  0% {
+    transform: translate3d(0, -50%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-18px, calc(-50% - 16px), 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(16px, calc(-50% + 14px), 0) scale(0.95);
+  }
+}
+
+.liquid-orb-a {
+  animation: liquid-drift-a 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.liquid-orb-b {
+  animation: liquid-drift-b 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.liquid-orb-c {
+  animation: liquid-drift-c 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-orb-a,
+  .liquid-orb-b,
+  .liquid-orb-c {
+    animation: none;
+  }
+}
+
 /* Grid background pattern requested by user */
 .grid-bg {
   position: absolute;

@@ -1,6 +1,7 @@
 import { Edit, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import { getProjectDisplayName } from "../../utils/projects";
 
 interface EditTaskModalProps {
 	task: Task | null;
@@ -153,7 +154,7 @@ export default function EditTaskModal({
 						>
 							{projects.map((proj) => (
 								<option key={proj.id} value={proj.id}>
-									{proj.name}
+									{getProjectDisplayName(proj)}
 								</option>
 							))}
 						</select>
