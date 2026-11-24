@@ -4,6 +4,7 @@ import {
 	PanelLeftOpen,
 	Plus,
 	Search,
+	Trash2,
 	X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -86,13 +87,11 @@ export default function ProjectsSidebar({
 				id: "all",
 				title: "Tablero General",
 				badge: totalTaskCount,
-				canDelete: false,
 			},
 			...projects.map((proj) => ({
 				id: proj.id,
 				title: proj.name,
 				badge: taskCountByProject[proj.id] ?? 0,
-				canDelete: proj.name.toLowerCase() !== "general",
 			})),
 		];
 	}, [projects, totalTaskCount, taskCountByProject]);
@@ -102,8 +101,21 @@ export default function ProjectsSidebar({
 		return Math.max(idx, 0);
 	}, [arcItems, currentProjectId]);
 
+	const activeProject = useMemo(
+		() => projects.find((proj) => proj.id === currentProjectId) ?? null,
+		[projects, currentProjectId],
+	);
+
+	const canDeleteActiveProject =
+		activeProject !== null && activeProject.name.toLowerCase() !== "general";
+
 	const activeProjectName = arcItems[activeIndex]?.title ?? "Tablero General";
 	const activeProjectCount = arcItems[activeIndex]?.badge ?? totalTaskCount;
+
+	const triggerDeleteActiveProject = () => {
+		if (!canDeleteActiveProject || !activeProject) return;
+		handleDeleteProject(activeProject.id, activeProject.name);
+	};
 
 	return (
 		<>
@@ -138,107 +150,129 @@ export default function ProjectsSidebar({
 					/>
 					<aside
 						aria-label="Barra lateral de proyectos móvil"
-						className="relative z-10 flex h-full w-64 max-w-[82vw] flex-col gap-3 border-r border-[var(--line)] bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md"
+						className="relative z-10 flex h-full w-64 max-w-[82vw] flex-col justify-between gap-3 border-r border-[var(--line)] bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md"
 					>
-						<div className="flex items-center justify-between gap-2 pb-1">
-							<h2
-								title={activeProjectName}
-								className="display-title m-0 text-sm font-black text-[var(--sea-ink)] truncate"
-							>
-								{activeProjectName}
-							</h2>
+						<div className="flex flex-col gap-3">
+							<div className="flex items-center justify-between gap-2 pb-1">
+								<h2
+									title={activeProjectName}
+									className="display-title m-0 text-sm font-black text-[var(--sea-ink)] truncate"
+								>
+									{activeProjectName}
+								</h2>
+								<button
+									type="button"
+									onClick={() => setIsMobileOpen(false)}
+									aria-label="Cerrar panel"
+									className="rounded-lg p-1 text-[var(--sea-ink-soft)] hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] cursor-pointer shrink-0"
+								>
+									<X className="h-4 w-4" />
+								</button>
+							</div>
+
+							<SearchBar value={searchQuery} onChange={setSearchQuery} />
+						</div>
+
+						<ArcList
+							items={arcItems}
+							activeIndex={activeIndex}
+							onSelect={(_idx, item) => handleProjectSelect(item.id)}
+							imageSide="none"
+							curve={0.95}
+							spacing={64}
+							visible={4}
+							blur={7}
+							backgroundColor="#000000"
+							subtitles={false}
+							autoplay={false}
+							interval={5.5}
+							wheel={true}
+							imageAspect={0.72}
+							imageRadius={22}
+							className="flex-1 min-h-0"
+						/>
+
+						<div className="flex flex-col gap-2">
 							<button
 								type="button"
-								onClick={() => setIsMobileOpen(false)}
-								aria-label="Cerrar panel"
-								className="rounded-lg p-1 text-[var(--sea-ink-soft)] hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] cursor-pointer shrink-0"
+								onClick={() => {
+									setIsMobileOpen(false);
+									handleCreateProject();
+								}}
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
 							>
-								<X className="h-4 w-4" />
+								<Plus className="h-3.5 w-3.5" />
+								<span>Nuevo Proyecto</span>
+							</button>
+
+							<button
+								type="button"
+								disabled={!canDeleteActiveProject}
+								onClick={() => {
+									setIsMobileOpen(false);
+									triggerDeleteActiveProject();
+								}}
+								title={
+									canDeleteActiveProject
+										? `Eliminar proyecto ${activeProjectName}`
+										: "No se puede eliminar este tablero"
+								}
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
+							>
+								<Trash2 className="h-3.5 w-3.5" />
+								<span>Eliminar Proyecto</span>
 							</button>
 						</div>
-
-						<SearchBar value={searchQuery} onChange={setSearchQuery} />
-
-						<div className="flex-1 flex flex-col justify-center">
-							<ArcList
-								items={arcItems}
-								activeIndex={activeIndex}
-								onSelect={(_idx, item) => handleProjectSelect(item.id)}
-								onDelete={(item) => handleDeleteProject(item.id, item.title)}
-								imageSide="none"
-								curve={0.95}
-								spacing={64}
-								visible={4}
-								blur={7}
-								backgroundColor="#000000"
-								subtitles={false}
-								autoplay={false}
-								interval={5.5}
-								wheel={true}
-								imageAspect={0.72}
-								imageRadius={22}
-							/>
-						</div>
-
-						<button
-							type="button"
-							onClick={() => {
-								setIsMobileOpen(false);
-								handleCreateProject();
-							}}
-							className="flex w-full items-center justify-center gap-1 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
-						>
-							<Plus className="h-3.5 w-3.5" />
-							<span>Nuevo Proyecto</span>
-						</button>
 					</aside>
 				</div>
 			)}
 
-			{/* DESKTOP BORDERLESS ARC RAIL */}
+			{/* DESKTOP FULL-HEIGHT BORDERLESS ARC SIDEBAR */}
 			<aside
 				aria-label="Barra lateral de proyectos"
-				className={`hidden lg:flex flex-col shrink-0 sticky top-24 self-start transition-all duration-300 ${
+				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-24 h-[calc(100vh-7.5rem)] transition-all duration-300 ${
 					isCollapsed
 						? "w-12 items-center gap-2.5 py-2"
-						: "w-48 xl:w-52 gap-3 py-1"
+						: "w-52 xl:w-56 gap-3 py-1"
 				}`}
 			>
 				{isCollapsed ? (
 					<>
-						<button
-							type="button"
-							onClick={toggleCollapsed}
-							aria-label="Expandir barra lateral"
-							title="Expandir barra lateral"
-							className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer"
-						>
-							<PanelLeftOpen className="h-4 w-4" />
-						</button>
+						<div className="flex flex-col items-center gap-2.5">
+							<button
+								type="button"
+								onClick={toggleCollapsed}
+								aria-label="Expandir barra lateral"
+								title="Expandir barra lateral"
+								className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer"
+							>
+								<PanelLeftOpen className="h-4 w-4" />
+							</button>
 
-						<button
-							type="button"
-							onClick={handleExpandAndSearch}
-							aria-label="Buscar notas"
-							title={
-								searchQuery ? `Buscando: "${searchQuery}"` : "Buscar notas"
-							}
-							className={`flex h-9 w-9 items-center justify-center rounded-full border transition cursor-pointer ${
-								searchQuery
-									? "border-yellow-400 bg-yellow-400/15 text-yellow-300"
-									: "border-[var(--line)] bg-[var(--surface-strong)]/50 text-[var(--sea-ink-soft)] hover:border-yellow-500/30 hover:text-yellow-200"
-							}`}
-						>
-							<Search className="h-4 w-4" />
-						</button>
+							<button
+								type="button"
+								onClick={handleExpandAndSearch}
+								aria-label="Buscar notas"
+								title={
+									searchQuery ? `Buscando: "${searchQuery}"` : "Buscar notas"
+								}
+								className={`flex h-9 w-9 items-center justify-center rounded-full border transition cursor-pointer ${
+									searchQuery
+										? "border-yellow-400 bg-yellow-400/15 text-yellow-300"
+										: "border-[var(--line)] bg-[var(--surface-strong)]/50 text-[var(--sea-ink-soft)] hover:border-yellow-500/30 hover:text-yellow-200"
+								}`}
+							>
+								<Search className="h-4 w-4" />
+							</button>
+						</div>
 
-						<div className="flex flex-col items-center gap-1.5 py-1">
+						<div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-1.5 overflow-y-auto kanban-scroll py-2">
 							<button
 								type="button"
 								onClick={() => handleProjectSelect("all")}
 								aria-label="Tablero General"
 								title={`Tablero General (${totalTaskCount})`}
-								className={`flex h-9 w-9 items-center justify-center rounded-full border transition cursor-pointer ${
+								className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition cursor-pointer ${
 									currentProjectId === "all"
 										? "bg-yellow-300 border-yellow-400 text-slate-950 shadow-sm"
 										: "border-yellow-500/20 bg-yellow-500/5 text-yellow-100/80 hover:bg-yellow-400/10"
@@ -257,7 +291,7 @@ export default function ProjectsSidebar({
 										onClick={() => handleProjectSelect(proj.id)}
 										aria-label={proj.name}
 										title={`${proj.name} (${taskCountByProject[proj.id] ?? 0})`}
-										className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-black transition cursor-pointer ${
+										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-black transition cursor-pointer ${
 											isSelected
 												? "bg-yellow-300 border-yellow-400 text-slate-950 shadow-sm"
 												: "border-yellow-500/20 bg-yellow-500/5 text-yellow-200 hover:border-yellow-400/40 hover:bg-yellow-400/15"
@@ -269,19 +303,36 @@ export default function ProjectsSidebar({
 							})}
 						</div>
 
-						<button
-							type="button"
-							onClick={handleCreateProject}
-							aria-label="Nuevo Proyecto"
-							title="Nuevo Proyecto"
-							className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
-						>
-							<Plus className="h-4 w-4" />
-						</button>
+						<div className="flex flex-col items-center gap-2">
+							<button
+								type="button"
+								onClick={handleCreateProject}
+								aria-label="Nuevo Proyecto"
+								title="Nuevo Proyecto"
+								className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+							>
+								<Plus className="h-4 w-4" />
+							</button>
+
+							<button
+								type="button"
+								disabled={!canDeleteActiveProject}
+								onClick={triggerDeleteActiveProject}
+								aria-label="Eliminar Proyecto"
+								title={
+									canDeleteActiveProject
+										? `Eliminar proyecto ${activeProjectName}`
+										: "No se puede eliminar este tablero"
+								}
+								className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/30 bg-red-500/5 text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+							>
+								<Trash2 className="h-4 w-4" />
+							</button>
+						</div>
 					</>
 				) : (
 					<>
-						{/* Compact Top Row: Search + Collapse */}
+						{/* Top Row: Search + Collapse */}
 						<div className="flex items-center gap-1.5">
 							<SearchBar
 								value={searchQuery}
@@ -299,12 +350,11 @@ export default function ProjectsSidebar({
 							</button>
 						</div>
 
-						{/* Floating Curved Arc List (no heavy panel chrome) */}
+						{/* Full-height Curved Arc List */}
 						<ArcList
 							items={arcItems}
 							activeIndex={activeIndex}
 							onSelect={(_idx, item) => handleProjectSelect(item.id)}
-							onDelete={(item) => handleDeleteProject(item.id, item.title)}
 							imageSide="none"
 							curve={0.95}
 							spacing={64}
@@ -317,17 +367,35 @@ export default function ProjectsSidebar({
 							wheel={true}
 							imageAspect={0.72}
 							imageRadius={22}
+							className="flex-1 min-h-0"
 						/>
 
-						{/* Compact Create Project trigger */}
-						<button
-							type="button"
-							onClick={handleCreateProject}
-							className="flex w-full items-center justify-center gap-1 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
-						>
-							<Plus className="h-3.5 w-3.5" />
-							<span>Nuevo Proyecto</span>
-						</button>
+						{/* Bottom Actions: Create + Delete Active Project */}
+						<div className="flex flex-col gap-2">
+							<button
+								type="button"
+								onClick={handleCreateProject}
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+							>
+								<Plus className="h-3.5 w-3.5" />
+								<span>Nuevo Proyecto</span>
+							</button>
+
+							<button
+								type="button"
+								disabled={!canDeleteActiveProject}
+								onClick={triggerDeleteActiveProject}
+								title={
+									canDeleteActiveProject
+										? `Eliminar proyecto ${activeProjectName}`
+										: "No se puede eliminar este tablero"
+								}
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
+							>
+								<Trash2 className="h-3.5 w-3.5" />
+								<span>Eliminar Proyecto</span>
+							</button>
+						</div>
 					</>
 				)}
 			</aside>

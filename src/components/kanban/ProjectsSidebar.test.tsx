@@ -42,7 +42,7 @@ describe("ProjectsSidebar", () => {
 			/>,
 		);
 
-	it("renders all projects in the arc list without hiding items past 3 or arrow buttons", () => {
+	it("renders all projects in the arc list without inline X delete buttons or arrows", () => {
 		renderSidebar();
 
 		expect(screen.getAllByText("Tablero General").length).toBeGreaterThan(0);
@@ -51,23 +51,21 @@ describe("ProjectsSidebar", () => {
 		}
 		expect(screen.queryByText("Más")).toBeNull();
 		expect(
-			screen.queryByRole("button", { name: "Proyecto anterior" }),
-		).toBeNull();
-		expect(
-			screen.queryByRole("button", { name: "Siguiente proyecto" }),
+			screen.queryByRole("button", { name: /Eliminar proyecto Marketing/i }),
 		).toBeNull();
 	});
 
-	it("selects a project on click, cycles projects with wheel scroll, and creates/deletes projects", () => {
+	it("deletes the currently active project via the footer Trash button and supports wheel cycling", () => {
 		renderSidebar({ currentProjectId: "p4" });
 
 		fireEvent.click(screen.getByText("Backend API"));
 		expect(setCurrentProjectId).toHaveBeenCalledWith("p2");
 
-		// Active non-General project shows delete button
-		fireEvent.click(
-			screen.getByRole("button", { name: "Eliminar proyecto Marketing" }),
-		);
+		const deleteBtn = screen.getByRole("button", {
+			name: /Eliminar Proyecto/i,
+		});
+		expect((deleteBtn as HTMLButtonElement).disabled).toBe(false);
+		fireEvent.click(deleteBtn);
 		expect(handleDeleteProject).toHaveBeenCalledWith("p4", "Marketing");
 
 		// Wheel down advances from p4 (index 4) to p5 (index 5)
@@ -79,12 +77,20 @@ describe("ProjectsSidebar", () => {
 		expect(handleCreateProject).toHaveBeenCalledTimes(1);
 	});
 
-	it("does not allow deleting the General project even when active", () => {
-		renderSidebar({ currentProjectId: "p1" });
+	it("disables the footer delete button on Tablero General and General project", () => {
+		renderSidebar({ currentProjectId: "all" });
+		const deleteAllBtn = screen.getByRole("button", {
+			name: /Eliminar Proyecto/i,
+		}) as HTMLButtonElement;
+		expect(deleteAllBtn.disabled).toBe(true);
 
-		expect(
-			screen.queryByRole("button", { name: "Eliminar proyecto General" }),
-		).toBeNull();
+		cleanup();
+
+		renderSidebar({ currentProjectId: "p1" });
+		const deleteGeneralBtn = screen.getByRole("button", {
+			name: /Eliminar Proyecto/i,
+		}) as HTMLButtonElement;
+		expect(deleteGeneralBtn.disabled).toBe(true);
 	});
 
 	it("integrates SearchBar inside the sidebar and forwards changes", () => {

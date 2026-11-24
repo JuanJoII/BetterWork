@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export interface ArcListItem {
@@ -6,14 +5,12 @@ export interface ArcListItem {
 	title: string;
 	subtitle?: string;
 	badge?: string | number;
-	canDelete?: boolean;
 }
 
 export interface ArcListProps {
 	items: ArcListItem[];
 	activeIndex: number;
 	onSelect: (index: number, item: ArcListItem) => void;
-	onDelete?: (item: ArcListItem) => void;
 	imageSide?: "left" | "right" | "none";
 	curve?: number;
 	spacing?: number;
@@ -33,7 +30,6 @@ export default function ArcList({
 	items,
 	activeIndex,
 	onSelect,
-	onDelete,
 	curve = 0.95,
 	spacing = 64,
 	visible = 4,
@@ -116,24 +112,25 @@ export default function ArcList({
 	}, [autoplay, interval, items, safeActiveIndex, onSelect]);
 
 	const halfVisible = Math.max(1, visible / 2);
-	const stageHeight = Math.max(spacing * visible, spacing * 2.5);
-	const maxArcPull = Math.round(24 * curve);
+	const minStageHeight = Math.max(spacing * visible, spacing * 2.5);
+	const maxArcPull = Math.round(20 * curve);
+	const rightSafetyGutter = maxArcPull + 8;
 
 	return (
 		<div
 			className={`relative flex flex-col items-stretch select-none ${className}`.trim()}
 		>
-			{/* Curved Arc Viewport (scroll wheel cycles projects) */}
+			{/* Curved Arc Viewport (fills available vertical space; scroll wheel cycles projects) */}
 			<nav
 				ref={viewportRef}
 				aria-label="Selector de proyectos"
-				className="relative w-full overflow-hidden"
+				className="relative flex-1 w-full overflow-hidden"
 				style={{
-					height: `${stageHeight}px`,
+					minHeight: `${minStageHeight}px`,
 					maskImage:
-						"linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
+						"linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)",
 					WebkitMaskImage:
-						"linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
+						"linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)",
 				}}
 			>
 				{items.map((item, idx) => {
@@ -141,14 +138,14 @@ export default function ArcList({
 					const absOffset = Math.abs(offset);
 					const isActive = offset === 0;
 					const isHovered = hoveredIndex === idx;
-					const isOutOfRange = absOffset > halfVisible + 0.75;
+					const isOutOfRange = absOffset > halfVisible + 1.25;
 
 					const translateY = offset * spacing;
 					// Convex right-facing arc: active item bows outward toward the board,
 					// neighbors above/below curve inward toward the left edge
-					const arcRetreat = absOffset ** 1.55 * curve * 14;
+					const arcRetreat = absOffset ** 1.55 * curve * 12;
 					const translateX = Math.max(0, maxArcPull - arcRetreat);
-					const scale = isActive ? 1 : Math.max(0.78, 1 - absOffset * 0.09);
+					const scale = isActive ? 1 : Math.max(0.78, 1 - absOffset * 0.08);
 					const computedBlur =
 						isActive || isHovered
 							? 0
@@ -157,7 +154,7 @@ export default function ArcList({
 						? 0
 						: isActive || isHovered
 							? 1
-							: Math.max(0.24, 1 - absOffset * 0.28);
+							: Math.max(0.22, 1 - absOffset * 0.26);
 
 					return (
 						<div
@@ -165,7 +162,7 @@ export default function ArcList({
 							style={{
 								position: "absolute",
 								left: 0,
-								right: 0,
+								right: `${rightSafetyGutter}px`,
 								top: "50%",
 								transform: `translate3d(${translateX}px, calc(-50% + ${translateY}px), 0) scale(${scale})`,
 								transformOrigin: "left center",
@@ -181,72 +178,54 @@ export default function ArcList({
 								transition:
 									"transform 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease, filter 240ms ease",
 							}}
-							className="pr-5"
 						>
-							<div className="flex items-center gap-1.5 py-1">
-								<button
-									type="button"
-									onClick={() => onSelect(idx, item)}
-									onMouseEnter={() => setHoveredIndex(idx)}
-									onMouseLeave={() => setHoveredIndex(null)}
-									title={item.title}
-									className="group relative flex flex-1 min-w-0 items-center justify-between gap-2 pb-1.5 text-left cursor-pointer"
-								>
-									<div className="min-w-0">
-										<span
-											className={`block truncate transition-colors ${
-												isActive
-													? "display-title text-[17px] font-black text-yellow-300"
-													: "text-sm font-bold text-slate-300 group-hover:text-yellow-100"
-											}`}
-										>
-											{item.title}
-										</span>
-										{subtitles && item.subtitle && (
-											<span className="block truncate text-[11px] font-semibold text-[var(--sea-ink-soft)]">
-												{item.subtitle}
-											</span>
-										)}
-									</div>
-
-									{item.badge !== undefined && (
-										<span
-											className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black leading-none ${
-												isActive
-													? "bg-yellow-300 text-slate-950"
-													: "bg-slate-800/80 text-yellow-200/75"
-											}`}
-										>
-											{item.badge}
+							<button
+								type="button"
+								onClick={() => onSelect(idx, item)}
+								onMouseEnter={() => setHoveredIndex(idx)}
+								onMouseLeave={() => setHoveredIndex(null)}
+								title={item.title}
+								className="group relative flex w-full min-w-0 items-center justify-between gap-2 pb-1.5 pt-1 text-left cursor-pointer"
+							>
+								<div className="min-w-0 flex-1">
+									<span
+										className={`block truncate transition-colors ${
+											isActive
+												? "display-title text-[17px] font-black text-yellow-300"
+												: "text-sm font-bold text-slate-300 group-hover:text-yellow-100"
+										}`}
+									>
+										{item.title}
+									</span>
+									{subtitles && item.subtitle && (
+										<span className="block truncate text-[11px] font-semibold text-[var(--sea-ink-soft)]">
+											{item.subtitle}
 										</span>
 									)}
+								</div>
 
-									{/* Horizontal navbar-style indicator animating left-to-right */}
+								{item.badge !== undefined && (
 									<span
-										aria-hidden="true"
-										className={`pointer-events-none absolute left-0 bottom-0 h-[2px] w-full origin-left rounded-full bg-gradient-to-r from-purple-500 to-yellow-400 transition-transform duration-200 ease-out ${
+										className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black leading-none ${
 											isActive
-												? "scale-x-100"
-												: "scale-x-0 group-hover:scale-x-100"
+												? "bg-yellow-300 text-slate-950"
+												: "bg-slate-800/80 text-yellow-200/75"
 										}`}
-									/>
-								</button>
-
-								{item.canDelete && onDelete && isActive && (
-									<button
-										type="button"
-										onClick={(e) => {
-											e.stopPropagation();
-											onDelete(item);
-										}}
-										aria-label={`Eliminar proyecto ${item.title}`}
-										title={`Eliminar proyecto ${item.title}`}
-										className="shrink-0 mb-1.5 rounded-full p-1 text-red-400/80 transition hover:bg-red-500/20 hover:text-red-300 cursor-pointer"
 									>
-										<X className="h-3.5 w-3.5" />
-									</button>
+										{item.badge}
+									</span>
 								)}
-							</div>
+
+								{/* Horizontal navbar-style indicator animating left-to-right */}
+								<span
+									aria-hidden="true"
+									className={`pointer-events-none absolute left-0 bottom-0 h-[2px] w-full origin-left rounded-full bg-gradient-to-r from-purple-500 to-yellow-400 transition-transform duration-200 ease-out ${
+										isActive
+											? "scale-x-100"
+											: "scale-x-0 group-hover:scale-x-100"
+									}`}
+								/>
+							</button>
 						</div>
 					);
 				})}
