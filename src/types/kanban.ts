@@ -15,7 +15,7 @@ export interface Task {
 	createdAt: string;
 }
 
-export interface Ritual {
+export interface Daily {
 	id: string;
 	title: string;
 	description: string;

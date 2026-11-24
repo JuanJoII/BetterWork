@@ -1,15 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import AuthGuard from "../components/AuthGuard";
-import RitualesBoard from "../components/rituales/RitualesBoard";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/rituales")({
-	component: RitualesPage,
+	beforeLoad: () => {
+		throw redirect({
+			to: "/dailys",
+			replace: true,
+		});
+	},
 });
-
-function RitualesPage() {
-	return (
-		<AuthGuard>
-			<RitualesBoard />
-		</AuthGuard>
-	);
-}

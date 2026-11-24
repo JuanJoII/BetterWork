@@ -9,19 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RitualesRouteImport } from './routes/rituales'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as FocusRouteImport } from './routes/focus'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DailysRouteImport } from './routes/dailys'
+import { Route as FocusRouteImport } from './routes/focus'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RitualesRouteImport } from './routes/rituales'
 
-const RitualesRoute = RitualesRouteImport.update({
-  id: '/rituales',
-  path: '/rituales',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const DailysRoute = DailysRouteImport.update({
+  id: '/dailys',
+  path: '/dailys',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FocusRoute = FocusRouteImport.update({
@@ -29,20 +30,27 @@ const FocusRoute = FocusRouteImport.update({
   path: '/focus',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RitualesRoute = RitualesRouteImport.update({
+  id: '/rituales',
+  path: '/rituales',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dailys': typeof DailysRoute
   '/focus': typeof FocusRoute
   '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dailys': typeof DailysRoute
   '/focus': typeof FocusRoute
   '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dailys': typeof DailysRoute
   '/focus': typeof FocusRoute
   '/login': typeof LoginRoute
   '/rituales': typeof RitualesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/focus' | '/login' | '/rituales'
+  fullPaths: '/' | '/dailys' | '/focus' | '/login' | '/rituales'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/focus' | '/login' | '/rituales'
-  id: '__root__' | '/' | '/focus' | '/login' | '/rituales'
+  to: '/' | '/dailys' | '/focus' | '/login' | '/rituales'
+  id: '__root__' | '/' | '/dailys' | '/focus' | '/login' | '/rituales'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DailysRoute: typeof DailysRoute
   FocusRoute: typeof FocusRoute
   LoginRoute: typeof LoginRoute
   RitualesRoute: typeof RitualesRoute
@@ -71,18 +81,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/rituales': {
-      id: '/rituales'
-      path: '/rituales'
-      fullPath: '/rituales'
-      preLoaderRoute: typeof RitualesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/dailys': {
+      id: '/dailys'
+      path: '/dailys'
+      fullPath: '/dailys'
+      preLoaderRoute: typeof DailysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/focus': {
@@ -92,11 +102,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FocusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rituales': {
+      id: '/rituales'
+      path: '/rituales'
+      fullPath: '/rituales'
+      preLoaderRoute: typeof RitualesRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DailysRoute: DailysRoute,
   FocusRoute: FocusRoute,
   LoginRoute: LoginRoute,
   RitualesRoute: RitualesRoute,

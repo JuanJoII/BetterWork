@@ -55,11 +55,11 @@ export default function Header() {
 							Concentración
 						</Link>
 						<Link
-							to="/rituales"
+							to="/dailys"
 							className="nav-link"
 							activeProps={{ className: "nav-link is-active" }}
 						>
-							Rituales
+							Dailys
 						</Link>
 					</div>
 				)}
@@ -80,6 +80,13 @@ export default function Header() {
 							activeProps={{ className: "nav-link is-active" }}
 						>
 							Concentrarme
+						</Link>
+						<Link
+							to="/dailys"
+							className="nav-link"
+							activeProps={{ className: "nav-link is-active" }}
+						>
+							Dailys
 						</Link>
 					</div>
 				)}
