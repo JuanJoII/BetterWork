@@ -3,7 +3,6 @@ import {
 	PanelLeftClose,
 	PanelLeftOpen,
 	Plus,
-	Search,
 	Trash2,
 	X,
 } from "lucide-react";
@@ -54,9 +53,6 @@ export default function ProjectsSidebar({
 	const [isCreating, setIsCreating] = useState(false);
 
 	const desktopSidebarRef = useRef<HTMLElement>(null);
-	const desktopSearchRef = useRef<HTMLInputElement>(null);
-	const compactSearchContainerRef = useRef<HTMLDivElement>(null);
-	const compactSearchInputRef = useRef<HTMLInputElement>(null);
 	const createContainerRef = useRef<HTMLDivElement>(null);
 	const createInputRef = useRef<HTMLInputElement>(null);
 	const wheelAccRef = useRef(0);
@@ -105,38 +101,6 @@ export default function ProjectsSidebar({
 		};
 	}, [isCreateOpen]);
 
-	// Focus input and handle Escape / outside-click for the compact search popover
-	useEffect(() => {
-		if (!isCompactSearchOpen) return;
-
-		const focusTimer = window.setTimeout(() => {
-			compactSearchInputRef.current?.focus();
-		}, 20);
-
-		const handlePointerDown = (event: MouseEvent) => {
-			if (
-				compactSearchContainerRef.current &&
-				!compactSearchContainerRef.current.contains(event.target as Node)
-			) {
-				setIsCompactSearchOpen(false);
-			}
-		};
-
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				setIsCompactSearchOpen(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handlePointerDown);
-		document.addEventListener("keydown", handleKeyDown);
-		return () => {
-			window.clearTimeout(focusTimer);
-			document.removeEventListener("mousedown", handlePointerDown);
-			document.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [isCompactSearchOpen]);
-
 	const toggleCollapsed = () => {
 		setIsCreateOpen(false);
 		setIsCompactSearchOpen(false);
@@ -151,9 +115,11 @@ export default function ProjectsSidebar({
 		});
 	};
 
-	const toggleCompactSearch = () => {
-		setIsCreateOpen(false);
-		setIsCompactSearchOpen((prev) => !prev);
+	const handleCompactSearchChange = (nextOpen: boolean) => {
+		if (nextOpen) {
+			setIsCreateOpen(false);
+		}
+		setIsCompactSearchOpen(nextOpen);
 	};
 
 	const handleProjectSelect = (id: string) => {
@@ -625,38 +591,13 @@ export default function ProjectsSidebar({
 								<PanelLeftOpen className="h-4 w-4" />
 							</button>
 
-							<div className="relative" ref={compactSearchContainerRef}>
-								<button
-									type="button"
-									onClick={toggleCompactSearch}
-									aria-label="Buscar notas"
-									aria-expanded={isCompactSearchOpen}
-									title={
-										searchQuery ? `Buscando: "${searchQuery}"` : "Buscar notas"
-									}
-									className={`flex h-9 w-9 items-center justify-center rounded-full border transition cursor-pointer ${
-										searchQuery || isCompactSearchOpen
-											? "border-yellow-400 bg-yellow-400/15 text-yellow-300"
-											: "border-[var(--line)] bg-[var(--surface-strong)]/50 text-[var(--sea-ink-soft)] hover:border-yellow-500/30 hover:text-yellow-200"
-									}`}
-								>
-									<Search className="h-4 w-4" />
-								</button>
-
-								{isCompactSearchOpen && (
-									<div
-										role="dialog"
-										aria-label="Buscar notas"
-										className="absolute left-full top-0 z-50 ml-3 w-64 rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-2.5 shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in"
-									>
-										<SearchBar
-											value={searchQuery}
-											onChange={setSearchQuery}
-											inputRef={compactSearchInputRef}
-										/>
-									</div>
-								)}
-							</div>
+							<SearchBar
+								value={searchQuery}
+								onChange={setSearchQuery}
+								expandable
+								expanded={isCompactSearchOpen}
+								onExpandedChange={handleCompactSearchChange}
+							/>
 						</div>
 
 						<nav
@@ -745,11 +686,7 @@ export default function ProjectsSidebar({
 					<>
 						{/* Top Row: Search + Collapse */}
 						<div className="flex items-center gap-1.5">
-							<SearchBar
-								value={searchQuery}
-								onChange={setSearchQuery}
-								inputRef={desktopSearchRef}
-							/>
+							<SearchBar value={searchQuery} onChange={setSearchQuery} />
 							<button
 								type="button"
 								onClick={toggleCollapsed}

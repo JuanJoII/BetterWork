@@ -33,4 +33,39 @@ describe("SearchBar", () => {
 		fireEvent.click(clearBtn);
 		expect(onChange).toHaveBeenCalledWith("");
 	});
+
+	it("expands from the magnifying glass trigger and contracts back on Enter in expandable mode", () => {
+		const onChange = vi.fn();
+		const onExpandedChange = vi.fn();
+
+		const { rerender } = render(
+			<SearchBar
+				value=""
+				onChange={onChange}
+				expandable
+				expanded={false}
+				onExpandedChange={onExpandedChange}
+			/>,
+		);
+
+		const trigger = screen.getByRole("button", { name: "Buscar notas" });
+		expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+		fireEvent.click(trigger);
+		expect(onExpandedChange).toHaveBeenCalledWith(true);
+
+		rerender(
+			<SearchBar
+				value="notas"
+				onChange={onChange}
+				expandable
+				expanded={true}
+				onExpandedChange={onExpandedChange}
+			/>,
+		);
+
+		const input = screen.getByPlaceholderText("Buscar notas...");
+		fireEvent.keyDown(input, { key: "Enter" });
+		expect(onExpandedChange).toHaveBeenCalledWith(false);
+	});
 });

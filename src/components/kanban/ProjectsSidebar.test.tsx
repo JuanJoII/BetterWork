@@ -164,7 +164,7 @@ describe("ProjectsSidebar", () => {
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
 	});
 
-	it("collapses, opens search popover without expanding, renders emoji icon, and cycles via wheel", () => {
+	it("collapses, expands search directly from magnifying glass and contracts on Enter", () => {
 		renderSidebar({ currentProjectId: "p2" });
 
 		fireEvent.click(
@@ -177,25 +177,22 @@ describe("ProjectsSidebar", () => {
 			screen.getByRole("button", { name: "Diseño UI" }).textContent,
 		).toContain("🎨");
 
-		// Clicking search in compact mode opens popover WITHOUT expanding the sidebar
-		fireEvent.click(screen.getByRole("button", { name: "Buscar notas" }));
-		expect(screen.getByRole("dialog", { name: "Buscar notas" })).toBeTruthy();
+		// Clicking search in compact mode unfurls the pill directly from the magnifying glass (no popover wrapper)
+		const searchBtn = screen.getByRole("button", { name: "Buscar notas" });
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("false");
+		fireEvent.click(searchBtn);
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("true");
 		expect(
 			screen.getByRole("button", { name: "Expandir barra lateral" }),
 		).toBeTruthy();
 
-		const dialogInput = screen
-			.getByRole("dialog", { name: "Buscar notas" })
-			.querySelector("input");
-		expect(dialogInput).toBeTruthy();
-		if (dialogInput) {
-			fireEvent.change(dialogInput, { target: { value: "urgente" } });
-		}
+		const compactInput = screen.getAllByPlaceholderText("Buscar notas...")[1];
+		fireEvent.change(compactInput, { target: { value: "urgente" } });
 		expect(setSearchQuery).toHaveBeenCalledWith("urgente");
 
-		// Close search popover with Escape, then wheel cycle works
-		fireEvent.keyDown(document, { key: "Escape" });
-		expect(screen.queryByRole("dialog", { name: "Buscar notas" })).toBeNull();
+		// Pressing Enter contracts the search pill back to the magnifying glass
+		fireEvent.keyDown(compactInput, { key: "Enter" });
+		expect(searchBtn.getAttribute("aria-expanded")).toBe("false");
 
 		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
 		expect(sidebar.className).toContain("z-30");
