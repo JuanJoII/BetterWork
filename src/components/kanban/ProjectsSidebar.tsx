@@ -1,4 +1,6 @@
 import {
+	Check,
+	FolderPlus,
 	LayoutGrid,
 	PanelLeftClose,
 	PanelLeftOpen,
@@ -20,7 +22,7 @@ interface ProjectsSidebarProps {
 	setSearchQuery: (value: string) => void;
 	totalTaskCount: number;
 	taskCountByProject: Record<string, number>;
-	handleCreateProject: () => void;
+	onCreateProject: (name: string) => Promise<void>;
 	handleDeleteProject: (id: string, name: string) => void;
 }
 
@@ -34,15 +36,21 @@ export default function ProjectsSidebar({
 	setSearchQuery,
 	totalTaskCount,
 	taskCountByProject,
-	handleCreateProject,
+	onCreateProject,
 	handleDeleteProject,
 }: ProjectsSidebarProps) {
 	const [isCollapsed, setIsCollapsed] = useState(false);
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
+	const [isCreateOpen, setIsCreateOpen] = useState(false);
+	const [newProjectName, setNewProjectName] = useState("");
+	const [isCreating, setIsCreating] = useState(false);
+
+	const desktopSidebarRef = useRef<HTMLElement>(null);
 	const desktopSearchRef = useRef<HTMLInputElement>(null);
-	const collapsedNavRef = useRef<HTMLElement>(null);
-	const collapsedWheelAccRef = useRef(0);
-	const collapsedLastStepRef = useRef(0);
+	const createContainerRef = useRef<HTMLDivElement>(null);
+	const createInputRef = useRef<HTMLInputElement>(null);
+	const wheelAccRef = useRef(0);
+	const lastStepRef = useRef(0);
 
 	useEffect(() => {
 		try {
@@ -55,7 +63,40 @@ export default function ProjectsSidebar({
 		}
 	}, []);
 
+	// Focus input and handle Escape / outside-click for the inline create popover
+	useEffect(() => {
+		if (!isCreateOpen) return;
+
+		const focusTimer = window.setTimeout(() => {
+			createInputRef.current?.focus();
+		}, 20);
+
+		const handlePointerDown = (event: MouseEvent) => {
+			if (
+				createContainerRef.current &&
+				!createContainerRef.current.contains(event.target as Node)
+			) {
+				setIsCreateOpen(false);
+			}
+		};
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setIsCreateOpen(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handlePointerDown);
+		document.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.clearTimeout(focusTimer);
+			document.removeEventListener("mousedown", handlePointerDown);
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [isCreateOpen]);
+
 	const toggleCollapsed = () => {
+		setIsCreateOpen(false);
 		setIsCollapsed((prev) => {
 			const next = !prev;
 			try {
@@ -120,43 +161,68 @@ export default function ProjectsSidebar({
 		handleDeleteProject(activeProject.id, activeProject.name);
 	};
 
-	const latestCollapsedRef = useRef({
-		arcItems,
-		activeIndex,
-		setCurrentProjectId,
-	});
-	latestCollapsedRef.current = {
-		arcItems,
-		activeIndex,
-		setCurrentProjectId,
+	const handleOpenCreate = () => {
+		setNewProjectName("");
+		setIsCreateOpen((prev) => !prev);
 	};
 
-	// Enable smooth wheel project cycling in collapsed compact sidebar mode
+	const handleCreateSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		const trimmed = newProjectName.trim();
+		if (!trimmed || isCreating) return;
+
+		setIsCreating(true);
+		try {
+			await onCreateProject(trimmed);
+			setNewProjectName("");
+			setIsCreateOpen(false);
+			setIsMobileOpen(false);
+		} finally {
+			setIsCreating(false);
+		}
+	};
+
+	const latestWheelStateRef = useRef({
+		arcItems,
+		activeIndex,
+		setCurrentProjectId,
+		isCreateOpen,
+	});
+	latestWheelStateRef.current = {
+		arcItems,
+		activeIndex,
+		setCurrentProjectId,
+		isCreateOpen,
+	};
+
+	// Unified wheel listener across the ENTIRE desktop sidebar (expanded & compact)
+	// Prevents page scroll leakage anywhere inside the sidebar and cycles projects smoothly
 	useEffect(() => {
-		if (!isCollapsed) return;
-		const el = collapsedNavRef.current;
+		const el = desktopSidebarRef.current;
 		if (!el) return;
 
-		const handleCollapsedWheel = (e: WheelEvent) => {
+		const handleSidebarWheel = (e: WheelEvent) => {
 			const {
 				arcItems: items,
 				activeIndex: currentIdx,
 				setCurrentProjectId: selectProject,
-			} = latestCollapsedRef.current;
+				isCreateOpen: popoverOpen,
+			} = latestWheelStateRef.current;
 
-			if (items.length <= 1) return;
-
+			// Always prevent page scroll while pointer is anywhere over the sidebar
 			e.preventDefault();
 
+			if (popoverOpen || items.length <= 1) return;
+
 			const now = Date.now();
-			if (now - collapsedLastStepRef.current < 130) {
+			if (now - lastStepRef.current < 130) {
 				return;
 			}
 
-			collapsedWheelAccRef.current += e.deltaY;
-			if (Math.abs(collapsedWheelAccRef.current) >= 24) {
-				const direction = collapsedWheelAccRef.current > 0 ? 1 : -1;
-				collapsedWheelAccRef.current = 0;
+			wheelAccRef.current += e.deltaY;
+			if (Math.abs(wheelAccRef.current) >= 24) {
+				const direction = wheelAccRef.current > 0 ? 1 : -1;
+				wheelAccRef.current = 0;
 
 				const nextIdx = Math.min(
 					Math.max(currentIdx + direction, 0),
@@ -164,17 +230,82 @@ export default function ProjectsSidebar({
 				);
 
 				if (nextIdx !== currentIdx) {
-					collapsedLastStepRef.current = now;
+					lastStepRef.current = now;
 					selectProject(items[nextIdx].id);
 				}
 			}
 		};
 
-		el.addEventListener("wheel", handleCollapsedWheel, { passive: false });
+		el.addEventListener("wheel", handleSidebarWheel, { passive: false });
 		return () => {
-			el.removeEventListener("wheel", handleCollapsedWheel);
+			el.removeEventListener("wheel", handleSidebarWheel);
 		};
-	}, [isCollapsed]);
+	}, []);
+
+	const renderCreatePopover = (placement: "above" | "right") => {
+		if (!isCreateOpen) return null;
+
+		const positionClasses =
+			placement === "right"
+				? "left-full bottom-0 ml-3 w-64"
+				: "left-0 bottom-full mb-2.5 w-full min-w-[14.5rem]";
+
+		return (
+			<div
+				role="dialog"
+				aria-label="Crear nuevo proyecto"
+				className={`absolute z-50 ${positionClasses} rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in`}
+			>
+				<div className="mb-2.5 flex items-center justify-between gap-2">
+					<div className="flex items-center gap-1.5 text-yellow-300">
+						<FolderPlus className="h-3.5 w-3.5" />
+						<span className="text-[11px] font-black uppercase tracking-wider">
+							Nuevo Proyecto
+						</span>
+					</div>
+					<button
+						type="button"
+						onClick={() => setIsCreateOpen(false)}
+						aria-label="Cerrar creación de proyecto"
+						className="rounded-lg p-1 text-[var(--sea-ink-soft)] transition hover:bg-white/5 hover:text-[var(--sea-ink)] cursor-pointer"
+					>
+						<X className="h-3.5 w-3.5" />
+					</button>
+				</div>
+
+				<form onSubmit={handleCreateSubmit} className="flex flex-col gap-2.5">
+					<input
+						ref={createInputRef}
+						type="text"
+						value={newProjectName}
+						onChange={(e) => setNewProjectName(e.target.value)}
+						placeholder="Nombre del proyecto..."
+						aria-label="Nombre del proyecto"
+						maxLength={48}
+						className="w-full rounded-xl border border-yellow-500/25 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-yellow-100 placeholder:text-slate-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20"
+					/>
+
+					<div className="flex items-center justify-end gap-1.5">
+						<button
+							type="button"
+							onClick={() => setIsCreateOpen(false)}
+							className="rounded-full border border-[var(--line)] px-3 py-1 text-[11px] font-bold text-[var(--sea-ink-soft)] transition hover:text-[var(--sea-ink)] cursor-pointer"
+						>
+							Cancelar
+						</button>
+						<button
+							type="submit"
+							disabled={!newProjectName.trim() || isCreating}
+							className="inline-flex items-center gap-1 rounded-full bg-yellow-300 px-3.5 py-1 text-[11px] font-black text-slate-950 transition hover:bg-yellow-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+						>
+							<Check className="h-3 w-3" />
+							<span>{isCreating ? "Creando..." : "Crear"}</span>
+						</button>
+					</div>
+				</form>
+			</div>
+		);
+	};
 
 	return (
 		<>
@@ -204,7 +335,10 @@ export default function ProjectsSidebar({
 					<button
 						type="button"
 						aria-label="Cerrar panel de proyectos"
-						onClick={() => setIsMobileOpen(false)}
+						onClick={() => {
+							setIsCreateOpen(false);
+							setIsMobileOpen(false);
+						}}
 						className="fixed inset-0 bg-black/55 backdrop-blur-xs border-none"
 					/>
 					<aside
@@ -221,7 +355,10 @@ export default function ProjectsSidebar({
 								</h2>
 								<button
 									type="button"
-									onClick={() => setIsMobileOpen(false)}
+									onClick={() => {
+										setIsCreateOpen(false);
+										setIsMobileOpen(false);
+									}}
 									aria-label="Cerrar panel"
 									className="rounded-lg p-1 text-[var(--sea-ink-soft)] hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] cursor-pointer shrink-0"
 								>
@@ -252,17 +389,21 @@ export default function ProjectsSidebar({
 						/>
 
 						<div className="flex flex-col gap-2">
-							<button
-								type="button"
-								onClick={() => {
-									setIsMobileOpen(false);
-									handleCreateProject();
-								}}
-								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+							<div
+								className="relative"
+								ref={isMobileOpen ? createContainerRef : undefined}
 							>
-								<Plus className="h-3.5 w-3.5" />
-								<span>Nuevo Proyecto</span>
-							</button>
+								{isMobileOpen && renderCreatePopover("above")}
+								<button
+									type="button"
+									onClick={handleOpenCreate}
+									aria-expanded={isCreateOpen}
+									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+								>
+									<Plus className="h-3.5 w-3.5" />
+									<span>Nuevo Proyecto</span>
+								</button>
+							</div>
 
 							<button
 								type="button"
@@ -288,6 +429,7 @@ export default function ProjectsSidebar({
 
 			{/* DESKTOP FULL-HEIGHT BORDERLESS ARC SIDEBAR */}
 			<aside
+				ref={desktopSidebarRef}
 				aria-label="Barra lateral de proyectos"
 				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-28 h-[calc(100vh-9.5rem)] transition-all duration-300 ${
 					isCollapsed
@@ -326,7 +468,6 @@ export default function ProjectsSidebar({
 						</div>
 
 						<nav
-							ref={collapsedNavRef}
 							aria-label="Selector compacto de proyectos"
 							className="flex flex-1 min-h-0 flex-col items-center justify-center gap-1.5 overflow-y-auto kanban-scroll py-2"
 						>
@@ -367,15 +508,22 @@ export default function ProjectsSidebar({
 						</nav>
 
 						<div className="flex flex-col items-center gap-2">
-							<button
-								type="button"
-								onClick={handleCreateProject}
-								aria-label="Nuevo Proyecto"
-								title="Nuevo Proyecto"
-								className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+							<div
+								className="relative"
+								ref={!isMobileOpen ? createContainerRef : undefined}
 							>
-								<Plus className="h-4 w-4" />
-							</button>
+								{!isMobileOpen && renderCreatePopover("right")}
+								<button
+									type="button"
+									onClick={handleOpenCreate}
+									aria-label="Nuevo Proyecto"
+									aria-expanded={isCreateOpen}
+									title="Nuevo Proyecto"
+									className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+								>
+									<Plus className="h-4 w-4" />
+								</button>
+							</div>
 
 							<button
 								type="button"
@@ -413,7 +561,7 @@ export default function ProjectsSidebar({
 							</button>
 						</div>
 
-						{/* Full-height Curved Arc List */}
+						{/* Full-height Curved Arc List (wheel is handled cleanly at the sidebar level) */}
 						<ArcList
 							items={arcItems}
 							activeIndex={activeIndex}
@@ -427,22 +575,29 @@ export default function ProjectsSidebar({
 							subtitles={false}
 							autoplay={false}
 							interval={5.5}
-							wheel={true}
+							wheel={false}
 							imageAspect={0.72}
 							imageRadius={22}
 							className="flex-1 min-h-0"
 						/>
 
-						{/* Bottom Actions: Create + Delete Active Project */}
+						{/* Bottom Actions: Anchored Create Popover + Delete Active Project */}
 						<div className="flex flex-col gap-2">
-							<button
-								type="button"
-								onClick={handleCreateProject}
-								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+							<div
+								className="relative"
+								ref={!isMobileOpen ? createContainerRef : undefined}
 							>
-								<Plus className="h-3.5 w-3.5" />
-								<span>Nuevo Proyecto</span>
-							</button>
+								{!isMobileOpen && renderCreatePopover("above")}
+								<button
+									type="button"
+									onClick={handleOpenCreate}
+									aria-expanded={isCreateOpen}
+									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+								>
+									<Plus className="h-3.5 w-3.5" />
+									<span>Nuevo Proyecto</span>
+								</button>
+							</div>
 
 							<button
 								type="button"

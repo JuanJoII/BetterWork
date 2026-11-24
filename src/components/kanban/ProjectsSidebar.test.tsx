@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Project } from "../../types/kanban";
 import ProjectsSidebar from "./ProjectsSidebar";
@@ -14,11 +20,12 @@ const SAMPLE_PROJECTS: Project[] = [
 describe("ProjectsSidebar", () => {
 	const setCurrentProjectId = vi.fn();
 	const setSearchQuery = vi.fn();
-	const handleCreateProject = vi.fn();
+	const onCreateProject = vi.fn();
 	const handleDeleteProject = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		onCreateProject.mockResolvedValue(undefined);
 		window.localStorage.clear();
 	});
 
@@ -36,7 +43,7 @@ describe("ProjectsSidebar", () => {
 				setSearchQuery={setSearchQuery}
 				totalTaskCount={12}
 				taskCountByProject={{ p1: 4, p2: 3, p3: 2, p4: 2, p5: 1 }}
-				handleCreateProject={handleCreateProject}
+				onCreateProject={onCreateProject}
 				handleDeleteProject={handleDeleteProject}
 				{...overrides}
 			/>,
@@ -55,11 +62,43 @@ describe("ProjectsSidebar", () => {
 		).toBeNull();
 	});
 
-	it("deletes the currently active project via the footer Trash button and supports wheel cycling", () => {
+	it("handles wheel scrolling across the entire sidebar container without leaking to page scroll", () => {
 		renderSidebar({ currentProjectId: "p4" });
 
-		fireEvent.click(screen.getByText("Backend API"));
-		expect(setCurrentProjectId).toHaveBeenCalledWith("p2");
+		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
+		const wheelEvent = new WheelEvent("wheel", {
+			deltaY: 100,
+			bubbles: true,
+			cancelable: true,
+		});
+		sidebar.dispatchEvent(wheelEvent);
+
+		expect(wheelEvent.defaultPrevented).toBe(true);
+		expect(setCurrentProjectId).toHaveBeenCalledWith("p5");
+	});
+
+	it("opens an anchored popover from Nuevo Proyecto and creates a project on submit", async () => {
+		renderSidebar();
+
+		fireEvent.click(screen.getByRole("button", { name: /Nuevo Proyecto/i }));
+		expect(
+			screen.getByRole("dialog", { name: "Crear nuevo proyecto" }),
+		).toBeTruthy();
+
+		const input = screen.getByLabelText("Nombre del proyecto");
+		fireEvent.change(input, { target: { value: "Roadmap Q4" } });
+		fireEvent.click(screen.getByRole("button", { name: "Crear" }));
+
+		await waitFor(() => {
+			expect(onCreateProject).toHaveBeenCalledWith("Roadmap Q4");
+		});
+		expect(
+			screen.queryByRole("dialog", { name: "Crear nuevo proyecto" }),
+		).toBeNull();
+	});
+
+	it("deletes the currently active project via the footer Trash button", () => {
+		renderSidebar({ currentProjectId: "p4" });
 
 		const deleteBtn = screen.getByRole("button", {
 			name: /Eliminar Proyecto/i,
@@ -67,14 +106,6 @@ describe("ProjectsSidebar", () => {
 		expect((deleteBtn as HTMLButtonElement).disabled).toBe(false);
 		fireEvent.click(deleteBtn);
 		expect(handleDeleteProject).toHaveBeenCalledWith("p4", "Marketing");
-
-		// Wheel down advances from p4 (index 4) to p5 (index 5)
-		const selector = screen.getByLabelText("Selector de proyectos");
-		fireEvent.wheel(selector, { deltaY: 100 });
-		expect(setCurrentProjectId).toHaveBeenCalledWith("p5");
-
-		fireEvent.click(screen.getByRole("button", { name: /Nuevo Proyecto/i }));
-		expect(handleCreateProject).toHaveBeenCalledTimes(1);
 	});
 
 	it("disables the footer delete button on Tablero General and General project", () => {
@@ -101,7 +132,7 @@ describe("ProjectsSidebar", () => {
 		expect(setSearchQuery).toHaveBeenCalledWith("convex");
 	});
 
-	it("collapses, cycles projects via wheel in compact mode, and expands back", () => {
+	it("collapses, cycles projects via wheel anywhere on compact sidebar, and expands back", () => {
 		renderSidebar({ currentProjectId: "p2" });
 
 		fireEvent.click(
@@ -114,9 +145,8 @@ describe("ProjectsSidebar", () => {
 			screen.getByRole("button", { name: "Expandir barra lateral" }),
 		).toBeTruthy();
 
-		// Wheel down in compact rail advances from p2 (index 2) to p3 (index 3)
-		const compactNav = screen.getByLabelText("Selector compacto de proyectos");
-		fireEvent.wheel(compactNav, { deltaY: 100 });
+		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
+		fireEvent.wheel(sidebar, { deltaY: 100 });
 		expect(setCurrentProjectId).toHaveBeenCalledWith("p3");
 
 		fireEvent.click(

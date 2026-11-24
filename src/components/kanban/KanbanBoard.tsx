@@ -2,7 +2,7 @@ import { useGSAP } from "@gsap/react";
 import { useNavigate } from "@tanstack/react-router";
 import confetti from "canvas-confetti";
 import gsap from "gsap";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
 
 gsap.registerPlugin(useGSAP);
@@ -67,6 +67,17 @@ export default function KanbanBoard() {
 	);
 
 	const [currentProjectId, setCurrentProjectId] = useState<string>("all");
+	const previousProjectIdRef = useRef<string>(currentProjectId);
+
+	// Always scroll back to the top of the page when switching projects
+	useEffect(() => {
+		if (previousProjectIdRef.current !== currentProjectId) {
+			previousProjectIdRef.current = currentProjectId;
+			if (typeof window !== "undefined") {
+				window.scrollTo({ top: 0, behavior: "auto" });
+			}
+		}
+	}, [currentProjectId]);
 
 	// Filter Configurations
 	const [searchQuery, setSearchQuery] = useState<string>("");
@@ -397,85 +408,36 @@ export default function KanbanBoard() {
 		}
 	};
 
-	const handleCreateProject = () => {
-		const toastId = sileo.action({
-			title: "Nuevo Proyecto",
-			fill: "#130f26",
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
-			},
-			description: (
-				<div className="flex flex-col gap-2 mt-2">
-					<input
-						type="text"
-						id="toast-proj-name"
-						placeholder="Nombre del proyecto..."
-						className="w-full rounded-lg bg-slate-950/40 border border-yellow-500/20 px-3 py-1.5 text-xs text-yellow-100 placeholder-yellow-100/40 font-semibold focus:outline-none focus:border-yellow-400"
-						onKeyDown={async (e) => {
-							if (e.key === "Enter") {
-								const val = (e.target as HTMLInputElement).value;
-								if (val.trim()) {
-									try {
-										const newId = await createProjectMutation({
-											name: val.trim(),
-										});
-										setCurrentProjectId(newId);
-										sileo.dismiss(toastId);
-										sileo.success({
-											title: "Proyecto creado",
-											description: `Se ha creado el proyecto "${val.trim()}"`,
-											fill: "#130f26",
-											styles: {
-												title: "text-purple-200 font-extrabold",
-												description:
-													"text-purple-300/80 text-xs font-semibold mt-0.5",
-											},
-										});
-									} catch (err) {
-										console.error(err);
-									}
-								}
-							}
-						}}
-					/>
-					<div className="text-[9px] text-yellow-500/60 font-semibold">
-						Escribe el nombre y presiona Enter
-					</div>
-				</div>
-			),
-			duration: null,
-			button: {
-				title: "Crear",
-				onClick: async () => {
-					const input = document.getElementById(
-						"toast-proj-name",
-					) as HTMLInputElement;
-					if (input?.value.trim()) {
-						const val = input.value.trim();
-						try {
-							const newId = await createProjectMutation({
-								name: val,
-							});
-							setCurrentProjectId(newId);
-							sileo.dismiss(toastId);
-							sileo.success({
-								title: "Proyecto creado",
-								description: `Se ha creado el proyecto "${val}"`,
-								fill: "#130f26",
-								styles: {
-									title: "text-purple-200 font-extrabold",
-									description:
-										"text-purple-300/80 text-xs font-semibold mt-0.5",
-								},
-							});
-						} catch (err) {
-							console.error(err);
-						}
-					}
+	const handleCreateProject = async (name: string) => {
+		const trimmed = name.trim();
+		if (!trimmed) return;
+		try {
+			const newId = await createProjectMutation({
+				name: trimmed,
+			});
+			setCurrentProjectId(newId);
+			sileo.success({
+				title: "Proyecto creado",
+				description: `Se ha creado el proyecto "${trimmed}"`,
+				fill: "#130f26",
+				styles: {
+					title: "text-purple-200 font-extrabold",
+					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
 				},
-			},
-		});
+			});
+		} catch (err) {
+			console.error(err);
+			sileo.error({
+				title: "Error al crear proyecto",
+				description: "No se pudo crear el proyecto. Intenta de nuevo.",
+				fill: "#260f1c",
+				styles: {
+					title: "text-red-200 font-extrabold",
+					description: "text-red-300/80 text-xs font-semibold mt-0.5",
+				},
+			});
+			throw err;
+		}
 	};
 
 	const handleDeleteProject = (projectId: string, projectName: string) => {
@@ -585,7 +547,7 @@ export default function KanbanBoard() {
 					setSearchQuery={setSearchQuery}
 					totalTaskCount={tasks.length}
 					taskCountByProject={taskCountByProject}
-					handleCreateProject={handleCreateProject}
+					onCreateProject={handleCreateProject}
 					handleDeleteProject={handleDeleteProject}
 				/>
 
