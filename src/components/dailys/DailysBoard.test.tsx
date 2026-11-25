@@ -79,7 +79,8 @@ describe("DailysBoard", () => {
 		expect(screen.getByText("Completado hoy")).toBeTruthy();
 
 		fireEvent.click(screen.getByRole("button", { name: /Añadir Daily/i }));
-		expect(screen.getByText("Añadir Nuevo Daily")).toBeTruthy();
+		expect(screen.getByRole("dialog", { name: "Crear daily" })).toBeTruthy();
+		expect(screen.queryByText("Añadir Nuevo Daily")).toBeNull();
 
 		fireEvent.change(screen.getByLabelText("Nombre del Daily"), {
 			target: { value: "Planificar el día" },

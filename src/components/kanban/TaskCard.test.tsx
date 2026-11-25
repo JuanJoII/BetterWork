@@ -39,8 +39,8 @@ describe("TaskCard", () => {
 		expect(screen.queryByTitle("Completar Tarea")).toBeNull();
 	});
 
-	it("renders priority badge for standard tasks", () => {
-		const regularTask: Task = {
+	it("communicates regular task priority through color tones without rendering a priority pill on the board", () => {
+		const urgentTask: Task = {
 			id: "task_2",
 			title: "Desplegar PR",
 			description: "Revisar build de producción",
@@ -50,10 +50,22 @@ describe("TaskCard", () => {
 			createdAt: "2026-11-23T08:00:00.000Z",
 		};
 
-		render(<TaskCard {...baseProps} task={regularTask} />);
+		const { container } = render(<TaskCard {...baseProps} task={urgentTask} />);
 
-		expect(screen.getByText("URGENTE")).toBeTruthy();
+		const card = container.querySelector("[data-task-card]");
+		expect(card?.getAttribute("data-note-tone")).toBe("high");
+		expect(card?.className).toContain("bg-red-50/95");
+		expect(screen.queryByText("URGENTE")).toBeNull();
+		expect(screen.queryByText(/Prioridad/i)).toBeNull();
 		expect(screen.queryByText("DAILY")).toBeNull();
+
+		cleanup();
+
+		const lowTask: Task = { ...urgentTask, id: "task_low", priority: "low" };
+		const lowRender = render(<TaskCard {...baseProps} task={lowTask} />);
+		const lowCard = lowRender.container.querySelector("[data-task-card]");
+		expect(lowCard?.getAttribute("data-note-tone")).toBe("low");
+		expect(lowCard?.className).toContain("bg-emerald-50/95");
 	});
 
 	it("renders and triggers the complete check button only in finalizado column", () => {

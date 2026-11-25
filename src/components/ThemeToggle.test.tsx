@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getErrorToastTheme, getSuccessToastTheme } from "../utils/toast";
 import ThemeToggle from "./ThemeToggle";
 
 describe("ThemeToggle", () => {
@@ -38,13 +39,19 @@ describe("ThemeToggle", () => {
 		fireEvent.click(btn);
 		expect(window.localStorage.getItem("theme")).toBe("light");
 		expect(document.documentElement.classList.contains("light")).toBe(true);
+		expect(document.documentElement.classList.contains("dark")).toBe(false);
 		expect(btn.getAttribute("aria-label")).toMatch(/Tema: Claro/i);
+		expect(getSuccessToastTheme().fill).toBe("#faf5ff");
+		expect(getErrorToastTheme().fill).toBe("#fff1f2");
 
 		// light -> dark
 		fireEvent.click(btn);
 		expect(window.localStorage.getItem("theme")).toBe("dark");
 		expect(document.documentElement.classList.contains("dark")).toBe(true);
+		expect(document.documentElement.classList.contains("light")).toBe(false);
 		expect(btn.getAttribute("aria-label")).toMatch(/Tema: Oscuro/i);
+		expect(getSuccessToastTheme().fill).toBe("#130f26");
+		expect(getErrorToastTheme().fill).toBe("#260f1c");
 
 		// dark -> auto
 		fireEvent.click(btn);

@@ -195,8 +195,8 @@ export default function ArcList({
 											icon={item.icon}
 											className={
 												isActive
-													? "h-4 w-4 text-yellow-300"
-													: "h-3.5 w-3.5 text-slate-400 group-hover:text-yellow-200"
+													? "h-4 w-4 text-amber-700 dark:text-yellow-300"
+													: "h-3.5 w-3.5 text-slate-500 group-hover:text-amber-700 dark:text-slate-400 dark:group-hover:text-yellow-200"
 											}
 											emojiClassName={
 												isActive
@@ -209,8 +209,8 @@ export default function ArcList({
 										<span
 											className={`block truncate transition-colors ${
 												isActive
-													? "display-title text-[17px] font-black text-yellow-300"
-													: "text-sm font-bold text-slate-300 group-hover:text-yellow-100"
+													? "display-title text-[17px] font-black text-amber-700 dark:text-yellow-300"
+													: "text-sm font-bold text-slate-600 group-hover:text-amber-700 dark:text-slate-300 dark:group-hover:text-yellow-100"
 											}`}
 										>
 											{item.title}
@@ -227,8 +227,8 @@ export default function ArcList({
 									<span
 										className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black leading-none ${
 											isActive
-												? "bg-yellow-300 text-slate-950"
-												: "bg-slate-800/80 text-yellow-200/75"
+												? "bg-amber-400 text-slate-950 dark:bg-yellow-300"
+												: "bg-slate-200/85 text-slate-700 dark:bg-slate-800/80 dark:text-yellow-200/75"
 										}`}
 									>
 										{item.badge}

@@ -27,11 +27,11 @@ export default function Header() {
 
 	return (
 		<header className="sticky top-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-5xl">
-			<nav className="relative flex items-center justify-between gap-x-4 py-2 px-5 rounded-full border border-[var(--line)] bg-slate-900/65 backdrop-blur-md shadow-xl shadow-black/25">
+			<nav className="relative flex items-center justify-between gap-x-4 py-2 px-5 rounded-full border border-[var(--line)] bg-white/80 dark:bg-slate-900/65 backdrop-blur-md shadow-lg shadow-slate-900/5 dark:shadow-xl dark:shadow-black/25">
 				<h1 className="m-0 flex-shrink-0 text-base font-black tracking-tight">
 					<Link
 						to="/"
-						className="text-purple-400 hover:text-yellow-400 transition no-underline font-serif font-black text-lg"
+						className="text-purple-700 hover:text-amber-600 dark:text-purple-400 dark:hover:text-yellow-400 transition no-underline font-serif font-black text-lg"
 					>
 						BetterWork
 					</Link>
@@ -149,7 +149,7 @@ export default function Header() {
 						<button
 							type="button"
 							onClick={() => signOut()}
-							className="rounded-xl p-2 text-red-400 transition hover:bg-red-500/10 hover:text-red-300 flex items-center justify-center cursor-pointer border-none bg-transparent"
+							className="rounded-xl p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition hover:bg-red-500/10 flex items-center justify-center cursor-pointer border-none bg-transparent"
 							title="Cerrar Sesión"
 						>
 							<LogOut className="h-5 w-5" />

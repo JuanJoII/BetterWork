@@ -14,11 +14,12 @@ export default function Footer() {
 					href="https://portafolio.jayjo.cloud"
 					target="_blank"
 					rel="noreferrer"
-					className="rounded-xl p-2 text-purple-400 transition hover:bg-[var(--link-bg-hover)] hover:text-yellow-400"
+					className="rounded-xl p-2 text-purple-700 hover:text-amber-600 dark:text-purple-400 dark:hover:text-yellow-400 transition hover:bg-[var(--link-bg-hover)]"
 				>
 					<span className="sr-only">Ir a mi web</span>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
+						aria-hidden="true"
 						width="36"
 						height="36"
 						viewBox="0 0 24 24"
@@ -41,7 +42,7 @@ export default function Footer() {
 					href="https://github.com/JuanJoII"
 					target="_blank"
 					rel="noreferrer"
-					className="rounded-xl p-2 text-purple-400 transition hover:bg-[var(--link-bg-hover)] hover:text-yellow-400"
+					className="rounded-xl p-2 text-purple-700 hover:text-amber-600 dark:text-purple-400 dark:hover:text-yellow-400 transition hover:bg-[var(--link-bg-hover)]"
 				>
 					<span className="sr-only">Mi GitHub</span>
 					<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32">
