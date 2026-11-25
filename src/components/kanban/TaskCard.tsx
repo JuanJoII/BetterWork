@@ -7,6 +7,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import type { Project, Task } from "../../types/kanban";
+import { getNoteToneKey, getNoteToneStyles } from "../../utils/noteTheme";
 import { getProjectDisplayName } from "../../utils/projects";
 import ProjectIcon from "./ProjectIcon";
 
@@ -38,12 +39,15 @@ export default function TaskCard({
 	onCompleteTask,
 }: TaskCardProps) {
 	const isRitual = !!task.isRitual;
+	const toneKey = getNoteToneKey(task);
+	const tone = getNoteToneStyles(task);
 
 	return (
 		/* biome-ignore lint/a11y/noStaticElementInteractions: draggable task card */
 		<div
 			data-task-card
 			data-ritual={isRitual}
+			data-note-tone={toneKey}
 			draggable
 			onDragStart={(e) => {
 				e.dataTransfer?.setData("text/plain", task.id);
@@ -53,54 +57,25 @@ export default function TaskCard({
 				onDragStart();
 			}}
 			onDragEnd={onDragEnd}
-			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-[border-color,background-color,box-shadow] duration-200 cursor-grab active:cursor-grabbing shadow-sm ${
-				isRitual
-					? "border-purple-300/80 bg-purple-50/95 hover:border-purple-400 hover:bg-purple-50 hover:shadow-[0_14px_28px_rgba(126,34,206,0.1)] text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/15 dark:hover:border-purple-400/50 dark:hover:bg-purple-950/25 dark:hover:shadow-[0_16px_32px_rgba(168,85,247,0.06)] dark:text-purple-100/90"
-					: "border-amber-300/80 bg-amber-50/95 hover:border-amber-400 hover:bg-amber-50 hover:shadow-[0_14px_28px_rgba(217,119,6,0.1)] text-amber-950 dark:border-yellow-500/20 dark:bg-yellow-950/20 dark:hover:border-yellow-400/40 dark:hover:bg-yellow-950/30 dark:hover:shadow-[0_16px_32px_rgba(234,179,8,0.08)] dark:text-yellow-100/90"
-			}`}
+			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-[border-color,background-color,box-shadow] duration-200 cursor-grab active:cursor-grabbing shadow-sm ${tone.card} ${tone.cardHover}`}
 		>
 			{/* Tech-tape overlay */}
 			<div
-				className={`absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 border-x shadow-sm backdrop-blur-[2px] z-10 ${
-					isRitual
-						? "bg-purple-300/45 border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40"
-						: "bg-amber-300/45 border-amber-400/55 dark:bg-yellow-400/10 dark:border-yellow-400/30"
-				}`}
+				className={`absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 border-x shadow-sm backdrop-blur-[2px] z-10 ${tone.tape}`}
 			/>
 
 			<div>
-				{/* Note meta bar */}
-				<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
-					<span
-						className={`font-black ${
-							isRitual
-								? "text-purple-700 dark:text-purple-400"
-								: "text-amber-700 dark:text-yellow-400/70"
-						}`}
-					>
-						{isRitual ? "Hábito Diario" : `Prioridad ${task.priority}`}
-					</span>
-
-					{isRitual ? (
+				{/* Daily badge bar (regular notes communicate priority purely through color) */}
+				{isRitual && (
+					<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+						<span className={`font-black ${tone.metaText}`}>Hábito Diario</span>
 						<span className="px-2 py-0.5 rounded border border-purple-300 bg-purple-100 text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300 font-black animate-pulse">
 							DAILY
 						</span>
-					) : (
-						task.priority === "high" && (
-							<span className="px-2 py-0.5 rounded border border-red-300 bg-red-100 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400 font-black">
-								URGENTE
-							</span>
-						)
-					)}
-				</div>
+					</div>
+				)}
 
-				<h3
-					className={`m-0 text-base font-black leading-snug ${
-						isRitual
-							? "text-purple-900 dark:text-purple-300"
-							: "text-amber-950 dark:text-yellow-400"
-					}`}
-				>
+				<h3 className={`m-0 text-base font-black leading-snug ${tone.title}`}>
 					{task.title}
 				</h3>
 
@@ -111,11 +86,7 @@ export default function TaskCard({
 				{/* Project Indicator (only for General Board view) */}
 				{currentProjectId === "all" && projectOfTask && (
 					<div
-						className={`mt-2 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
-							isRitual
-								? "text-purple-700/80 dark:text-purple-400/75"
-								: "text-amber-800/75 dark:text-yellow-500/70"
-						}`}
+						className={`mt-2 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${tone.projectText}`}
 					>
 						{projectOfTask.icon ? (
 							<ProjectIcon
@@ -133,22 +104,14 @@ export default function TaskCard({
 
 			{/* Note Footer Actions */}
 			<div
-				className={`border-t pt-3.5 flex items-center justify-end ${
-					isRitual
-						? "border-purple-300/60 text-purple-700 dark:border-purple-500/10 dark:text-purple-400/75"
-						: "border-amber-300/60 text-amber-800 dark:border-yellow-500/10 dark:text-yellow-400/70"
-				}`}
+				className={`border-t pt-3.5 flex items-center justify-end ${tone.divider} ${tone.metaText}`}
 			>
 				<div className="flex items-center gap-1">
 					{colId !== "finalizado" && (
 						<button
 							type="button"
 							onClick={onFocusClick}
-							className={`rounded-lg border px-2 py-1 text-[10px] font-black flex items-center gap-0.5 transition cursor-pointer ${
-								isRitual
-									? "border-purple-300 bg-purple-100/80 hover:bg-purple-200/70 text-purple-800 dark:border-purple-500/25 dark:bg-purple-500/5 dark:hover:bg-purple-500/15 dark:text-purple-300 dark:hover:text-purple-200"
-									: "border-amber-300 bg-amber-100/80 hover:bg-amber-200/70 text-amber-900 dark:border-yellow-500/25 dark:bg-yellow-500/5 dark:hover:bg-yellow-400/10 dark:text-yellow-300 dark:hover:text-yellow-200"
-							}`}
+							className={`rounded-lg border px-2 py-1 text-[10px] font-black flex items-center gap-0.5 transition cursor-pointer ${tone.focusButton}`}
 							title="Iniciar Deep Work"
 						>
 							<Clock className="h-3 w-3" />
@@ -162,11 +125,7 @@ export default function TaskCard({
 							<button
 								type="button"
 								onClick={() => onMoveTask("backward")}
-								className={`p-1 rounded-lg transition cursor-pointer ${
-									isRitual
-										? "hover:bg-purple-200/60 text-purple-700 hover:text-purple-900 dark:hover:bg-purple-500/15 dark:text-purple-400 dark:hover:text-purple-300"
-										: "hover:bg-amber-200/60 text-amber-800 hover:text-amber-950 dark:hover:bg-yellow-400/10 dark:text-yellow-400/70 dark:hover:text-yellow-300"
-								}`}
+								className={`p-1 rounded-lg transition cursor-pointer ${tone.iconButton}`}
 								title="Mover atrás"
 							>
 								<ChevronLeft className="h-3.5 w-3.5" />
@@ -176,11 +135,7 @@ export default function TaskCard({
 							<button
 								type="button"
 								onClick={() => onMoveTask("forward")}
-								className={`p-1 rounded-lg transition cursor-pointer ${
-									isRitual
-										? "hover:bg-purple-200/60 text-purple-700 hover:text-purple-900 dark:hover:bg-purple-500/15 dark:text-purple-400 dark:hover:text-purple-300"
-										: "hover:bg-amber-200/60 text-amber-800 hover:text-amber-950 dark:hover:bg-yellow-400/10 dark:text-yellow-400/70 dark:hover:text-yellow-300"
-								}`}
+								className={`p-1 rounded-lg transition cursor-pointer ${tone.iconButton}`}
 								title="Mover adelante"
 							>
 								<ChevronRight className="h-3.5 w-3.5" />
@@ -189,11 +144,7 @@ export default function TaskCard({
 						<button
 							type="button"
 							onClick={onEditTask}
-							className={`p-1 rounded-lg ml-0.5 transition cursor-pointer ${
-								isRitual
-									? "hover:bg-purple-200/60 text-purple-700 hover:text-purple-900 dark:hover:bg-purple-500/15 dark:text-purple-400 dark:hover:text-purple-300"
-									: "hover:bg-amber-200/60 text-amber-800 hover:text-amber-950 dark:hover:bg-yellow-400/10 dark:text-yellow-400/70 dark:hover:text-yellow-300"
-							}`}
+							className={`p-1 rounded-lg ml-0.5 transition cursor-pointer ${tone.iconButton}`}
 							title="Editar"
 						>
 							<Edit className="h-3.5 w-3.5" />

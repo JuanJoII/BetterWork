@@ -14,12 +14,12 @@ const PROJECTS: Project[] = [
 	},
 ];
 
-describe("Kanban tactile modals", () => {
+describe("Sticky-note direct manipulation modals", () => {
 	afterEach(() => {
 		cleanup();
 	});
 
-	it("submits CreateTaskModal with pill priority, project chip, and supports Escape close", () => {
+	it("renders CreateTaskModal as a sticky note without redundant header/project picker and cycles priority colors with side arrows", () => {
 		const onSubmit = vi.fn();
 		const onClose = vi.fn();
 
@@ -28,28 +28,50 @@ describe("Kanban tactile modals", () => {
 				isOpen={true}
 				onClose={onClose}
 				projects={PROJECTS}
-				currentProjectId="all"
-				column="en-proceso"
+				currentProjectId="p2"
 				onSubmit={onSubmit}
 			/>,
 		);
 
-		expect(screen.getByRole("dialog")).toBeTruthy();
-		expect(screen.getByText("En Proceso")).toBeTruthy();
+		expect(
+			screen.getByRole("dialog", { name: "Crear nota adhesiva" }),
+		).toBeTruthy();
+		expect(screen.queryByText("Nueva Nota")).toBeNull();
+		expect(screen.queryByText("Proyecto Destino")).toBeNull();
+
+		// Starts in Media (yellow)
+		expect(screen.getByText("Media")).toBeTruthy();
+
+		// Next arrow cycles Media -> Urgente (red)
+		fireEvent.click(
+			screen.getByRole("button", { name: "Cambiar prioridad siguiente" }),
+		);
+		expect(screen.getByText("Urgente")).toBeTruthy();
+
+		// Next arrow wraps Urgente -> Baja (green)
+		fireEvent.click(
+			screen.getByRole("button", { name: "Cambiar prioridad siguiente" }),
+		);
+		expect(screen.getByText("Baja")).toBeTruthy();
+
+		// Previous arrow goes back Baja -> Urgente (red)
+		fireEvent.click(
+			screen.getByRole("button", { name: "Cambiar prioridad anterior" }),
+		);
+		expect(screen.getByText("Urgente")).toBeTruthy();
 
 		fireEvent.change(screen.getByLabelText("Título"), {
-			target: { value: "Diseñar modal" },
+			target: { value: "Diseñar nota directa" },
 		});
 		fireEvent.change(screen.getByLabelText("Descripción"), {
-			target: { value: "Usar píldoras táctiles" },
+			target: { value: "Sin campos redundantes" },
 		});
-		fireEvent.click(screen.getByRole("button", { name: "Urgente" }));
-		fireEvent.click(screen.getByRole("button", { name: "Backend API" }));
 		fireEvent.click(screen.getByRole("button", { name: "Guardar Nota" }));
 
+		// Automatically uses the active board project (p2)
 		expect(onSubmit).toHaveBeenCalledWith(
-			"Diseñar modal",
-			"Usar píldoras táctiles",
+			"Diseñar nota directa",
+			"Sin campos redundantes",
 			"high",
 			"p2",
 		);
@@ -58,42 +80,60 @@ describe("Kanban tactile modals", () => {
 		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 
-	it("edits status, priority, and project via tactile pills in EditTaskModal", () => {
+	it("cycles priority colors in EditTaskModal for regular tasks and omits arrows for Daily notes", () => {
 		const onSubmit = vi.fn();
-		const sampleTask: Task = {
+		const regularTask: Task = {
 			id: "t1",
-			title: "Revisar logs",
-			description: "Daily matutino",
+			title: "Revisar endpoints",
+			description: "Validar mutaciones",
 			priority: "medium",
-			column: "pendiente",
-			projectId: "p1",
-			isRitual: true,
+			column: "en-proceso",
+			projectId: "p2",
 			createdAt: "2026-11-20T00:00:00Z",
 		};
 
 		render(
 			<EditTaskModal
-				task={sampleTask}
+				task={regularTask}
 				onClose={vi.fn()}
 				projects={PROJECTS}
 				onSubmit={onSubmit}
 			/>,
 		);
 
-		expect(screen.getByText("DAILY")).toBeTruthy();
-		fireEvent.click(screen.getByRole("button", { name: "Finalizado" }));
-		fireEvent.click(screen.getByRole("button", { name: "Baja" }));
-		fireEvent.click(screen.getByRole("button", { name: "Backend API" }));
+		expect(screen.queryByText("Editar Nota")).toBeNull();
+		expect(screen.getByText("Media")).toBeTruthy();
+
+		fireEvent.click(
+			screen.getByRole("button", { name: "Cambiar prioridad anterior" }),
+		);
+		expect(screen.getByText("Baja")).toBeTruthy();
 		fireEvent.click(screen.getByRole("button", { name: "Actualizar Nota" }));
 
 		expect(onSubmit).toHaveBeenCalledWith(
 			expect.objectContaining({
 				id: "t1",
-				title: "Revisar logs",
 				priority: "low",
-				column: "finalizado",
+				column: "en-proceso",
 				projectId: "p2",
 			}),
 		);
+
+		cleanup();
+
+		// Daily notes stay purple without priority color arrows
+		render(
+			<EditTaskModal
+				task={{ ...regularTask, id: "t2", isRitual: true }}
+				onClose={vi.fn()}
+				projects={PROJECTS}
+				onSubmit={vi.fn()}
+			/>,
+		);
+
+		expect(screen.getByText("DAILY")).toBeTruthy();
+		expect(
+			screen.queryByRole("button", { name: "Cambiar prioridad siguiente" }),
+		).toBeNull();
 	});
 });

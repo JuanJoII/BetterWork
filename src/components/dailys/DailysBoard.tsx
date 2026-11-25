@@ -1,11 +1,12 @@
 import { useMutation, useQuery } from "convex/react";
-import { Check, Plus, Sparkles, Trash2, Zap } from "lucide-react";
+import { Check, Plus, Trash2, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { sileo } from "sileo";
 import { api } from "../../../convex/_generated/api";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import type { Daily } from "../../types/kanban";
 import { getTodayDateKey } from "../../utils/date";
+import { NOTE_TONE_STYLES } from "../../utils/noteTheme";
 import { getErrorToastTheme, getSuccessToastTheme } from "../../utils/toast";
 import ModalShell from "../ui/ModalShell";
 
@@ -214,28 +215,11 @@ export default function DailysBoard() {
 			<ModalShell
 				isOpen={showAddModal}
 				onClose={() => setShowAddModal(false)}
-				titleId="create-daily-modal-title"
-				tone="purple"
+				ariaLabel="Crear daily"
+				tone="daily"
 			>
-				<div className="mb-5 flex items-center gap-2.5 pr-8">
-					<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-purple-400/50 bg-purple-400/20 text-purple-700 dark:border-purple-400/40 dark:bg-purple-500/20 dark:text-purple-300">
-						<Sparkles className="h-4.5 w-4.5" />
-					</div>
-					<div className="flex flex-wrap items-center gap-2">
-						<h2
-							id="create-daily-modal-title"
-							className="display-title m-0 text-lg font-black tracking-tight text-[var(--sea-ink)]"
-						>
-							Añadir Nuevo Daily
-						</h2>
-						<span className="rounded-full border border-purple-300 bg-purple-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-purple-800 dark:border-purple-400/40 dark:bg-purple-500/20 dark:text-purple-200">
-							DAILY
-						</span>
-					</div>
-				</div>
-
-				<form onSubmit={handleAddDaily} className="space-y-5">
-					<div className="rounded-2xl border border-purple-300/75 bg-purple-50/75 p-4 dark:border-purple-500/30 dark:bg-purple-950/25">
+				<form onSubmit={handleAddDaily} className="flex flex-col">
+					<div className="mb-3 flex items-center gap-2.5 pr-8 pt-1">
 						<label htmlFor="modal-daily-title" className="sr-only">
 							Nombre del Daily
 						</label>
@@ -247,42 +231,41 @@ export default function DailysBoard() {
 							placeholder="Ej. Revisar bandeja de Gmail"
 							value={newTitle}
 							onChange={(e) => setNewTitle(e.target.value)}
-							className="w-full border-0 border-b border-purple-300/70 bg-transparent pb-2.5 font-serif text-lg font-black text-purple-950 placeholder:text-purple-900/40 focus:border-purple-500 focus:outline-none dark:border-purple-400/25 dark:text-purple-200 dark:placeholder:text-purple-200/35 dark:focus:border-purple-400"
+							className={`min-w-0 flex-1 border-0 border-b bg-transparent pb-2 font-serif text-xl font-black leading-snug focus:outline-none ${NOTE_TONE_STYLES.daily.titleInput}`}
 						/>
-
-						<label htmlFor="modal-daily-desc" className="sr-only">
-							Descripción
-						</label>
-						<textarea
-							id="modal-daily-desc"
-							rows={3}
-							placeholder="Instrucciones breves o rutina diaria..."
-							value={newDesc}
-							onChange={(e) => setNewDesc(e.target.value)}
-							className="mt-3 w-full resize-none bg-transparent text-xs sm:text-sm leading-relaxed font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200 dark:placeholder:text-slate-500"
-						/>
+						<span
+							className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${NOTE_TONE_STYLES.daily.pill}`}
+						>
+							DAILY
+						</span>
 					</div>
 
-					<p className="m-0 text-[11px] font-semibold leading-relaxed text-[var(--sea-ink-soft)]">
-						Aparecerá automáticamente cada día en tu columna{" "}
-						<strong className="text-purple-700 dark:text-purple-300">
-							Pendiente
-						</strong>
-						.
-					</p>
+					<label htmlFor="modal-daily-desc" className="sr-only">
+						Descripción
+					</label>
+					<textarea
+						id="modal-daily-desc"
+						rows={5}
+						placeholder="Instrucciones breves o rutina diaria..."
+						value={newDesc}
+						onChange={(e) => setNewDesc(e.target.value)}
+						className="w-full resize-none bg-transparent text-sm leading-relaxed font-medium text-slate-700 placeholder:text-slate-400/90 focus:outline-none dark:text-slate-200/90 dark:placeholder:text-slate-400/60"
+					/>
 
-					<div className="flex items-center justify-end gap-2 border-t border-slate-900/8 dark:border-white/10 pt-4">
+					<div
+						className={`mt-5 flex items-center justify-end gap-2 border-t pt-4 ${NOTE_TONE_STYLES.daily.divider}`}
+					>
 						<button
 							type="button"
 							onClick={() => setShowAddModal(false)}
-							className="rounded-full border border-slate-200/90 px-4 py-2 text-xs font-extrabold text-[var(--sea-ink-soft)] transition hover:border-slate-300 hover:text-[var(--sea-ink)] dark:border-white/12 dark:hover:border-white/25 cursor-pointer"
+							className="rounded-full px-4 py-1.5 text-xs font-extrabold text-[var(--sea-ink-soft)] transition hover:bg-black/5 hover:text-[var(--sea-ink)] dark:hover:bg-white/10 cursor-pointer"
 						>
 							Cancelar
 						</button>
 						<button
 							type="submit"
 							disabled={!newTitle.trim()}
-							className="rounded-full bg-purple-600 px-5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-purple-500 dark:bg-purple-400 dark:text-slate-950 dark:hover:bg-purple-300 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+							className={`rounded-full px-5 py-1.5 text-xs font-black shadow-sm transition active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer ${NOTE_TONE_STYLES.daily.ctaButton}`}
 						>
 							Crear Daily
 						</button>

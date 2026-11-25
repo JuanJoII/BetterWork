@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import { getNoteToneKey, getNoteToneStyles } from "../../utils/noteTheme";
 import {
 	GENERAL_BOARD_LABEL,
 	getProjectDisplayName,
@@ -332,12 +333,15 @@ export default function FocusTaskPanel({
 						const isActive = task.id === activeTaskId;
 						const isDragging = task.id === draggingTaskId;
 						const projectOfTask = projects.find((p) => p.id === task.projectId);
+						const toneKey = getNoteToneKey(task);
+						const tone = getNoteToneStyles(task);
 
 						return (
 							/* biome-ignore lint/a11y/useSemanticElements: draggable sticky-note card supporting both HTML5 DnD and click selection */
 							<div
 								key={task.id}
 								role="button"
+								data-note-tone={toneKey}
 								tabIndex={isLocked ? -1 : 0}
 								draggable={!isLocked}
 								aria-disabled={isLocked}
@@ -365,48 +369,24 @@ export default function FocusTaskPanel({
 									}
 								}}
 								aria-pressed={isActive}
-								className={`group relative rounded-2xl border p-4 text-left transition-all duration-200 select-none ${
+								className={`group relative rounded-2xl border p-4 text-left transition-[border-color,background-color,box-shadow,opacity] duration-200 select-none ${
 									isLocked
 										? "cursor-not-allowed"
 										: "cursor-grab active:cursor-grabbing"
-								} ${
-									isDaily
-										? "border-purple-300/80 bg-purple-50/95 text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/20 dark:text-purple-100/90"
-										: "border-amber-300/80 bg-amber-50/95 text-amber-950 dark:border-yellow-500/20 dark:bg-yellow-950/20 dark:text-yellow-100/90"
-								} ${
-									!isLocked
-										? isDaily
-											? "hover:border-purple-400 hover:bg-purple-50 dark:hover:border-purple-400/55 dark:hover:bg-purple-950/30"
-											: "hover:border-amber-400 hover:bg-amber-50 dark:hover:border-yellow-400/45 dark:hover:bg-yellow-950/30"
-										: !isActive
-											? "opacity-60"
-											: ""
-								} ${
-									isActive
-										? isDaily
-											? "shadow-[0_16px_26px_-10px_rgba(126,34,206,0.38)] dark:shadow-[0_16px_26px_-10px_rgba(168,85,247,0.55)]"
-											: "shadow-[0_16px_26px_-10px_rgba(217,119,6,0.38)] dark:shadow-[0_16px_26px_-10px_rgba(250,204,21,0.48)]"
-										: ""
-								} ${isDragging ? "opacity-45 scale-[0.98]" : ""}`}
+								} ${tone.card} ${
+									!isLocked ? tone.cardHover : !isActive ? "opacity-60" : ""
+								} ${isActive ? tone.activeBottomShadow : ""} ${
+									isDragging ? "opacity-45 scale-[0.98]" : ""
+								}`}
 							>
 								{/* Tech-tape overlay (Kanban visual signature) */}
 								<div
-									className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4 w-12 border-x shadow-sm backdrop-blur-[2px] ${
-										isDaily
-											? "bg-purple-300/45 border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40"
-											: "bg-amber-300/45 border-amber-400/55 dark:bg-yellow-400/10 dark:border-yellow-400/30"
-									}`}
+									className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4 w-12 border-x shadow-sm backdrop-blur-[2px] ${tone.tape}`}
 								/>
 
-								{/* Top meta row */}
+								{/* Top meta row (grip + EN FOCUS / DAILY only — regular priority conveyed by color) */}
 								<div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider">
-									<span
-										className={`flex items-center gap-1 ${
-											isDaily
-												? "text-purple-700 dark:text-purple-400"
-												: "text-amber-700 dark:text-yellow-400/75"
-										}`}
-									>
+									<span className={`flex items-center gap-1 ${tone.metaText}`}>
 										<GripVertical
 											className={`h-3.5 w-3.5 transition-opacity ${
 												isLocked
@@ -414,9 +394,7 @@ export default function FocusTaskPanel({
 													: "opacity-55 group-hover:opacity-100"
 											}`}
 										/>
-										<span>
-											{isDaily ? "Hábito Diario" : `Prioridad ${task.priority}`}
-										</span>
+										{isDaily && <span>Hábito Diario</span>}
 									</span>
 
 									<div className="flex items-center gap-1">
@@ -425,26 +403,16 @@ export default function FocusTaskPanel({
 												EN FOCUS
 											</span>
 										)}
-										{isDaily ? (
+										{isDaily && (
 											<span className="rounded border border-purple-300 bg-purple-100 px-1.5 py-0.5 text-[9px] font-black text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300">
 												DAILY
 											</span>
-										) : (
-											task.priority === "high" && (
-												<span className="rounded border border-red-300 bg-red-100 px-1.5 py-0.5 text-[9px] font-black text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-400">
-													URGENTE
-												</span>
-											)
 										)}
 									</div>
 								</div>
 
 								<h3
-									className={`m-0 text-sm font-black leading-snug ${
-										isDaily
-											? "text-purple-900 dark:text-purple-300"
-											: "text-amber-950 dark:text-yellow-400"
-									}`}
+									className={`m-0 text-sm font-black leading-snug ${tone.title}`}
 								>
 									{task.title}
 								</h3>
@@ -456,14 +424,12 @@ export default function FocusTaskPanel({
 								)}
 
 								{/* Footer: Project + Status */}
-								<div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-900/10 dark:border-white/5 pt-2.5 text-[10px] font-extrabold">
+								<div
+									className={`mt-2 flex items-center justify-between gap-2 border-t pt-2.5 text-[10px] font-extrabold ${tone.divider}`}
+								>
 									{projectOfTask ? (
 										<span
-											className={`flex min-w-0 items-center gap-1 uppercase tracking-wider ${
-												isDaily
-													? "text-purple-700/80 dark:text-purple-300/80"
-													: "text-amber-800/80 dark:text-yellow-500/80"
-											}`}
+											className={`flex min-w-0 items-center gap-1 uppercase tracking-wider ${tone.projectText}`}
 										>
 											{projectOfTask.icon ? (
 												<ProjectIcon

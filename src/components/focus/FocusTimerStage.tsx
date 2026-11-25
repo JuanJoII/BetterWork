@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
+import { getNoteToneStyles } from "../../utils/noteTheme";
 import { getProjectDisplayName } from "../../utils/projects";
 import { useResolvedTheme } from "../../utils/theme";
 import GradientText from "../GradientText";
@@ -173,6 +174,7 @@ export default function FocusTimerStage({
 	};
 
 	const isDaily = !!activeTask?.isRitual;
+	const activeTaskTone = activeTask ? getNoteToneStyles(activeTask) : null;
 	const headerTitle = activeTask
 		? `Focus en ${activeTask.title}`
 		: "Focus en ...";
@@ -245,45 +247,27 @@ export default function FocusTimerStage({
 						{/* Active Sticky Note Card */}
 						<div
 							data-active-focus-card
-							className={`relative mb-6 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${
-								isDaily
-									? "border-purple-300/80 bg-purple-50/90 text-purple-950 dark:border-purple-500/35 dark:bg-purple-950/30 dark:text-purple-100/90"
-									: "border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-yellow-500/25 dark:bg-yellow-950/30 dark:text-yellow-100/90"
-							}`}
+							className={`relative mb-6 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${activeTaskTone?.card ?? ""}`}
 						>
 							{/* Tech-tape overlay */}
 							<div
-								className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4.5 w-14 border-x shadow-sm backdrop-blur-[2px] ${
-									isDaily
-										? "bg-purple-300/45 border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40"
-										: "bg-amber-300/45 border-amber-400/55 dark:bg-yellow-400/10 dark:border-yellow-400/30"
-								}`}
+								className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4.5 w-14 border-x shadow-sm backdrop-blur-[2px] ${activeTaskTone?.tape ?? ""}`}
 							/>
 
-							<div className="mb-2.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider">
-								<span
-									className={
-										isDaily
-											? "text-purple-700 dark:text-purple-400"
-											: "text-amber-700 dark:text-yellow-400/80"
-									}
-								>
-									{isDaily
-										? "Hábito Diario"
-										: `Prioridad ${activeTask.priority}`}
-								</span>
+							<div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider">
+								{isDaily ? (
+									<span className={activeTaskTone?.metaText ?? ""}>
+										Hábito Diario
+									</span>
+								) : (
+									<span />
+								)}
 
 								<div className="flex items-center gap-1.5">
-									{isDaily ? (
+									{isDaily && (
 										<span className="rounded border border-purple-300 bg-purple-100 px-2 py-0.5 text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300 font-black">
 											DAILY
 										</span>
-									) : (
-										activeTask.priority === "high" && (
-											<span className="rounded border border-red-300 bg-red-100 px-2 py-0.5 text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-400 font-black">
-												URGENTE
-											</span>
-										)
 									)}
 									<button
 										type="button"
@@ -303,11 +287,7 @@ export default function FocusTimerStage({
 							</div>
 
 							<h2
-								className={`m-0 text-base font-black leading-snug ${
-									isDaily
-										? "text-purple-900 dark:text-purple-300"
-										: "text-amber-950 dark:text-yellow-400"
-								}`}
+								className={`m-0 text-base font-black leading-snug ${activeTaskTone?.title ?? ""}`}
 							>
 								{activeTask.title}
 							</h2>
@@ -318,14 +298,12 @@ export default function FocusTimerStage({
 								</p>
 							)}
 
-							<div className="mt-3.5 flex items-center justify-between gap-2 border-t border-slate-900/10 dark:border-white/10 pt-3">
+							<div
+								className={`mt-3.5 flex items-center justify-between gap-2 border-t pt-3 ${activeTaskTone?.divider ?? "border-slate-900/10 dark:border-white/10"}`}
+							>
 								{activeProject ? (
 									<span
-										className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
-											isDaily
-												? "text-purple-700/80 dark:text-purple-300/80"
-												: "text-amber-800/80 dark:text-yellow-500/80"
-										}`}
+										className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${activeTaskTone?.projectText ?? ""}`}
 									>
 										{activeProject.icon ? (
 											<ProjectIcon
