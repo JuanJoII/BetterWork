@@ -11,6 +11,7 @@ import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
 import { getTodayDateKey } from "../../utils/date";
+import { getErrorToastTheme, getSuccessToastTheme } from "../../utils/toast";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
@@ -193,15 +194,10 @@ export default function KanbanBoard() {
 		sileo.error({
 			id: toastKey,
 			title: "¿Eliminar nota?",
-			fill: "#260f1c",
 			duration: 5000,
 			description:
 				"Esta acción es irreversible. Pulsa 'Eliminar' para confirmar, o cierra esta alerta para cancelar.",
-			styles: {
-				title: "text-red-200 font-extrabold",
-				description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				button: "bg-red-600 text-white hover:bg-red-700 font-bold",
-			},
+			...getErrorToastTheme(),
 			button: {
 				title: "Eliminar",
 				onClick: () => {
@@ -214,12 +210,7 @@ export default function KanbanBoard() {
 									title: "Nota eliminada",
 									description:
 										"La nota adhesiva se ha eliminado correctamente.",
-									fill: "#130f26",
-									styles: {
-										title: "text-purple-200 font-extrabold",
-										description:
-											"text-purple-300/80 text-xs font-semibold mt-0.5",
-									},
+									...getSuccessToastTheme(),
 								});
 							})
 							.catch((err) => {
@@ -227,11 +218,7 @@ export default function KanbanBoard() {
 								sileo.error({
 									title: "Error al eliminar",
 									description: "No se pudo eliminar la nota. Intenta de nuevo.",
-									fill: "#260f1c",
-									styles: {
-										title: "text-red-200 font-extrabold",
-										description: "text-red-300/80 text-xs font-semibold mt-0.5",
-									},
+									...getErrorToastTheme(),
 								});
 							});
 					};
@@ -295,11 +282,7 @@ export default function KanbanBoard() {
 					title: "Error al completar",
 					description:
 						"No se pudo marcar la tarea como realizada. Intenta de nuevo.",
-					fill: "#260f1c",
-					styles: {
-						title: "text-red-200 font-extrabold",
-						description: "text-red-300/80 text-xs font-semibold mt-0.5",
-					},
+					...getErrorToastTheme(),
 				});
 				return null;
 			});
@@ -312,13 +295,8 @@ export default function KanbanBoard() {
 			description: isRitual
 				? `Has completado "${title}" por hoy. Volverá a estar activo mañana.`
 				: `Felicidades, has finalizado "${title}" con éxito.`,
-			fill: "#130f26",
 			duration: 8000,
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				button: "bg-purple-600 text-white hover:bg-purple-700 font-bold",
-			},
+			...getSuccessToastTheme(),
 			button: {
 				title: "Deshacer",
 				onClick: async () => {
@@ -340,11 +318,7 @@ export default function KanbanBoard() {
 						sileo.success({
 							title: "Tarea restaurada",
 							description: `Se ha vuelto a agregar "${title}".`,
-							fill: "#130f26",
-							styles: {
-								title: "text-purple-200 font-extrabold",
-								description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-							},
+							...getSuccessToastTheme(),
 						});
 					} catch (err) {
 						console.error("Error undoing task completion:", err);
@@ -417,11 +391,7 @@ export default function KanbanBoard() {
 							? "En Proceso"
 							: "Finalizado"
 				}.`,
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
 			setShowAddModal(false);
 		} catch (e) {
@@ -459,22 +429,14 @@ export default function KanbanBoard() {
 			sileo.success({
 				title: "Proyecto creado",
 				description: `Se ha creado el proyecto "${trimmed}"`,
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
 		} catch (err) {
 			console.error(err);
 			sileo.error({
 				title: "Error al crear proyecto",
 				description: "No se pudo crear el proyecto. Intenta de nuevo.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getErrorToastTheme(),
 			});
 			throw err;
 		}
@@ -485,14 +447,9 @@ export default function KanbanBoard() {
 		sileo.error({
 			id: toastKey,
 			title: "¿Eliminar proyecto?",
-			fill: "#260f1c",
 			duration: 5000,
 			description: `Se eliminará el proyecto "${projectName}" y TODAS sus notas asociadas de forma irreversible. Pulsa 'Confirmar' o cierra este aviso para cancelar.`,
-			styles: {
-				title: "text-red-200 font-extrabold",
-				description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				button: "bg-red-600 text-white hover:bg-red-700 font-bold",
-			},
+			...getErrorToastTheme(),
 			button: {
 				title: "Confirmar",
 				onClick: () => {
@@ -505,12 +462,7 @@ export default function KanbanBoard() {
 							sileo.success({
 								title: "Proyecto eliminado",
 								description: `Se ha eliminado el proyecto "${projectName}" y sus tareas.`,
-								fill: "#130f26",
-								styles: {
-									title: "text-purple-200 font-extrabold",
-									description:
-										"text-purple-300/80 text-xs font-semibold mt-0.5",
-								},
+								...getSuccessToastTheme(),
 							});
 						})
 						.catch((e) => {
@@ -519,11 +471,7 @@ export default function KanbanBoard() {
 								title: "Error al eliminar",
 								description:
 									"No se pudo eliminar el proyecto. Intenta de nuevo.",
-								fill: "#260f1c",
-								styles: {
-									title: "text-red-200 font-extrabold",
-									description: "text-red-300/80 text-xs font-semibold mt-0.5",
-								},
+								...getErrorToastTheme(),
 							});
 						});
 				},

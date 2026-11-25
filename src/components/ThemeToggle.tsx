@@ -1,8 +1,7 @@
 import { Monitor, Moon, Sun } from "lucide";
 import { MorphIcon } from "morphicons/react";
 import { useEffect, useState } from "react";
-
-type ThemeMode = "light" | "dark" | "auto";
+import { notifyThemeChange, type ThemeMode } from "../utils/theme";
 
 function getInitialMode(): ThemeMode {
 	if (typeof window === "undefined") {
@@ -34,6 +33,7 @@ function applyThemeMode(mode: ThemeMode) {
 	}
 
 	document.documentElement.style.colorScheme = resolved;
+	notifyThemeChange(resolved);
 }
 
 export default function ThemeToggle() {
@@ -78,9 +78,9 @@ export default function ThemeToggle() {
 
 	const iconTintClass =
 		mode === "light"
-			? "text-yellow-300 hover:text-yellow-200"
+			? "text-amber-500 hover:text-amber-600 dark:text-yellow-300 dark:hover:text-yellow-200"
 			: mode === "dark"
-				? "text-purple-300 hover:text-purple-200"
+				? "text-purple-600 hover:text-purple-700 dark:text-purple-300 dark:hover:text-purple-200"
 				: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]";
 
 	return (

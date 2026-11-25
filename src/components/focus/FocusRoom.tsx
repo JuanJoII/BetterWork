@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
 import { playCompletionChime } from "../../utils/audio";
+import { getSuccessToastTheme } from "../../utils/toast";
 import FocusTaskPanel, { type FocusStatusFilter } from "./FocusTaskPanel";
 import FocusTimerStage, { type FocusClockMode } from "./FocusTimerStage";
 
@@ -199,11 +200,7 @@ export default function FocusRoom() {
 				description: activeTask
 					? `"${activeTask.title}" registrada en tu progreso.`
 					: "Tu sesión de enfoque ha sido registrada.",
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
 		},
 		[activeTask, timerDuration, updateColumnMutation],
@@ -276,11 +273,7 @@ export default function FocusRoom() {
 				clockMode === "stopwatch"
 					? `"${targetTask.title}" está lista en el cronómetro.`
 					: `"${targetTask.title}" está lista en el temporizador.`,
-			fill: "#130f26",
-			styles: {
-				title: "text-purple-200 font-extrabold",
-				description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-			},
+			...getSuccessToastTheme(),
 		});
 	};
 
@@ -311,11 +304,7 @@ export default function FocusRoom() {
 			sileo.success({
 				title: "Tarea movida a Finalizado",
 				description: `"${task.title}" se actualizó en tu tablero.`,
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
 		} catch (e) {
 			console.error("Error finishing task:", e);

@@ -119,7 +119,9 @@ export default function FocusTaskPanel({
 					</h2>
 					<span
 						className={`text-xs font-bold ${
-							isLocked ? "text-amber-300/85" : "text-[var(--sea-ink-soft)]"
+							isLocked
+								? "text-amber-700 dark:text-amber-300/85"
+								: "text-[var(--sea-ink-soft)]"
 						}`}
 					>
 						{isLocked
@@ -127,7 +129,7 @@ export default function FocusTaskPanel({
 							: "Arrastra una nota al temporizador"}
 					</span>
 				</div>
-				<span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-yellow-400/20 px-1.5 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
+				<span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-400/20 px-1.5 text-xs font-black text-amber-800 border border-amber-500/35 dark:bg-yellow-400/20 dark:text-yellow-400 dark:border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
 					{tasks.length}
 				</span>
 			</div>
@@ -151,14 +153,14 @@ export default function FocusTaskPanel({
 						title="Filtrar por proyecto o estado"
 						className={`relative flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-extrabold transition cursor-pointer ${
 							isFilterOpen || activeFilterCount > 0
-								? "border-yellow-400/75 bg-yellow-400/15 text-yellow-300 shadow-[0_0_16px_rgba(250,204,21,0.18)]"
-								: "border-yellow-500/20 bg-slate-900/75 text-[var(--sea-ink-soft)] hover:border-yellow-400/40 hover:text-yellow-200"
+								? "border-amber-500/75 bg-amber-400/20 text-amber-800 shadow-[0_0_14px_rgba(245,158,11,0.16)] dark:border-yellow-400/75 dark:bg-yellow-400/15 dark:text-yellow-300 dark:shadow-[0_0_16px_rgba(250,204,21,0.18)]"
+								: "border-amber-500/30 bg-white/85 text-[var(--sea-ink-soft)] hover:border-amber-500/60 hover:text-amber-800 dark:border-yellow-500/20 dark:bg-slate-900/75 dark:hover:border-yellow-400/40 dark:hover:text-yellow-200"
 						}`}
 					>
 						<SlidersHorizontal className="h-3.5 w-3.5" />
 						<span className="hidden sm:inline">Filtros</span>
 						{activeFilterCount > 0 && (
-							<span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-yellow-300 px-1 text-[10px] font-black text-slate-950 leading-none">
+							<span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 dark:bg-yellow-300 px-1 text-[10px] font-black text-slate-950 leading-none">
 								{activeFilterCount}
 							</span>
 						)}
@@ -169,10 +171,10 @@ export default function FocusTaskPanel({
 						<div
 							role="dialog"
 							aria-label="Filtros de tareas"
-							className="absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in"
+							className="absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-amber-400/45 bg-white/95 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14),0_0_24px_rgba(245,158,11,0.08)] dark:border-yellow-400/35 dark:bg-slate-950/95 dark:shadow-[0_18px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in"
 						>
 							<div className="mb-3 flex items-center justify-between gap-2">
-								<h3 className="display-title m-0 text-sm font-black text-yellow-300">
+								<h3 className="display-title m-0 text-sm font-black text-amber-700 dark:text-yellow-300">
 									Filtrar tareas
 								</h3>
 								<div className="flex items-center gap-1.5">
@@ -180,7 +182,7 @@ export default function FocusTaskPanel({
 										<button
 											type="button"
 											onClick={clearFilters}
-											className="text-[10px] font-extrabold text-yellow-300/80 hover:text-yellow-200 cursor-pointer"
+											className="text-[10px] font-extrabold text-amber-700 hover:text-amber-900 dark:text-yellow-300/80 dark:hover:text-yellow-200 cursor-pointer"
 										>
 											Limpiar
 										</button>
@@ -189,7 +191,7 @@ export default function FocusTaskPanel({
 										type="button"
 										onClick={() => setIsFilterOpen(false)}
 										aria-label="Cerrar filtros"
-										className="rounded-lg p-1 text-[var(--sea-ink-soft)] hover:bg-white/5 hover:text-[var(--sea-ink)] cursor-pointer"
+										className="rounded-lg p-1 text-[var(--sea-ink-soft)] hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-[var(--sea-ink)] cursor-pointer"
 									>
 										<X className="h-3.5 w-3.5" />
 									</button>
@@ -207,8 +209,8 @@ export default function FocusTaskPanel({
 										onClick={() => onProjectChange("all")}
 										className={`flex w-full items-center justify-between rounded-xl border px-2.5 py-1.5 text-left text-xs font-bold transition cursor-pointer ${
 											selectedProjectId === "all"
-												? "border-yellow-400/60 bg-yellow-300/15 text-yellow-300"
-												: "border-transparent text-slate-300 hover:bg-white/5 hover:text-yellow-100"
+												? "border-amber-400/75 bg-amber-400/20 text-amber-900 dark:border-yellow-400/60 dark:bg-yellow-300/15 dark:text-yellow-300"
+												: "border-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-yellow-100"
 										}`}
 									>
 										<span>{GENERAL_BOARD_LABEL}</span>
@@ -228,8 +230,8 @@ export default function FocusTaskPanel({
 													onClick={() => onProjectChange(proj.id)}
 													className={`flex w-full items-center justify-between gap-2 rounded-xl border px-2.5 py-1.5 text-left text-xs font-bold transition cursor-pointer ${
 														isSelected
-															? "border-yellow-400/60 bg-yellow-300/15 text-yellow-300"
-															: "border-transparent text-slate-300 hover:bg-white/5 hover:text-yellow-100"
+															? "border-amber-400/75 bg-amber-400/20 text-amber-900 dark:border-yellow-400/60 dark:bg-yellow-300/15 dark:text-yellow-300"
+															: "border-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-yellow-100"
 													}`}
 												>
 													<span className="flex min-w-0 items-center gap-2">
@@ -270,8 +272,8 @@ export default function FocusTaskPanel({
 												onClick={() => onStatusFilterChange(opt.id)}
 												className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition cursor-pointer ${
 													isSelected
-														? "border-yellow-400 bg-yellow-300 text-slate-950"
-														: "border-yellow-500/20 bg-slate-900/60 text-slate-300 hover:border-yellow-400/40 hover:text-yellow-100"
+														? "border-amber-500 bg-amber-400 text-slate-950 dark:border-yellow-400 dark:bg-yellow-300"
+														: "border-amber-500/25 bg-slate-100/80 text-slate-700 hover:border-amber-500/55 hover:text-slate-950 dark:border-yellow-500/20 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-yellow-400/40 dark:hover:text-yellow-100"
 												}`}
 											>
 												{opt.label}
@@ -292,7 +294,7 @@ export default function FocusTaskPanel({
 						<button
 							type="button"
 							onClick={() => onProjectChange("all")}
-							className="inline-flex items-center gap-1 rounded-full border border-yellow-400/40 bg-yellow-400/10 px-2.5 py-0.5 text-[10px] font-extrabold text-yellow-200 hover:bg-yellow-400/20 cursor-pointer"
+							className="inline-flex items-center gap-1 rounded-full border border-amber-500/45 bg-amber-400/18 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-900 hover:bg-amber-400/25 dark:border-yellow-400/40 dark:bg-yellow-400/10 dark:text-yellow-200 dark:hover:bg-yellow-400/20 cursor-pointer"
 						>
 							{selectedProject.icon && (
 								<ProjectIcon
@@ -311,7 +313,7 @@ export default function FocusTaskPanel({
 						<button
 							type="button"
 							onClick={() => onStatusFilterChange("active")}
-							className="inline-flex items-center gap-1 rounded-full border border-purple-400/40 bg-purple-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-purple-200 hover:bg-purple-500/25 cursor-pointer"
+							className="inline-flex items-center gap-1 rounded-full border border-purple-400/50 bg-purple-100 px-2.5 py-0.5 text-[10px] font-extrabold text-purple-800 hover:bg-purple-200/70 dark:border-purple-400/40 dark:bg-purple-500/15 dark:text-purple-200 dark:hover:bg-purple-500/25 cursor-pointer"
 						>
 							<span>
 								{STATUS_OPTIONS.find((s) => s.id === statusFilter)?.label}
@@ -369,21 +371,21 @@ export default function FocusTaskPanel({
 										: "cursor-grab active:cursor-grabbing"
 								} ${
 									isDaily
-										? "border-purple-500/30 bg-purple-950/20 text-purple-100/90"
-										: "border-yellow-500/20 bg-yellow-950/20 text-yellow-100/90"
+										? "border-purple-300/80 bg-purple-50/95 text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/20 dark:text-purple-100/90"
+										: "border-amber-300/80 bg-amber-50/95 text-amber-950 dark:border-yellow-500/20 dark:bg-yellow-950/20 dark:text-yellow-100/90"
 								} ${
 									!isLocked
 										? isDaily
-											? "hover:border-purple-400/55 hover:bg-purple-950/30"
-											: "hover:border-yellow-400/45 hover:bg-yellow-950/30"
+											? "hover:border-purple-400 hover:bg-purple-50 dark:hover:border-purple-400/55 dark:hover:bg-purple-950/30"
+											: "hover:border-amber-400 hover:bg-amber-50 dark:hover:border-yellow-400/45 dark:hover:bg-yellow-950/30"
 										: !isActive
 											? "opacity-60"
 											: ""
 								} ${
 									isActive
 										? isDaily
-											? "shadow-[0_16px_26px_-10px_rgba(168,85,247,0.55)]"
-											: "shadow-[0_16px_26px_-10px_rgba(250,204,21,0.48)]"
+											? "shadow-[0_16px_26px_-10px_rgba(126,34,206,0.38)] dark:shadow-[0_16px_26px_-10px_rgba(168,85,247,0.55)]"
+											: "shadow-[0_16px_26px_-10px_rgba(217,119,6,0.38)] dark:shadow-[0_16px_26px_-10px_rgba(250,204,21,0.48)]"
 										: ""
 								} ${isDragging ? "opacity-45 scale-[0.98]" : ""}`}
 							>
@@ -391,8 +393,8 @@ export default function FocusTaskPanel({
 								<div
 									className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4 w-12 border-x shadow-sm backdrop-blur-[2px] ${
 										isDaily
-											? "bg-purple-500/20 border-purple-400/40"
-											: "bg-yellow-400/10 border-yellow-400/30"
+											? "bg-purple-300/45 border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40"
+											: "bg-amber-300/45 border-amber-400/55 dark:bg-yellow-400/10 dark:border-yellow-400/30"
 									}`}
 								/>
 
@@ -400,7 +402,9 @@ export default function FocusTaskPanel({
 								<div className="mb-2 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider">
 									<span
 										className={`flex items-center gap-1 ${
-											isDaily ? "text-purple-400" : "text-yellow-400/75"
+											isDaily
+												? "text-purple-700 dark:text-purple-400"
+												: "text-amber-700 dark:text-yellow-400/75"
 										}`}
 									>
 										<GripVertical
@@ -417,17 +421,17 @@ export default function FocusTaskPanel({
 
 									<div className="flex items-center gap-1">
 										{isActive && (
-											<span className="rounded border border-emerald-400/45 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-black text-emerald-300">
+											<span className="rounded border border-emerald-500/45 bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black text-emerald-800 dark:border-emerald-400/45 dark:bg-emerald-500/15 dark:text-emerald-300">
 												EN FOCUS
 											</span>
 										)}
 										{isDaily ? (
-											<span className="rounded border border-purple-500/40 bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-black text-purple-300">
+											<span className="rounded border border-purple-300 bg-purple-100 px-1.5 py-0.5 text-[9px] font-black text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300">
 												DAILY
 											</span>
 										) : (
 											task.priority === "high" && (
-												<span className="rounded border border-red-500/25 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-black text-red-400">
+												<span className="rounded border border-red-300 bg-red-100 px-1.5 py-0.5 text-[9px] font-black text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-400">
 													URGENTE
 												</span>
 											)
@@ -437,24 +441,28 @@ export default function FocusTaskPanel({
 
 								<h3
 									className={`m-0 text-sm font-black leading-snug ${
-										isDaily ? "text-purple-300" : "text-yellow-400"
+										isDaily
+											? "text-purple-900 dark:text-purple-300"
+											: "text-amber-950 dark:text-yellow-400"
 									}`}
 								>
 									{task.title}
 								</h3>
 
 								{task.description && (
-									<p className="mt-1.5 mb-2.5 line-clamp-2 text-xs leading-relaxed text-slate-300/85 font-medium">
+									<p className="mt-1.5 mb-2.5 line-clamp-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300/85 font-medium">
 										{task.description}
 									</p>
 								)}
 
 								{/* Footer: Project + Status */}
-								<div className="mt-2 flex items-center justify-between gap-2 border-t border-white/5 pt-2.5 text-[10px] font-extrabold">
+								<div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-900/10 dark:border-white/5 pt-2.5 text-[10px] font-extrabold">
 									{projectOfTask ? (
 										<span
 											className={`flex min-w-0 items-center gap-1 uppercase tracking-wider ${
-												isDaily ? "text-purple-300/80" : "text-yellow-500/80"
+												isDaily
+													? "text-purple-700/80 dark:text-purple-300/80"
+													: "text-amber-800/80 dark:text-yellow-500/80"
 											}`}
 										>
 											{projectOfTask.icon ? (
@@ -477,10 +485,10 @@ export default function FocusTaskPanel({
 									<span
 										className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
 											task.column === "en-proceso"
-												? "bg-yellow-400/15 text-yellow-300 border border-yellow-400/25"
+												? "bg-amber-200/80 text-amber-900 border border-amber-400/50 dark:bg-yellow-400/15 dark:text-yellow-300 dark:border-yellow-400/25"
 												: task.column === "finalizado"
-													? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
-													: "bg-slate-800/80 text-slate-300 border border-white/10"
+													? "bg-emerald-100 text-emerald-800 border border-emerald-400/45 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/25"
+													: "bg-slate-200/85 text-slate-700 border border-slate-300/80 dark:bg-slate-800/80 dark:text-slate-300 dark:border-white/10"
 										}`}
 									>
 										{COLUMN_LABEL[task.column]}
@@ -502,7 +510,7 @@ export default function FocusTaskPanel({
 									onSearchChange("");
 									clearFilters();
 								}}
-								className="mt-3 rounded-full border border-yellow-400/35 bg-yellow-400/10 px-3 py-1 text-[11px] font-extrabold text-yellow-300 hover:bg-yellow-400/20 cursor-pointer"
+								className="mt-3 rounded-full border border-amber-500/45 bg-amber-400/15 px-3 py-1 text-[11px] font-extrabold text-amber-900 hover:bg-amber-400/25 dark:border-yellow-400/35 dark:bg-yellow-400/10 dark:text-yellow-300 dark:hover:bg-yellow-400/20 cursor-pointer"
 							>
 								Restablecer búsqueda y filtros
 							</button>

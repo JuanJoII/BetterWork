@@ -5,6 +5,8 @@ import { Lock, LogIn, Mail, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { sileo } from "sileo";
 import GradientText from "../components/GradientText";
+import { useResolvedTheme } from "../utils/theme";
+import { getErrorToastTheme, getSuccessToastTheme } from "../utils/toast";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
@@ -14,6 +16,7 @@ function LoginPage() {
 	const { isLoading, isAuthenticated } = useConvexAuth();
 	const { signIn } = useAuthActions();
 	const navigate = useNavigate();
+	const resolvedTheme = useResolvedTheme();
 
 	const [isRegister, setIsRegister] = useState(false);
 	const [email, setEmail] = useState("");
@@ -29,8 +32,8 @@ function LoginPage() {
 
 	if (isLoading) {
 		return (
-			<div className="flex min-h-screen items-center justify-center bg-slate-950">
-				<div className="h-10 w-10 animate-spin rounded-full border-4 border-yellow-500/20 border-t-yellow-400" />
+			<div className="flex min-h-screen items-center justify-center bg-[var(--bg-base)]">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-amber-500/25 border-t-amber-500 dark:border-yellow-500/20 dark:border-t-yellow-400" />
 			</div>
 		);
 	}
@@ -47,11 +50,7 @@ function LoginPage() {
 			sileo.error({
 				title: "Campos vacíos",
 				description: "Por favor, ingresa tu correo y contraseña.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getErrorToastTheme(),
 			});
 			return;
 		}
@@ -61,12 +60,9 @@ function LoginPage() {
 		if (!emailRegex.test(trimmedEmail)) {
 			sileo.error({
 				title: "Correo inválido",
-				description: "Por favor, introduce una dirección de correo válida (ejemplo@correo.com).",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				description:
+					"Por favor, introduce una dirección de correo válida (ejemplo@correo.com).",
+				...getErrorToastTheme(),
 			});
 			return;
 		}
@@ -76,11 +72,7 @@ function LoginPage() {
 			sileo.error({
 				title: "Contraseña muy corta",
 				description: "La contraseña debe tener al menos 8 caracteres.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getErrorToastTheme(),
 			});
 			return;
 		}
@@ -91,12 +83,9 @@ function LoginPage() {
 		if (!hasLetter || !hasNumber) {
 			sileo.error({
 				title: "Contraseña insegura",
-				description: "La contraseña debe incluir al menos una letra y un número.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				description:
+					"La contraseña debe incluir al menos una letra y un número.",
+				...getErrorToastTheme(),
 			});
 			return;
 		}
@@ -106,11 +95,7 @@ function LoginPage() {
 			sileo.error({
 				title: "Contraseñas no coinciden",
 				description: "La confirmación de la contraseña debe ser idéntica.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getErrorToastTheme(),
 			});
 			return;
 		}
@@ -125,36 +110,37 @@ function LoginPage() {
 
 			sileo.success({
 				title: isRegister ? "¡Registro Exitoso!" : "¡Sesión Iniciada!",
-				description: isRegister 
+				description: isRegister
 					? "Tu cuenta ha sido creada y has iniciado sesión correctamente."
 					: "Bienvenido de vuelta a BetterWork.",
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
+			const message =
+				err instanceof Error
+					? err.message
+					: "Credenciales incorrectas o error en el servidor.";
 			sileo.error({
 				title: isRegister ? "Error al registrarse" : "Error al iniciar sesión",
-				description: err.message || "Credenciales incorrectas o error en el servidor.",
-				fill: "#260f1c",
-				styles: {
-					title: "text-red-200 font-extrabold",
-					description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				},
+				description: message,
+				...getErrorToastTheme(),
 			});
 		} finally {
 			setPending(false);
 		}
 	};
 
+	const headingColors =
+		resolvedTheme === "light"
+			? ["#7c3aed", "#c026d3", "#d97706"]
+			: ["#5227FF", "#FF9FFC", "#B497CF"];
+
 	return (
 		<main className="min-h-[85vh] flex items-center justify-center px-4 py-16 relative">
 			{/* Decorative glows to match the design system */}
-			<div className="pointer-events-none absolute -right-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(250,204,21,0.04),transparent_70%)]" />
-			<div className="pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(192,132,252,0.06),transparent_70%)]" />
+			<div className="pointer-events-none absolute -right-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(234,179,8,0.12),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(250,204,21,0.04),transparent_70%)]" />
+			<div className="pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 h-[35rem] w-[35rem] rounded-full bg-[radial-gradient(circle,rgba(147,51,234,0.1),transparent_70%)] dark:bg-[radial-gradient(circle,rgba(192,132,252,0.06),transparent_70%)]" />
 
 			<div className="w-full max-w-[32rem] relative z-10">
 				{/* Refactored Auth Card containing the titles inside */}
@@ -162,7 +148,7 @@ function LoginPage() {
 					{/* Top Branding Section INSIDE the container */}
 					<div className="text-center mb-12">
 						<GradientText
-							colors={["#5227FF", "#FF9FFC", "#B497CF"]}
+							colors={headingColors}
 							animationSpeed={8}
 							showBorder={false}
 							className="text-4xl sm:text-5xl font-black tracking-tight leading-tight pb-1"
@@ -203,11 +189,15 @@ function LoginPage() {
 
 					<form onSubmit={handleSubmit} className="space-y-5">
 						<div>
-							<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
+							<label
+								htmlFor="login-email"
+								className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans"
+							>
 								Correo Electrónico
 							</label>
 							<div className="auth-input-container">
 								<input
+									id="login-email"
 									type="email"
 									required
 									value={email}
@@ -220,11 +210,15 @@ function LoginPage() {
 						</div>
 
 						<div>
-							<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
+							<label
+								htmlFor="login-password"
+								className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans"
+							>
 								Contraseña
 							</label>
 							<div className="auth-input-container">
 								<input
+									id="login-password"
 									type="password"
 									required
 									value={password}
@@ -238,11 +232,15 @@ function LoginPage() {
 
 						{isRegister && (
 							<div>
-								<label className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans">
+								<label
+									htmlFor="login-confirm-password"
+									className="block text-[10px] font-black uppercase tracking-widest text-[var(--sea-ink-soft)] mb-2 pl-1 font-sans"
+								>
 									Confirmar Contraseña
 								</label>
 								<div className="auth-input-container">
 									<input
+										id="login-confirm-password"
 										type="password"
 										required
 										value={confirmPassword}

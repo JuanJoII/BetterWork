@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { Project, Task } from "../../types/kanban";
 import { getProjectDisplayName } from "../../utils/projects";
+import { useResolvedTheme } from "../../utils/theme";
 import GradientText from "../GradientText";
 import ProjectIcon from "../kanban/ProjectIcon";
 import LiquidGlassBackground from "./LiquidGlassBackground";
@@ -86,6 +87,7 @@ export default function FocusTimerStage({
 	onResetTimer,
 	onFinishSession,
 }: FocusTimerStageProps) {
+	const resolvedTheme = useResolvedTheme();
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [isCustomOpen, setIsCustomOpen] = useState(false);
 	const [customMinutesInput, setCustomMinutesInput] = useState("");
@@ -189,6 +191,11 @@ export default function FocusTimerStage({
 			? "Reanudar"
 			: "Comenzar";
 
+	const gradientColors =
+		resolvedTheme === "light"
+			? ["#b45309", "#7e22ce", "#db2777", "#d97706"]
+			: ["#fde047", "#c084fc", "#ec4899", "#facc15"];
+
 	return (
 		<section
 			data-focus-panel
@@ -197,32 +204,32 @@ export default function FocusTimerStage({
 			onDragOver={handleDragOver}
 			onDragLeave={handleDragLeave}
 			onDrop={handleDrop}
-			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-[border-color,box-shadow] duration-300 ${
+			className={`relative flex flex-1 min-w-0 w-full flex-col justify-between overflow-hidden rounded-3xl border bg-white/65 dark:bg-slate-950/30 p-6 sm:p-8 lg:min-h-[calc(100vh-9.5rem)] backdrop-blur-2xl backdrop-saturate-150 transition-[border-color,box-shadow] duration-300 ${
 				showDragOver
-					? "border-yellow-400/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.28),0_0_0_2px_rgba(250,204,21,0.35),0_0_50px_rgba(250,204,21,0.22)]"
+					? "border-amber-500/85 shadow-[inset_0_1px_1px_rgba(255,255,255,0.9),0_0_0_2px_rgba(245,158,11,0.3),0_0_40px_rgba(245,158,11,0.18)] dark:border-yellow-400/90 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.28),0_0_0_2px_rgba(250,204,21,0.35),0_0_50px_rgba(250,204,21,0.22)]"
 					: showDraggingHint
-						? "border-dashed border-yellow-400/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_24px_60px_rgba(2,6,23,0.5)]"
-						: "border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-1px_1px_rgba(192,132,252,0.12),0_24px_60px_rgba(2,6,23,0.55)]"
+						? "border-dashed border-amber-500/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.85),0_20px_50px_rgba(15,23,42,0.08)] dark:border-yellow-400/60 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_24px_60px_rgba(2,6,23,0.5)]"
+						: "border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_20px_50px_rgba(15,23,42,0.08)] dark:border-white/15 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-1px_1px_rgba(192,132,252,0.12),0_24px_60px_rgba(2,6,23,0.55)]"
 			}`}
 		>
 			<LiquidGlassBackground />
 
 			{/* Interactive Drop Overlay when dragging over the timer stage */}
 			{showDragOver && (
-				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-yellow-400/80 bg-slate-950/70 backdrop-blur-md">
-					<div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_36px_rgba(250,204,21,0.32)]">
+				<div className="pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-500/80 bg-white/80 dark:border-yellow-400/80 dark:bg-slate-950/70 backdrop-blur-md">
+					<div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-amber-500/45 bg-amber-400/20 text-amber-700 shadow-[0_0_28px_rgba(245,158,11,0.22)] dark:border-yellow-400/50 dark:bg-yellow-400/15 dark:text-yellow-300 dark:shadow-[0_0_36px_rgba(250,204,21,0.32)]">
 						<Target className="h-10 w-10" />
 					</div>
-					<p className="display-title m-0 text-2xl sm:text-3xl font-black tracking-tight text-yellow-300">
+					<p className="display-title m-0 text-2xl sm:text-3xl font-black tracking-tight text-amber-700 dark:text-yellow-300">
 						Suelta la nota aquí
 					</p>
 				</div>
 			)}
 
 			{/* Minimal GradientText Header */}
-			<header className="relative z-10 mb-6 flex items-center justify-center border-b border-white/10 pb-5 text-center">
+			<header className="relative z-10 mb-6 flex items-center justify-center border-b border-slate-900/10 dark:border-white/10 pb-5 text-center">
 				<GradientText
-					colors={["#fde047", "#c084fc", "#ec4899", "#facc15"]}
+					colors={gradientColors}
 					animationSpeed={7}
 					showBorder={false}
 					className="text-2xl sm:text-3xl font-black tracking-tight leading-tight max-w-full cursor-default backdrop-blur-none"
@@ -240,22 +247,26 @@ export default function FocusTimerStage({
 							data-active-focus-card
 							className={`relative mb-6 w-full max-w-md rounded-2xl border p-5 text-left shadow-sm backdrop-blur-md transition-colors ${
 								isDaily
-									? "border-purple-500/35 bg-purple-950/30 text-purple-100/90"
-									: "border-yellow-500/25 bg-yellow-950/30 text-yellow-100/90"
+									? "border-purple-300/80 bg-purple-50/90 text-purple-950 dark:border-purple-500/35 dark:bg-purple-950/30 dark:text-purple-100/90"
+									: "border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-yellow-500/25 dark:bg-yellow-950/30 dark:text-yellow-100/90"
 							}`}
 						>
 							{/* Tech-tape overlay */}
 							<div
 								className={`absolute -top-2.5 left-1/2 -translate-x-1/2 h-4.5 w-14 border-x shadow-sm backdrop-blur-[2px] ${
 									isDaily
-										? "bg-purple-500/20 border-purple-400/40"
-										: "bg-yellow-400/10 border-yellow-400/30"
+										? "bg-purple-300/45 border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40"
+										: "bg-amber-300/45 border-amber-400/55 dark:bg-yellow-400/10 dark:border-yellow-400/30"
 								}`}
 							/>
 
 							<div className="mb-2.5 flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider">
 								<span
-									className={isDaily ? "text-purple-400" : "text-yellow-400/80"}
+									className={
+										isDaily
+											? "text-purple-700 dark:text-purple-400"
+											: "text-amber-700 dark:text-yellow-400/80"
+									}
 								>
 									{isDaily
 										? "Hábito Diario"
@@ -264,12 +275,12 @@ export default function FocusTimerStage({
 
 								<div className="flex items-center gap-1.5">
 									{isDaily ? (
-										<span className="rounded border border-purple-500/40 bg-purple-500/20 px-2 py-0.5 text-purple-300 font-black">
+										<span className="rounded border border-purple-300 bg-purple-100 px-2 py-0.5 text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300 font-black">
 											DAILY
 										</span>
 									) : (
 										activeTask.priority === "high" && (
-											<span className="rounded border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-red-400 font-black">
+											<span className="rounded border border-red-300 bg-red-100 px-2 py-0.5 text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-400 font-black">
 												URGENTE
 											</span>
 										)
@@ -284,7 +295,7 @@ export default function FocusTimerStage({
 												? "Pausa el reloj para cambiar de tarea"
 												: "Cambiar tarea"
 										}
-										className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-100 cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+										className="rounded-lg p-1 text-slate-500 hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-100 transition cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent"
 									>
 										<X className="h-3.5 w-3.5" />
 									</button>
@@ -293,23 +304,27 @@ export default function FocusTimerStage({
 
 							<h2
 								className={`m-0 text-base font-black leading-snug ${
-									isDaily ? "text-purple-300" : "text-yellow-400"
+									isDaily
+										? "text-purple-900 dark:text-purple-300"
+										: "text-amber-950 dark:text-yellow-400"
 								}`}
 							>
 								{activeTask.title}
 							</h2>
 
 							{activeTask.description && (
-								<p className="mt-1.5 mb-0 text-xs leading-relaxed text-slate-300 opacity-85 font-medium">
+								<p className="mt-1.5 mb-0 text-xs leading-relaxed text-slate-700 dark:text-slate-300 opacity-90 dark:opacity-85 font-medium">
 									{activeTask.description}
 								</p>
 							)}
 
-							<div className="mt-3.5 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+							<div className="mt-3.5 flex items-center justify-between gap-2 border-t border-slate-900/10 dark:border-white/10 pt-3">
 								{activeProject ? (
 									<span
 										className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
-											isDaily ? "text-purple-300/80" : "text-yellow-500/80"
+											isDaily
+												? "text-purple-700/80 dark:text-purple-300/80"
+												: "text-amber-800/80 dark:text-yellow-500/80"
 										}`}
 									>
 										{activeProject.icon ? (
@@ -328,7 +343,7 @@ export default function FocusTimerStage({
 								)}
 
 								{activeTask.column === "finalizado" ? (
-									<span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-400">
+									<span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
 										<CheckCircle className="h-3.5 w-3.5" />
 										Finalizada
 									</span>
@@ -336,7 +351,7 @@ export default function FocusTimerStage({
 									<button
 										type="button"
 										onClick={() => onMarkFinished(activeTask)}
-										className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black text-emerald-300 transition hover:bg-emerald-500/20 cursor-pointer"
+										className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/12 px-2.5 py-1 text-[10px] font-black text-emerald-700 hover:bg-emerald-500/20 dark:border-emerald-400/35 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20 transition cursor-pointer"
 									>
 										<CheckCircle className="h-3 w-3" />
 										<span>Mover a Finalizado</span>
@@ -349,7 +364,7 @@ export default function FocusTimerStage({
 						<div
 							role="tablist"
 							aria-label="Modo de tiempo"
-							className="mb-6 inline-flex items-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md"
+							className="mb-6 inline-flex items-center gap-1 rounded-full border border-slate-900/10 bg-white/80 dark:border-white/12 dark:bg-slate-950/50 p-1 backdrop-blur-md shadow-xs"
 						>
 							<button
 								type="button"
@@ -364,7 +379,7 @@ export default function FocusTimerStage({
 								onClick={() => onChangeClockMode("timer")}
 								className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
 									!isStopwatch
-										? "bg-yellow-300 text-slate-950 shadow-sm"
+										? "bg-amber-400 text-slate-950 shadow-sm dark:bg-yellow-300"
 										: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
 								}`}
 							>
@@ -384,7 +399,7 @@ export default function FocusTimerStage({
 								onClick={() => onChangeClockMode("stopwatch")}
 								className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
 									isStopwatch
-										? "bg-purple-400 text-slate-950 shadow-sm"
+										? "bg-purple-600 text-white shadow-sm dark:bg-purple-400 dark:text-slate-950"
 										: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
 								}`}
 							>
@@ -405,7 +420,7 @@ export default function FocusTimerStage({
 									cx="96"
 									cy="96"
 									r={circleRadius}
-									className="stroke-white/12 fill-none"
+									className="stroke-slate-900/10 dark:stroke-white/12 fill-none"
 									strokeWidth="6"
 								/>
 								<circle
@@ -413,7 +428,9 @@ export default function FocusTimerStage({
 									cy="96"
 									r={circleRadius}
 									className={`fill-none ${
-										isStopwatch ? "stroke-purple-400" : "stroke-[#eab308]"
+										isStopwatch
+											? "stroke-purple-600 dark:stroke-purple-400"
+											: "stroke-amber-500 dark:stroke-[#eab308]"
 									} ${
 										skipRingTransition
 											? "transition-none"
@@ -435,7 +452,9 @@ export default function FocusTimerStage({
 								</span>
 								<span
 									className={`mt-1 text-[10px] font-black uppercase tracking-widest ${
-										isStopwatch ? "text-purple-300/90" : "text-yellow-400/85"
+										isStopwatch
+											? "text-purple-700 dark:text-purple-300/90"
+											: "text-amber-700 dark:text-yellow-400/85"
 									}`}
 								>
 									{statusLabel}
@@ -447,7 +466,7 @@ export default function FocusTimerStage({
 						<div className="flex w-full flex-col items-center gap-4">
 							{/* Duration presets + custom duration (Timer mode only) */}
 							{!isStopwatch && (
-								<div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/12 bg-slate-950/50 p-1 backdrop-blur-md">
+								<div className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-slate-900/10 bg-white/80 dark:border-white/12 dark:bg-slate-950/50 p-1 backdrop-blur-md shadow-xs">
 									{DURATION_PRESETS.map((mins) => (
 										<button
 											key={mins}
@@ -459,7 +478,7 @@ export default function FocusTimerStage({
 											disabled={timerRunning}
 											className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
 												timerDuration === mins
-													? "bg-yellow-300 text-slate-950 shadow-sm"
+													? "bg-amber-400 text-slate-950 shadow-sm dark:bg-yellow-300"
 													: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
 											}`}
 										>
@@ -473,7 +492,7 @@ export default function FocusTimerStage({
 											onClick={handleOpenCustomDuration}
 											disabled={timerRunning}
 											title="Editar tiempo personalizado"
-											className="rounded-full bg-yellow-300 px-4 py-1.5 text-xs font-extrabold text-slate-950 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+											className="rounded-full bg-amber-400 dark:bg-yellow-300 px-4 py-1.5 text-xs font-extrabold text-slate-950 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											{timerDuration} min
 										</button>
@@ -499,13 +518,13 @@ export default function FocusTimerStage({
 														setIsCustomOpen(false);
 													}
 												}}
-												className="w-14 rounded-full border border-yellow-400/50 bg-slate-900/90 px-2.5 py-1 text-center font-mono text-xs font-black text-yellow-200 outline-none focus:border-yellow-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+												className="w-14 rounded-full border border-amber-500/60 bg-white px-2.5 py-1 text-center font-mono text-xs font-black text-slate-900 outline-none focus:border-amber-500 dark:border-yellow-400/50 dark:bg-slate-900/90 dark:text-yellow-200 dark:focus:border-yellow-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 											/>
 											<button
 												type="submit"
 												aria-label="Aplicar tiempo personalizado"
 												title="Aplicar"
-												className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-300 text-slate-950 transition hover:bg-yellow-200 cursor-pointer"
+												className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-slate-950 transition hover:bg-amber-300 dark:bg-yellow-300 dark:hover:bg-yellow-200 cursor-pointer"
 											>
 												<Check className="h-3.5 w-3.5" />
 											</button>
@@ -514,7 +533,7 @@ export default function FocusTimerStage({
 												onClick={() => setIsCustomOpen(false)}
 												aria-label="Cancelar tiempo personalizado"
 												title="Cancelar"
-												className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/10 hover:text-slate-100 cursor-pointer"
+												className="flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-100 cursor-pointer"
 											>
 												<X className="h-3.5 w-3.5" />
 											</button>
@@ -526,7 +545,7 @@ export default function FocusTimerStage({
 											disabled={timerRunning}
 											aria-label="Tiempo personalizado"
 											title="Tiempo personalizado (1 a 180 min)"
-											className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--sea-ink-soft)] transition-all hover:bg-white/10 hover:text-yellow-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+											className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--sea-ink-soft)] transition-all hover:bg-slate-900/5 hover:text-amber-700 dark:hover:bg-white/10 dark:hover:text-yellow-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											<Plus className="h-3.5 w-3.5" />
 										</button>
@@ -543,8 +562,8 @@ export default function FocusTimerStage({
 										timerRunning
 											? "bg-amber-500 text-slate-950 hover:bg-amber-400"
 											: isStopwatch
-												? "bg-purple-400 text-slate-950 hover:bg-purple-300 shadow-purple-500/25"
-												: "bg-yellow-300 text-slate-950 hover:bg-yellow-200 shadow-yellow-500/20"
+												? "bg-purple-600 text-white hover:bg-purple-500 shadow-purple-600/20 dark:bg-purple-400 dark:text-slate-950 dark:hover:bg-purple-300 dark:shadow-purple-500/25"
+												: "bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-amber-500/20 dark:bg-yellow-300 dark:hover:bg-yellow-200 dark:shadow-yellow-500/20"
 									}`}
 								>
 									{timerRunning ? (
@@ -558,7 +577,7 @@ export default function FocusTimerStage({
 								<button
 									type="button"
 									onClick={onResetTimer}
-									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-yellow-400/45 hover:bg-white/10 hover:text-[var(--sea-ink)] transition-colors cursor-pointer backdrop-blur-md"
+									className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-900/12 bg-white/80 text-[var(--sea-ink-soft)] hover:border-amber-500/60 hover:bg-white hover:text-[var(--sea-ink)] dark:border-white/15 dark:bg-white/5 dark:hover:border-yellow-400/45 dark:hover:bg-white/10 transition-colors cursor-pointer backdrop-blur-md"
 									title={isStopwatch ? "Reiniciar cronómetro" : "Reiniciar"}
 									aria-label={
 										isStopwatch
@@ -573,7 +592,7 @@ export default function FocusTimerStage({
 									type="button"
 									onClick={onFinishSession}
 									disabled={isStopwatch && elapsedSeconds === 0}
-									className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[var(--sea-ink-soft)] hover:border-emerald-400/50 hover:bg-emerald-500/15 hover:text-emerald-300 transition-colors cursor-pointer backdrop-blur-md disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/15 disabled:hover:bg-white/5 disabled:hover:text-[var(--sea-ink-soft)]"
+									className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-900/12 bg-white/80 text-[var(--sea-ink-soft)] hover:border-emerald-500/60 hover:bg-emerald-500/12 hover:text-emerald-700 dark:border-white/15 dark:bg-white/5 dark:hover:border-emerald-400/50 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-300 transition-colors cursor-pointer backdrop-blur-md disabled:opacity-40 disabled:cursor-not-allowed"
 									title="Finalizar y registrar sesión"
 									aria-label="Finalizar sesión ahora"
 								>
@@ -584,8 +603,8 @@ export default function FocusTimerStage({
 					</div>
 				) : (
 					/* Empty Drop-Zone Invitation */
-					<div className="flex w-full max-w-md flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.03] px-8 py-14 text-center backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
-						<div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-400/35 bg-yellow-400/12 text-yellow-300 shadow-[0_0_24px_rgba(250,204,21,0.15)]">
+					<div className="flex w-full max-w-md flex-col items-center justify-center rounded-3xl border border-dashed border-slate-900/15 bg-white/55 dark:border-white/20 dark:bg-white/[0.03] px-8 py-14 text-center backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+						<div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/40 bg-amber-400/18 text-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.14)] dark:border-yellow-400/35 dark:bg-yellow-400/12 dark:text-yellow-300 dark:shadow-[0_0_24px_rgba(250,204,21,0.15)]">
 							<Target className="h-7 w-7" />
 						</div>
 						<h2 className="display-title m-0 text-lg font-black text-[var(--sea-ink)]">
@@ -600,7 +619,7 @@ export default function FocusTimerStage({
 			</div>
 
 			{/* Footer Stats */}
-			<div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-4 text-xs font-bold text-[var(--sea-ink-soft)]">
+			<div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3 border-t border-slate-900/10 dark:border-white/10 pt-4 text-xs font-bold text-[var(--sea-ink-soft)]">
 				<span>Sesiones completadas: {completedSessions}</span>
 				<span aria-hidden="true">•</span>
 				<span>Tiempo enfocado: {formatFocusedTotal(totalFocusedSeconds)}</span>

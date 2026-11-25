@@ -33,32 +33,34 @@ const COLUMN_OVERLAY_THEME = {
 	pendiente: {
 		Icon: Clock,
 		containerRing:
-			"border-purple-400/90 shadow-[0_0_0_2px_rgba(192,132,252,0.3),0_0_40px_rgba(192,132,252,0.18)]",
-		draggingHint: "border-dashed border-purple-400/55",
-		overlayBorder: "border-purple-400/80",
+			"border-purple-500/80 dark:border-purple-400/90 shadow-[0_0_0_2px_rgba(147,51,234,0.22),0_0_32px_rgba(147,51,234,0.14)] dark:shadow-[0_0_0_2px_rgba(192,132,252,0.3),0_0_40px_rgba(192,132,252,0.18)]",
+		draggingHint:
+			"border-dashed border-purple-500/50 dark:border-purple-400/55",
+		overlayBorder: "border-purple-500/70 dark:border-purple-400/80",
 		badge:
-			"border-purple-400/50 bg-purple-400/15 text-purple-300 shadow-[0_0_32px_rgba(192,132,252,0.32)]",
-		title: "text-purple-300",
+			"border-purple-500/45 bg-purple-500/12 text-purple-700 dark:border-purple-400/50 dark:bg-purple-400/15 dark:text-purple-300 shadow-[0_0_24px_rgba(147,51,234,0.2)] dark:shadow-[0_0_32px_rgba(192,132,252,0.32)]",
+		title: "text-purple-700 dark:text-purple-300",
 	},
 	"en-proceso": {
 		Icon: Zap,
 		containerRing:
-			"border-yellow-400/90 shadow-[0_0_0_2px_rgba(250,204,21,0.3),0_0_40px_rgba(250,204,21,0.18)]",
-		draggingHint: "border-dashed border-yellow-400/55",
-		overlayBorder: "border-yellow-400/80",
+			"border-amber-500/85 dark:border-yellow-400/90 shadow-[0_0_0_2px_rgba(245,158,11,0.25),0_0_32px_rgba(245,158,11,0.16)] dark:shadow-[0_0_0_2px_rgba(250,204,21,0.3),0_0_40px_rgba(250,204,21,0.18)]",
+		draggingHint: "border-dashed border-amber-500/55 dark:border-yellow-400/55",
+		overlayBorder: "border-amber-500/75 dark:border-yellow-400/80",
 		badge:
-			"border-yellow-400/50 bg-yellow-400/15 text-yellow-300 shadow-[0_0_32px_rgba(250,204,21,0.32)]",
-		title: "text-yellow-300",
+			"border-amber-500/45 bg-amber-400/20 text-amber-700 dark:border-yellow-400/50 dark:bg-yellow-400/15 dark:text-yellow-300 shadow-[0_0_24px_rgba(245,158,11,0.2)] dark:shadow-[0_0_32px_rgba(250,204,21,0.32)]",
+		title: "text-amber-700 dark:text-yellow-300",
 	},
 	finalizado: {
 		Icon: CheckCircle,
 		containerRing:
-			"border-emerald-400/90 shadow-[0_0_0_2px_rgba(52,211,153,0.3),0_0_40px_rgba(52,211,153,0.18)]",
-		draggingHint: "border-dashed border-emerald-400/55",
-		overlayBorder: "border-emerald-400/80",
+			"border-emerald-500/85 dark:border-emerald-400/90 shadow-[0_0_0_2px_rgba(16,185,129,0.24),0_0_32px_rgba(16,185,129,0.15)] dark:shadow-[0_0_0_2px_rgba(52,211,153,0.3),0_0_40px_rgba(52,211,153,0.18)]",
+		draggingHint:
+			"border-dashed border-emerald-500/55 dark:border-emerald-400/55",
+		overlayBorder: "border-emerald-500/75 dark:border-emerald-400/80",
 		badge:
-			"border-emerald-400/50 bg-emerald-400/15 text-emerald-300 shadow-[0_0_32px_rgba(52,211,153,0.32)]",
-		title: "text-emerald-300",
+			"border-emerald-500/45 bg-emerald-500/12 text-emerald-700 dark:border-emerald-400/50 dark:bg-emerald-400/15 dark:text-emerald-300 shadow-[0_0_24px_rgba(16,185,129,0.2)] dark:shadow-[0_0_32px_rgba(52,211,153,0.32)]",
+		title: "text-emerald-700 dark:text-emerald-300",
 	},
 } as const;
 
@@ -140,7 +142,7 @@ export default function KanbanColumn({
 			{/* Interactive Drop Overlay when dragging a task from another column */}
 			{showDropOverlay && (
 				<div
-					className={`pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed ${overlayTheme.overlayBorder} bg-slate-950/70 px-4 text-center backdrop-blur-md`}
+					className={`pointer-events-none absolute inset-3 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed ${overlayTheme.overlayBorder} bg-white/80 dark:bg-slate-950/70 px-4 text-center backdrop-blur-md`}
 				>
 					<div
 						className={`mb-4 flex h-18 w-18 items-center justify-center rounded-full border ${overlayTheme.badge}`}
@@ -165,7 +167,7 @@ export default function KanbanColumn({
 						{col.subtitle}
 					</span>
 				</div>
-				<span className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
+				<span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 text-xs font-black text-amber-800 border border-amber-500/35 dark:bg-yellow-400/20 dark:text-yellow-400 dark:border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
 					{colTasks.length}
 				</span>
 			</div>
@@ -174,7 +176,7 @@ export default function KanbanColumn({
 			<button
 				type="button"
 				onClick={onAddCard}
-				className="mb-4 flex w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-yellow-500/20 bg-yellow-500/5 py-2.5 text-xs font-extrabold text-yellow-400 hover:border-yellow-400 hover:bg-yellow-400/10 transition cursor-pointer"
+				className="mb-4 flex w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-amber-500/40 bg-amber-400/10 py-2.5 text-xs font-extrabold text-amber-800 hover:border-amber-500 hover:bg-amber-400/20 dark:border-yellow-500/20 dark:bg-yellow-500/5 dark:text-yellow-400 dark:hover:border-yellow-400 dark:hover:bg-yellow-400/10 transition cursor-pointer"
 			>
 				<Plus className="h-4 w-4" />
 				<span>Añadir Nota</span>

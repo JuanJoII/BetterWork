@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import type { Daily } from "../../types/kanban";
 import { getTodayDateKey } from "../../utils/date";
+import { getErrorToastTheme, getSuccessToastTheme } from "../../utils/toast";
 
 export default function DailysBoard() {
 	const convexDailys = useQuery(api.rituals.list);
@@ -46,11 +47,7 @@ export default function DailysBoard() {
 			sileo.success({
 				title: "¡Daily Añadido!",
 				description: `"${newTitle.trim()}" se ha integrado en tus hábitos diarios y tu tablero de hoy.`,
-				fill: "#130f26",
-				styles: {
-					title: "text-purple-200 font-extrabold",
-					description: "text-purple-300/80 text-xs font-semibold mt-0.5",
-				},
+				...getSuccessToastTheme(),
 			});
 
 			setNewTitle("");
@@ -66,14 +63,9 @@ export default function DailysBoard() {
 		sileo.error({
 			id: toastKey,
 			title: "¿Eliminar daily?",
-			fill: "#260f1c",
 			duration: 3000,
 			description: `Se removerá el daily "${title}" de tus hábitos diarios y su tarea activa si existe. Pulsa 'Eliminar' para confirmar, o cierra esta alerta para cancelar.`,
-			styles: {
-				title: "text-red-200 font-extrabold",
-				description: "text-red-300/80 text-xs font-semibold mt-0.5",
-				button: "bg-red-600 text-white hover:bg-red-700 font-bold",
-			},
+			...getErrorToastTheme(),
 			button: {
 				title: "Eliminar",
 				onClick: () => {
@@ -83,11 +75,7 @@ export default function DailysBoard() {
 							sileo.error({
 								title: "Daily Eliminado",
 								description: `"${title}" ha sido removido de tu rutina diaria.`,
-								fill: "#260f1c",
-								styles: {
-									title: "text-red-200 font-extrabold",
-									description: "text-red-300/80 text-xs font-semibold mt-0.5",
-								},
+								...getErrorToastTheme(),
 							});
 						})
 						.catch((err) => {
@@ -95,11 +83,7 @@ export default function DailysBoard() {
 							sileo.error({
 								title: "Error al eliminar",
 								description: "No se pudo eliminar el daily. Intenta de nuevo.",
-								fill: "#260f1c",
-								styles: {
-									title: "text-red-200 font-extrabold",
-									description: "text-red-300/80 text-xs font-semibold mt-0.5",
-								},
+								...getErrorToastTheme(),
 							});
 						});
 				},
@@ -110,9 +94,9 @@ export default function DailysBoard() {
 	return (
 		<main className="page-wrap px-4 pt-12 pb-0 max-w-4xl mx-auto">
 			{/* Explanation Area */}
-			<section className="mb-8 rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-md p-6 shadow-sm relative">
+			<section className="mb-8 rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/80 backdrop-blur-md p-6 shadow-sm relative">
 				<div className="flex items-center gap-3 mb-3">
-					<h1 className="display-title m-0 text-2xl font-black text-slate-100 font-serif">
+					<h1 className="display-title m-0 text-2xl font-black text-[var(--sea-ink)] font-serif">
 						¿Qué es un Daily?
 					</h1>
 				</div>
@@ -126,15 +110,15 @@ export default function DailysBoard() {
 			</section>
 
 			{/* Dedicated Dailys Board Column */}
-			<div className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/75 backdrop-blur-sm p-6 shadow-sm dot-grid min-h-[500px] w-full">
+			<div className="flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface-strong)]/80 backdrop-blur-sm p-6 shadow-sm dot-grid min-h-[500px] w-full">
 				{/* Column Header */}
 				<div className="mb-4 flex items-center justify-between border-b border-[var(--line)] pb-4">
 					<div>
-						<h2 className="display-title m-0 text-lg font-black tracking-tight text-slate-100 flex items-center gap-2">
+						<h2 className="display-title m-0 text-lg font-black tracking-tight text-[var(--sea-ink)] flex items-center gap-2">
 							<span>Mis Dailys</span>
 						</h2>
 					</div>
-					<span className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-black text-yellow-400 border border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
+					<span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 text-xs font-black text-amber-800 border border-amber-500/35 dark:bg-yellow-400/20 dark:text-yellow-400 dark:border-yellow-400/35 shadow-[0_0_10px_rgba(234,179,8,0.15)]">
 						{dailys.length}
 					</span>
 				</div>
@@ -143,7 +127,7 @@ export default function DailysBoard() {
 				<button
 					type="button"
 					onClick={() => setShowAddModal(true)}
-					className="mb-6 flex w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-purple-500/25 bg-purple-500/5 py-3 text-xs font-extrabold text-purple-300 hover:border-purple-400 hover:bg-purple-500/10 transition cursor-pointer"
+					className="mb-6 flex w-full items-center justify-center gap-1 rounded-2xl border border-dashed border-purple-500/40 bg-purple-500/8 py-3 text-xs font-extrabold text-purple-800 hover:border-purple-500 hover:bg-purple-500/15 dark:border-purple-500/25 dark:bg-purple-500/5 dark:text-purple-300 dark:hover:border-purple-400 dark:hover:bg-purple-500/10 transition cursor-pointer"
 				>
 					<Plus className="h-4 w-4" />
 					<span>Añadir Daily</span>
@@ -158,45 +142,45 @@ export default function DailysBoard() {
 							return (
 								<div
 									key={daily.id}
-									className="relative rounded-2xl border border-purple-500/30 bg-purple-950/15 p-5 flex flex-col justify-between transition-all duration-300 shadow-sm text-purple-100/90"
+									className="relative rounded-2xl border border-purple-300/80 bg-purple-50/95 text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/15 dark:text-purple-100/90 p-5 flex flex-col justify-between transition-all duration-300 shadow-sm"
 								>
 									{/* Tech-tape overlay */}
-									<div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 bg-purple-500/20 border-x border-purple-400/40 shadow-sm backdrop-blur-[2px] z-10" />
+									<div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5.5 bg-purple-300/45 border-x border-purple-400/55 dark:bg-purple-500/20 dark:border-purple-400/40 shadow-sm backdrop-blur-[2px] z-10" />
 
 									<div>
 										{/* Note meta bar */}
 										<div className="relative z-10 mb-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
-											<span className="font-black text-purple-400">
+											<span className="font-black text-purple-700 dark:text-purple-400">
 												Hábito Diario
 											</span>
 											<div className="flex items-center gap-1.5">
 												{completedToday && (
-													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-black">
+													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-400/50 bg-emerald-100 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300 font-black">
 														<Check className="h-3 w-3" />
 														Completado hoy
 													</span>
 												)}
-												<span className="px-2 py-0.5 rounded border border-purple-500/40 bg-purple-500/20 text-purple-300 font-black animate-pulse">
+												<span className="px-2 py-0.5 rounded border border-purple-300 bg-purple-100 text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/20 dark:text-purple-300 font-black animate-pulse">
 													DAILY
 												</span>
 											</div>
 										</div>
 
-										<h3 className="m-0 text-base font-black leading-snug text-purple-300">
+										<h3 className="m-0 text-base font-black leading-snug text-purple-900 dark:text-purple-300">
 											{daily.title}
 										</h3>
 
-										<p className="mt-2 mb-4 text-xs leading-relaxed opacity-85 font-medium text-slate-300">
+										<p className="mt-2 mb-4 text-xs leading-relaxed opacity-90 dark:opacity-85 font-medium text-slate-700 dark:text-slate-300">
 											{daily.description}
 										</p>
 									</div>
 
 									{/* Delete Action Footer */}
-									<div className="border-t border-purple-500/10 pt-3.5 flex items-center justify-end text-purple-400/75">
+									<div className="border-t border-purple-300/60 dark:border-purple-500/10 pt-3.5 flex items-center justify-end text-purple-700 dark:text-purple-400/75">
 										<button
 											type="button"
 											onClick={() => handleDeleteDaily(daily.id, daily.title)}
-											className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400/80 hover:text-red-400 transition cursor-pointer"
+											className="p-1.5 rounded-lg hover:bg-red-500/15 text-red-600/85 hover:text-red-700 dark:hover:bg-red-500/20 dark:text-red-400/80 dark:hover:text-red-400 transition cursor-pointer"
 											title="Eliminar Daily"
 										>
 											<Trash2 className="h-4 w-4" />

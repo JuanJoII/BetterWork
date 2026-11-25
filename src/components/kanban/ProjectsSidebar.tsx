@@ -280,17 +280,17 @@ export default function ProjectsSidebar({
 			<div
 				role="dialog"
 				aria-label="¿Qué vas a crear?"
-				className={`absolute z-50 ${positionClasses} rounded-2xl border border-yellow-400/35 bg-slate-950/95 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in`}
+				className={`absolute z-50 ${positionClasses} rounded-2xl border border-amber-400/45 bg-white/95 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14),0_0_24px_rgba(245,158,11,0.1)] dark:border-yellow-400/35 dark:bg-slate-950/95 dark:shadow-[0_18px_40px_rgba(0,0,0,0.6),0_0_24px_rgba(250,204,21,0.12)] backdrop-blur-md rise-in`}
 			>
 				<div className="mb-3 flex items-center justify-between gap-2">
-					<h3 className="display-title m-0 text-sm font-black text-yellow-300">
+					<h3 className="display-title m-0 text-sm font-black text-amber-700 dark:text-yellow-300">
 						¿Qué vas a crear?
 					</h3>
 					<button
 						type="button"
 						onClick={() => setIsCreateOpen(false)}
 						aria-label="Cerrar creación de proyecto"
-						className="rounded-lg p-1 text-[var(--sea-ink-soft)] transition hover:bg-white/5 hover:text-[var(--sea-ink)] cursor-pointer"
+						className="rounded-lg p-1 text-[var(--sea-ink-soft)] transition hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-[var(--sea-ink)] cursor-pointer"
 					>
 						<X className="h-3.5 w-3.5" />
 					</button>
@@ -298,11 +298,11 @@ export default function ProjectsSidebar({
 
 				<form onSubmit={handleCreateSubmit} className="flex flex-col gap-3">
 					{/* Project name input with live selected icon preview */}
-					<div className="flex items-center gap-2 rounded-xl border border-yellow-500/25 bg-slate-900/80 px-3 py-2 focus-within:border-yellow-400 focus-within:ring-2 focus-within:ring-yellow-400/20">
+					<div className="flex items-center gap-2 rounded-xl border border-amber-500/35 bg-slate-50 px-3 py-2 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-400/25 dark:border-yellow-500/25 dark:bg-slate-900/80 dark:focus-within:border-yellow-400 dark:focus-within:ring-yellow-400/20">
 						{selectedIcon && (
 							<ProjectIcon
 								icon={selectedIcon}
-								className="h-4 w-4 text-yellow-300"
+								className="h-4 w-4 text-amber-600 dark:text-yellow-300"
 								emojiClassName="text-base leading-none"
 							/>
 						)}
@@ -314,20 +314,20 @@ export default function ProjectsSidebar({
 							placeholder="Nombre del proyecto..."
 							aria-label="Nombre del proyecto"
 							maxLength={48}
-							className="w-full min-w-0 bg-transparent text-xs font-semibold text-yellow-100 placeholder:text-slate-400 focus:outline-none"
+							className="w-full min-w-0 bg-transparent text-xs font-semibold text-slate-900 placeholder:text-slate-400 dark:text-yellow-100 dark:placeholder:text-slate-400 focus:outline-none"
 						/>
 					</div>
 
 					{/* Optional Icon / Emoji Picker */}
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between gap-2">
-							<div className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-slate-900/60 p-0.5">
+							<div className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-slate-100/90 dark:bg-slate-900/60 p-0.5">
 								<button
 									type="button"
 									onClick={() => setIconTab("icons")}
 									className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold transition cursor-pointer ${
 										iconTab === "icons"
-											? "bg-yellow-300 text-slate-950"
+											? "bg-amber-400 text-slate-950 dark:bg-yellow-300"
 											: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
 									}`}
 								>
@@ -338,7 +338,7 @@ export default function ProjectsSidebar({
 									onClick={() => setIconTab("emojis")}
 									className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold transition cursor-pointer ${
 										iconTab === "emojis"
-											? "bg-yellow-300 text-slate-950"
+											? "bg-amber-400 text-slate-950 dark:bg-yellow-300"
 											: "text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)]"
 									}`}
 								>
@@ -353,7 +353,7 @@ export default function ProjectsSidebar({
 										setSelectedIcon("");
 										setCustomEmoji("");
 									}}
-									className="text-[10px] font-bold text-[var(--sea-ink-soft)] transition hover:text-yellow-300 cursor-pointer"
+									className="text-[10px] font-bold text-[var(--sea-ink-soft)] transition hover:text-amber-700 dark:hover:text-yellow-300 cursor-pointer"
 								>
 									Quitar icono
 								</button>
@@ -377,8 +377,8 @@ export default function ProjectsSidebar({
 											title={label}
 											className={`flex h-7 w-7 items-center justify-center rounded-lg border transition cursor-pointer ${
 												isPicked
-													? "border-yellow-400 bg-yellow-300 text-slate-950"
-													: "border-transparent bg-slate-900/60 text-slate-300 hover:border-yellow-500/30 hover:text-yellow-200"
+													? "border-amber-500 bg-amber-400 text-slate-950 dark:border-yellow-400 dark:bg-yellow-300"
+													: "border-transparent bg-slate-100 text-slate-600 hover:border-amber-400/50 hover:text-amber-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-yellow-500/30 dark:hover:text-yellow-200"
 											}`}
 										>
 											<Icon className="h-3.5 w-3.5" />
@@ -403,8 +403,8 @@ export default function ProjectsSidebar({
 												aria-label={`Emoji ${emoji}`}
 												className={`flex h-7 w-7 items-center justify-center rounded-lg border text-sm transition cursor-pointer ${
 													isPicked
-														? "border-yellow-400 bg-yellow-300/20 scale-105"
-														: "border-transparent bg-slate-900/60 hover:border-yellow-500/30 hover:bg-slate-800/80"
+														? "border-amber-500 bg-amber-300/35 scale-105 dark:border-yellow-400 dark:bg-yellow-300/20"
+														: "border-transparent bg-slate-100 hover:border-amber-400/50 hover:bg-slate-200/70 dark:bg-slate-900/60 dark:hover:border-yellow-500/30 dark:hover:bg-slate-800/80"
 												}`}
 											>
 												{emoji}
@@ -420,7 +420,7 @@ export default function ProjectsSidebar({
 									placeholder="O escribe/pega tu propio emoji..."
 									aria-label="Emoji personalizado"
 									maxLength={8}
-									className="w-full rounded-lg border border-[var(--line)] bg-slate-900/60 px-2.5 py-1 text-[11px] font-medium text-yellow-100 placeholder:text-slate-500 focus:border-yellow-400/60 focus:outline-none"
+									className="w-full rounded-lg border border-[var(--line)] bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-900 placeholder:text-slate-400 focus:border-amber-500/70 dark:bg-slate-900/60 dark:text-yellow-100 dark:placeholder:text-slate-500 dark:focus:border-yellow-400/60 focus:outline-none"
 								/>
 							</div>
 						)}
@@ -437,7 +437,7 @@ export default function ProjectsSidebar({
 						<button
 							type="submit"
 							disabled={!newProjectName.trim() || isCreating}
-							className="rounded-full bg-yellow-300 px-4 py-1 text-[11px] font-black text-slate-950 transition hover:bg-yellow-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
+							className="rounded-full bg-amber-400 px-4 py-1 text-[11px] font-black text-slate-950 transition hover:bg-amber-300 dark:bg-yellow-300 dark:hover:bg-yellow-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
 						>
 							{isCreating ? "Creando..." : "Crear"}
 						</button>
@@ -455,18 +455,18 @@ export default function ProjectsSidebar({
 					type="button"
 					onClick={() => setIsMobileOpen(true)}
 					aria-label="Abrir panel de proyectos"
-					className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/80 px-3.5 py-1.5 text-xs font-extrabold text-[var(--sea-ink)] backdrop-blur-md transition hover:border-yellow-400/40 cursor-pointer shrink-0"
+					className="flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/85 px-3.5 py-1.5 text-xs font-extrabold text-[var(--sea-ink)] backdrop-blur-md transition hover:border-amber-500/50 dark:hover:border-yellow-400/40 cursor-pointer shrink-0"
 				>
-					<PanelLeftOpen className="h-4 w-4 text-yellow-400" />
+					<PanelLeftOpen className="h-4 w-4 text-amber-600 dark:text-yellow-400" />
 					{activeProjectIcon && (
 						<ProjectIcon
 							icon={activeProjectIcon}
-							className="h-3.5 w-3.5 text-yellow-300"
+							className="h-3.5 w-3.5 text-amber-600 dark:text-yellow-300"
 							emojiClassName="text-xs leading-none"
 						/>
 					)}
 					<span className="max-w-[10rem] truncate">{activeProjectName}</span>
-					<span className="rounded-full bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-black text-yellow-300 leading-none">
+					<span className="rounded-full bg-amber-400/25 px-1.5 py-0.5 text-[10px] font-black text-amber-800 dark:bg-yellow-400/20 dark:text-yellow-300 leading-none">
 						{activeProjectCount}
 					</span>
 				</button>
@@ -486,11 +486,11 @@ export default function ProjectsSidebar({
 							setIsCreateOpen(false);
 							setIsMobileOpen(false);
 						}}
-						className="fixed inset-0 bg-black/55 backdrop-blur-xs border-none"
+						className="fixed inset-0 bg-slate-900/35 dark:bg-black/55 backdrop-blur-xs border-none"
 					/>
 					<aside
 						aria-label="Barra lateral de proyectos móvil"
-						className="relative z-10 flex h-full w-64 max-w-[82vw] flex-col justify-between gap-3 border-r border-[var(--line)] bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md"
+						className="relative z-10 flex h-full w-64 max-w-[82vw] flex-col justify-between gap-3 border-r border-[var(--line)] bg-white/95 dark:bg-slate-950/95 p-4 shadow-2xl backdrop-blur-md"
 					>
 						<div className="flex flex-col gap-3">
 							<div className="flex items-center justify-between gap-2 pb-1">
@@ -545,7 +545,7 @@ export default function ProjectsSidebar({
 									type="button"
 									onClick={handleOpenCreate}
 									aria-expanded={isCreateOpen}
-									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-amber-500/50 bg-transparent py-1.5 text-xs font-extrabold text-amber-700 transition hover:border-amber-500 hover:bg-amber-400/15 dark:border-yellow-500/35 dark:text-yellow-400 dark:hover:border-yellow-400 dark:hover:bg-yellow-400/10 cursor-pointer"
 								>
 									<Plus className="h-3.5 w-3.5" />
 									<span>Nuevo Proyecto</span>
@@ -564,7 +564,7 @@ export default function ProjectsSidebar({
 										? `Eliminar proyecto ${activeProjectName}`
 										: "No se puede eliminar este tablero"
 								}
-								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-600 transition hover:border-red-500 hover:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:border-red-400 dark:hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
 							>
 								<Trash2 className="h-3.5 w-3.5" />
 								<span>Eliminar Proyecto</span>
@@ -601,7 +601,7 @@ export default function ProjectsSidebar({
 						title={
 							isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"
 						}
-						className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/70 text-[var(--sea-ink-soft)] transition hover:border-yellow-400/40 hover:text-yellow-300 cursor-pointer shrink-0"
+						className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-strong)]/80 text-[var(--sea-ink-soft)] transition hover:border-amber-500/55 hover:text-amber-700 dark:hover:border-yellow-400/40 dark:hover:text-yellow-300 cursor-pointer shrink-0"
 					>
 						<MorphIcon
 							icon={isCollapsed ? PanelLeftOpenNode : PanelLeftCloseNode}
@@ -635,8 +635,8 @@ export default function ProjectsSidebar({
 								title={`Tablero General (${totalTaskCount})`}
 								className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition cursor-pointer ${
 									currentProjectId === "all"
-										? "bg-yellow-300 border-yellow-400 text-slate-950 shadow-sm"
-										: "border-yellow-500/20 bg-yellow-500/5 text-yellow-100/80 hover:bg-yellow-400/10"
+										? "bg-amber-400 border-amber-500 text-slate-950 shadow-sm dark:bg-yellow-300 dark:border-yellow-400"
+										: "border-amber-500/30 bg-white/80 text-slate-600 hover:bg-amber-400/15 hover:text-amber-800 dark:border-yellow-500/20 dark:bg-yellow-500/5 dark:text-yellow-100/80 dark:hover:bg-yellow-400/10"
 								}`}
 							>
 								<LayoutGrid className="h-3.5 w-3.5" />
@@ -654,8 +654,8 @@ export default function ProjectsSidebar({
 										title={`${proj.name} (${taskCountByProject[proj.id] ?? 0})`}
 										className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-black transition cursor-pointer ${
 											isSelected
-												? "bg-yellow-300 border-yellow-400 text-slate-950 shadow-sm"
-												: "border-yellow-500/20 bg-yellow-500/5 text-yellow-200 hover:border-yellow-400/40 hover:bg-yellow-400/15"
+												? "bg-amber-400 border-amber-500 text-slate-950 shadow-sm dark:bg-yellow-300 dark:border-yellow-400"
+												: "border-amber-500/30 bg-white/80 text-slate-700 hover:border-amber-500/55 hover:bg-amber-400/15 hover:text-amber-800 dark:border-yellow-500/20 dark:bg-yellow-500/5 dark:text-yellow-200 dark:hover:border-yellow-400/40 dark:hover:bg-yellow-400/15"
 										}`}
 									>
 										{proj.icon ? (
@@ -684,7 +684,7 @@ export default function ProjectsSidebar({
 									aria-label="Nuevo Proyecto"
 									aria-expanded={isCreateOpen}
 									title="Nuevo Proyecto"
-									className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-yellow-500/35 bg-transparent text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+									className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-amber-500/50 bg-transparent text-amber-700 transition hover:border-amber-500 hover:bg-amber-400/15 dark:border-yellow-500/35 dark:text-yellow-400 dark:hover:border-yellow-400 dark:hover:bg-yellow-400/10 cursor-pointer"
 								>
 									<Plus className="h-4 w-4" />
 								</button>
@@ -700,7 +700,7 @@ export default function ProjectsSidebar({
 										? `Eliminar proyecto ${activeProjectName}`
 										: "No se puede eliminar este tablero"
 								}
-								className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/30 bg-red-500/5 text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+								className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/35 bg-red-500/5 text-red-600 transition hover:border-red-500 hover:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:border-red-400 dark:hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
 							>
 								<Trash2 className="h-4 w-4" />
 							</button>
@@ -739,7 +739,7 @@ export default function ProjectsSidebar({
 									type="button"
 									onClick={handleOpenCreate}
 									aria-expanded={isCreateOpen}
-									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-yellow-500/35 bg-transparent py-1.5 text-xs font-extrabold text-yellow-400 transition hover:border-yellow-400 hover:bg-yellow-400/10 cursor-pointer"
+									className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-amber-500/50 bg-transparent py-1.5 text-xs font-extrabold text-amber-700 transition hover:border-amber-500 hover:bg-amber-400/15 dark:border-yellow-500/35 dark:text-yellow-400 dark:hover:border-yellow-400 dark:hover:bg-yellow-400/10 cursor-pointer"
 								>
 									<Plus className="h-3.5 w-3.5" />
 									<span>Nuevo Proyecto</span>
@@ -755,7 +755,7 @@ export default function ProjectsSidebar({
 										? `Eliminar proyecto ${activeProjectName}`
 										: "No se puede eliminar este tablero"
 								}
-								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-400 transition hover:border-red-400 hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
+								className="flex w-full items-center justify-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/5 py-1.5 text-xs font-extrabold text-red-600 transition hover:border-red-500 hover:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:border-red-400 dark:hover:bg-red-500/15 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:border-red-500/30 disabled:hover:bg-red-500/5 cursor-pointer"
 							>
 								<Trash2 className="h-3.5 w-3.5" />
 								<span>Eliminar Proyecto</span>
