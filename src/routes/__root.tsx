@@ -48,8 +48,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(234,179,8,0.25)] bg-[var(--bg-base)] text-[var(--sea-ink)] min-h-screen relative overflow-x-hidden transition-colors duration-200">
-				{/* Grid background */}
-				<div className="grid-bg" />
+				{/* Ambient brand radial halos (Light & Dark Mode) */}
+				<div
+					aria-hidden="true"
+					className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[var(--bg-base)] transition-colors duration-300"
+				>
+					<div className="absolute bottom-0 left-[-20%] right-0 top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(147,51,234,0.18),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_farthest-side,rgba(168,85,247,0.22),rgba(255,255,255,0))]" />
+					<div className="absolute bottom-0 right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(234,179,8,0.22),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_farthest-side,rgba(234,179,8,0.18),rgba(255,255,255,0))]" />
+				</div>
 				<Toaster position="bottom-center" theme={resolvedTheme} />
 				<ConvexProvider>
 					<Header />
