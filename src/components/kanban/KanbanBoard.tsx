@@ -421,7 +421,12 @@ export default function KanbanBoard() {
 			});
 			setShowAddModal(false);
 		} catch (e) {
-			console.error(e);
+			console.error("Error creating task:", e);
+			sileo.error({
+				title: "Error al crear",
+				description: "No se pudo crear la nota. Intenta de nuevo.",
+				...getErrorToastTheme(),
+			});
 		}
 	};
 
@@ -437,9 +442,19 @@ export default function KanbanBoard() {
 				isRitual: updatedTask.isRitual,
 				ritualId: updatedTask.ritualId as Id<"rituals"> | undefined,
 			});
+			sileo.success({
+				title: "¡Nota Actualizada!",
+				description: `Se han guardado los cambios en "${updatedTask.title}".`,
+				...getSuccessToastTheme(),
+			});
 			handleCloseEditingTask();
 		} catch (e) {
-			console.error(e);
+			console.error("Error updating task:", e);
+			sileo.error({
+				title: "Error al actualizar",
+				description: "No se pudo actualizar la nota. Intenta de nuevo.",
+				...getErrorToastTheme(),
+			});
 		}
 	};
 
