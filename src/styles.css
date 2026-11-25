@@ -783,5 +783,85 @@ a {
   box-shadow: none;
 }
 
+/* Sileo toast contrast overrides (unlayered + higher specificity than sileo/styles.css) */
+:root:not(.dark) [data-sileo-svg] {
+  filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.14))
+    drop-shadow(0 2px 6px rgba(15, 23, 42, 0.08));
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-title].bw-toast-title-success {
+  color: #3b0764;
+  font-weight: 800;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-description].bw-toast-desc-success {
+  color: #581c87;
+  font-weight: 600;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-success {
+  background-color: #7e22ce;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-success:hover {
+  background-color: #6b21a8;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-title].bw-toast-title-error {
+  color: #7f1d1d;
+  font-weight: 800;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-description].bw-toast-desc-error {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-error {
+  background-color: #dc2626;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+[data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-error:hover {
+  background-color: #b91c1c;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-title].bw-toast-title-success {
+  color: #e9d5ff;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-description].bw-toast-desc-success {
+  color: rgba(216, 180, 254, 0.9);
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-success {
+  background-color: #9333ea;
+  color: #ffffff;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-success:hover {
+  background-color: #7e22ce;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-title].bw-toast-title-error {
+  color: #fecaca;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-description].bw-toast-desc-error {
+  color: rgba(252, 165, 165, 0.9);
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-error {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+:root.dark [data-sileo-viewport] [data-sileo-toast] [data-sileo-button].bw-toast-btn-error:hover {
+  background-color: #b91c1c;
+}
+
 
 

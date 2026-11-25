@@ -56,7 +56,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<div className="absolute bottom-0 left-[-20%] right-0 top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(147,51,234,0.18),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_farthest-side,rgba(168,85,247,0.22),rgba(255,255,255,0))]" />
 					<div className="absolute bottom-0 right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(234,179,8,0.22),rgba(255,255,255,0))] dark:bg-[radial-gradient(circle_farthest-side,rgba(234,179,8,0.18),rgba(255,255,255,0))]" />
 				</div>
-				<Toaster position="bottom-center" theme={resolvedTheme} />
+				{/* Sileo inverts toast surface colors: "light" = dark toast text-white, "dark" = light toast text-dark */}
+				<Toaster
+					position="bottom-center"
+					theme={resolvedTheme === "dark" ? "light" : "dark"}
+				/>
 				<ConvexProvider>
 					<Header />
 					<div className="relative z-10">{children}</div>
