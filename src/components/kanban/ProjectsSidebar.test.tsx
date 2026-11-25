@@ -242,4 +242,22 @@ describe("ProjectsSidebar", () => {
 			screen.queryByLabelText("Barra lateral de proyectos móvil"),
 		).toBeNull();
 	});
+
+	it("mounts directly in collapsed state from localStorage without triggering an initial width slide", () => {
+		window.localStorage.setItem("kairos_sidebar_collapsed", "true");
+		renderSidebar();
+
+		const sidebar = screen.getByLabelText("Barra lateral de proyectos");
+		expect(sidebar.className).toContain("w-12");
+		expect(sidebar.className).not.toContain("transition-[width]");
+		expect(
+			screen.getByRole("button", { name: "Expandir barra lateral" }),
+		).toBeTruthy();
+
+		// User interaction enables width transition
+		fireEvent.click(
+			screen.getByRole("button", { name: "Expandir barra lateral" }),
+		);
+		expect(sidebar.className).toContain("transition-[width]");
+	});
 });

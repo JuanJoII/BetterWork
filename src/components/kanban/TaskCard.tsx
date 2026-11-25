@@ -53,7 +53,7 @@ export default function TaskCard({
 				onDragStart();
 			}}
 			onDragEnd={onDragEnd}
-			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm ${
+			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-[border-color,background-color,box-shadow] duration-200 cursor-grab active:cursor-grabbing shadow-sm ${
 				isRitual
 					? "border-purple-300/80 bg-purple-50/95 hover:border-purple-400 hover:bg-purple-50 hover:shadow-[0_14px_28px_rgba(126,34,206,0.1)] text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/15 dark:hover:border-purple-400/50 dark:hover:bg-purple-950/25 dark:hover:shadow-[0_16px_32px_rgba(168,85,247,0.06)] dark:text-purple-100/90"
 					: "border-amber-300/80 bg-amber-50/95 hover:border-amber-400 hover:bg-amber-50 hover:shadow-[0_14px_28px_rgba(217,119,6,0.1)] text-amber-950 dark:border-yellow-500/20 dark:bg-yellow-950/20 dark:hover:border-yellow-400/40 dark:hover:bg-yellow-950/30 dark:hover:shadow-[0_16px_32px_rgba(234,179,8,0.08)] dark:text-yellow-100/90"

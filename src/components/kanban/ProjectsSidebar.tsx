@@ -44,7 +44,15 @@ export default function ProjectsSidebar({
 	onCreateProject,
 	handleDeleteProject,
 }: ProjectsSidebarProps) {
-	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+		if (typeof window === "undefined") return false;
+		try {
+			return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+		} catch {
+			return false;
+		}
+	});
+	const [shouldAnimateWidth, setShouldAnimateWidth] = useState(false);
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [isCompactSearchOpen, setIsCompactSearchOpen] = useState(false);
@@ -59,17 +67,6 @@ export default function ProjectsSidebar({
 	const createInputRef = useRef<HTMLInputElement>(null);
 	const wheelAccRef = useRef(0);
 	const lastStepRef = useRef(0);
-
-	useEffect(() => {
-		try {
-			const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
-			if (stored === "true") {
-				setIsCollapsed(true);
-			}
-		} catch {
-			// ignore storage access issues
-		}
-	}, []);
 
 	// Focus input and handle Escape / outside-click for the inline create popover
 	useEffect(() => {
@@ -104,6 +101,7 @@ export default function ProjectsSidebar({
 	}, [isCreateOpen]);
 
 	const toggleCollapsed = () => {
+		setShouldAnimateWidth(true);
 		setIsCreateOpen(false);
 		setIsCompactSearchOpen(false);
 		setIsCollapsed((prev) => {
@@ -578,7 +576,9 @@ export default function ProjectsSidebar({
 			<aside
 				ref={desktopSidebarRef}
 				aria-label="Barra lateral de proyectos"
-				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-28 z-30 h-[calc(100vh-9.5rem)] transition-all duration-300 ${
+				className={`hidden lg:flex flex-col justify-between shrink-0 sticky top-28 z-30 h-[calc(100vh-9.5rem)] ${
+					shouldAnimateWidth ? "transition-[width] duration-300" : ""
+				} ${
 					isCollapsed
 						? "w-12 items-center gap-2.5 py-1"
 						: "w-52 xl:w-56 gap-3 py-1"
