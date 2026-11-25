@@ -585,6 +585,7 @@ export default function KanbanBoard() {
 				onClose={() => setShowAddModal(false)}
 				projects={projects}
 				currentProjectId={currentProjectId}
+				column={modalColumn}
 				onSubmit={handleAddCardSubmit}
 			/>
 
