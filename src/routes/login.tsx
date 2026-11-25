@@ -12,7 +12,7 @@ export const Route = createFileRoute("/login")({
 	component: LoginPage,
 });
 
-function LoginPage() {
+export function LoginPage() {
 	const { isLoading, isAuthenticated } = useConvexAuth();
 	const { signIn } = useAuthActions();
 	const navigate = useNavigate();
@@ -23,6 +23,9 @@ function LoginPage() {
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [pending, setPending] = useState(false);
+	const [googlePending, setGooglePending] = useState(false);
+
+	const isBusy = pending || googlePending;
 
 	useEffect(() => {
 		if (!isLoading && isAuthenticated) {
@@ -131,6 +134,25 @@ function LoginPage() {
 		}
 	};
 
+	const handleGoogleSignIn = async () => {
+		setGooglePending(true);
+		try {
+			await signIn("google", { redirectTo: "/" });
+		} catch (err: unknown) {
+			console.error(err);
+			const message =
+				err instanceof Error
+					? err.message
+					: "No se pudo iniciar sesión con Google. Intenta de nuevo.";
+			sileo.error({
+				title: "Error con Google",
+				description: message,
+				...getErrorToastTheme(),
+			});
+			setGooglePending(false);
+		}
+	};
+
 	const headingColors =
 		resolvedTheme === "light"
 			? ["#7c3aed", "#c026d3", "#d97706"]
@@ -185,6 +207,50 @@ function LoginPage() {
 						>
 							Registrarse
 						</button>
+					</div>
+
+					{/* Google OAuth Sign-In */}
+					<div className="mb-1">
+						<button
+							type="button"
+							onClick={handleGoogleSignIn}
+							disabled={isBusy}
+							className="auth-google-btn"
+						>
+							{googlePending ? (
+								<div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-500 border-t-transparent dark:border-yellow-400 dark:border-t-transparent" />
+							) : (
+								<>
+									<svg
+										aria-hidden="true"
+										className="h-4.5 w-4.5 shrink-0"
+										viewBox="0 0 24 24"
+									>
+										<path
+											fill="#4285F4"
+											d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h6.44a5.5 5.5 0 0 1-2.39 3.61v3h3.87c2.26-2.08 3.57-5.15 3.57-8.64Z"
+										/>
+										<path
+											fill="#34A853"
+											d="M12 24c3.24 0 5.95-1.07 7.93-2.91l-3.87-3a7.18 7.18 0 0 1-10.69-3.77H1.37v3.09A12 12 0 0 0 12 24Z"
+										/>
+										<path
+											fill="#FBBC05"
+											d="M5.37 14.32a7.21 7.21 0 0 1 0-4.64V6.59H1.37a12 12 0 0 0 0 10.82l4-3.09Z"
+										/>
+										<path
+											fill="#EA4335"
+											d="M12 4.75c1.76 0 3.34.61 4.58 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.37 6.59l4 3.09A7.16 7.16 0 0 1 12 4.75Z"
+										/>
+									</svg>
+									<span>Continuar con Google</span>
+								</>
+							)}
+						</button>
+					</div>
+
+					<div className="auth-divider" aria-hidden="true">
+						<span>o con tu correo</span>
 					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-5">
@@ -256,7 +322,7 @@ function LoginPage() {
 						<div className="pt-2">
 							<button
 								type="submit"
-								disabled={pending}
+								disabled={isBusy}
 								className="auth-submit-btn"
 							>
 								{pending ? (
