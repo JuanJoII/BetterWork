@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 export default function Footer() {
 	const year = new Date().getFullYear();
 
@@ -7,6 +9,23 @@ export default function Footer() {
 				<p className="m-0 text-sm">
 					&copy; {year} Juan José Camacho. All rights reserved.
 				</p>
+				<div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold">
+					<Link
+						to="/privacy"
+						className="text-[var(--sea-ink-soft)] hover:text-purple-700 dark:hover:text-purple-300 transition no-underline hover:underline underline-offset-4"
+					>
+						Política de Privacidad
+					</Link>
+					<span aria-hidden="true" className="opacity-40">
+						•
+					</span>
+					<Link
+						to="/terms"
+						className="text-[var(--sea-ink-soft)] hover:text-purple-700 dark:hover:text-purple-300 transition no-underline hover:underline underline-offset-4"
+					>
+						Condiciones de Servicio
+					</Link>
+				</div>
 				<p className="island-kicker m-0">Apoyame en GitHub</p>
 			</div>
 			<div className="mt-4 flex justify-center gap-4">
