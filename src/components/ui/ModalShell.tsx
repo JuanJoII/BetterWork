@@ -59,7 +59,7 @@ export default function ModalShell({
 						onClick={onPrevTone}
 						aria-label="Cambiar prioridad anterior"
 						title="Cambiar prioridad"
-						className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-700 shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-white hover:text-slate-950 active:scale-95 dark:border-white/15 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-white/30 dark:hover:bg-slate-800/90 cursor-pointer"
+						className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/90 text-slate-700 shadow-lg backdrop-blur-md transition duration-200 hover:scale-110 hover:border-amber-500/70 hover:bg-white hover:text-slate-950 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-white/20 dark:bg-slate-900/85 dark:text-slate-200 dark:hover:border-yellow-400/60 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:ring-yellow-300 dark:focus-visible:ring-offset-slate-950 cursor-pointer"
 					>
 						<ChevronLeft className="h-5 w-5" />
 					</button>
@@ -70,7 +70,7 @@ export default function ModalShell({
 					role="dialog"
 					aria-modal="true"
 					aria-label={ariaLabel}
-					className={`relative flex-1 min-w-0 max-w-md rounded-3xl border p-6 sm:p-7 backdrop-blur-2xl transition-[background-color,border-color,box-shadow,color] duration-300 ${styles.modalSheet}`}
+					className={`relative flex-1 min-w-0 max-w-md rounded-3xl border px-5 py-5 sm:px-6 sm:py-6 backdrop-blur-2xl transition-[background-color,border-color,box-shadow,color] duration-300 ${styles.modalSheet}`}
 				>
 					{/* Signature centered tech-tape */}
 					<div
@@ -97,12 +97,13 @@ export default function ModalShell({
 						type="button"
 						onClick={onClose}
 						aria-label="Cerrar modal"
-						className={`absolute right-3.5 top-3.5 z-20 flex h-8 w-8 items-center justify-center rounded-full transition cursor-pointer ${styles.iconButton}`}
+						className={`absolute right-3.5 top-3.5 z-20 flex h-8 w-8 items-center justify-center rounded-full transition duration-200 hover:scale-105 cursor-pointer ${styles.iconButton} ${styles.focusRing}`}
 					>
 						<X className="h-4 w-4" />
 					</button>
 
-					<div className="relative z-10 max-h-[82vh] overflow-y-auto kanban-scroll pr-0.5">
+					{/* Generous X/Y gutter inside scroll area so button focus rings and shadows never clip */}
+					<div className="relative z-10 max-h-[82vh] overflow-y-auto kanban-scroll px-1.5 py-2">
 						{children}
 					</div>
 				</div>
@@ -113,7 +114,7 @@ export default function ModalShell({
 						onClick={onNextTone}
 						aria-label="Cambiar prioridad siguiente"
 						title="Cambiar prioridad"
-						className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-700 shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-white hover:text-slate-950 active:scale-95 dark:border-white/15 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-white/30 dark:hover:bg-slate-800/90 cursor-pointer"
+						className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white/90 text-slate-700 shadow-lg backdrop-blur-md transition duration-200 hover:scale-110 hover:border-amber-500/70 hover:bg-white hover:text-slate-950 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-white/20 dark:bg-slate-900/85 dark:text-slate-200 dark:hover:border-yellow-400/60 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:ring-yellow-300 dark:focus-visible:ring-offset-slate-950 cursor-pointer"
 					>
 						<ChevronRight className="h-5 w-5" />
 					</button>

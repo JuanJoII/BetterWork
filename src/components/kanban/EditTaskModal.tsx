@@ -104,19 +104,19 @@ export default function EditTaskModal({
 
 				{/* Sticky Note Footer Actions */}
 				<div
-					className={`mt-5 flex items-center justify-end gap-2 border-t pt-4 transition-colors duration-200 ${styles.divider}`}
+					className={`mt-5 flex items-center justify-end gap-2.5 border-t pt-4 pb-1 transition-colors duration-200 ${styles.divider}`}
 				>
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-full px-4 py-1.5 text-xs font-extrabold text-[var(--sea-ink-soft)] transition hover:bg-black/5 hover:text-[var(--sea-ink)] dark:hover:bg-white/10 cursor-pointer"
+						className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition duration-200 hover:-translate-y-0.5 active:scale-95 cursor-pointer ${styles.cancelButton} ${styles.focusRing}`}
 					>
 						Cancelar
 					</button>
 					<button
 						type="submit"
 						disabled={!title.trim()}
-						className={`rounded-full px-5 py-1.5 text-xs font-black shadow-sm transition active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer ${styles.ctaButton}`}
+						className={`rounded-full px-5 py-1.5 text-xs font-black shadow-sm transition duration-200 active:scale-95 disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer ${styles.ctaButton} ${styles.focusRing}`}
 					>
 						Actualizar Nota
 					</button>

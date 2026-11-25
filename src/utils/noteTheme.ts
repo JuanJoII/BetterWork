@@ -51,6 +51,8 @@ export interface NoteToneStyles {
 	activeBottomShadow: string;
 	pill: string;
 	ctaButton: string;
+	cancelButton: string;
+	focusRing: string;
 }
 
 export const NOTE_TONE_STYLES: Record<NoteToneKey, NoteToneStyles> = {
@@ -74,12 +76,16 @@ export const NOTE_TONE_STYLES: Record<NoteToneKey, NoteToneStyles> = {
 		focusButton:
 			"border-emerald-300 bg-emerald-100/80 hover:bg-emerald-200/70 text-emerald-900 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:text-emerald-300 dark:hover:text-emerald-200",
 		iconButton:
-			"hover:bg-emerald-200/60 text-emerald-800 hover:text-emerald-950 dark:hover:bg-emerald-400/15 dark:text-emerald-400/75 dark:hover:text-emerald-300",
+			"hover:bg-emerald-200/75 text-emerald-800 hover:text-emerald-950 dark:hover:bg-emerald-400/20 dark:text-emerald-300/80 dark:hover:text-emerald-200",
 		activeBottomShadow:
 			"shadow-[0_16px_26px_-10px_rgba(16,185,129,0.4)] dark:shadow-[0_16px_26px_-10px_rgba(52,211,153,0.5)]",
 		pill: "border-emerald-400/60 bg-emerald-200/70 text-emerald-900 dark:border-emerald-400/40 dark:bg-emerald-500/20 dark:text-emerald-200",
 		ctaButton:
-			"bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-400 dark:text-slate-950 dark:hover:bg-emerald-300",
+			"bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(16,185,129,0.35)] dark:bg-emerald-400 dark:text-slate-950 dark:hover:bg-emerald-300 dark:hover:shadow-[0_8px_22px_rgba(52,211,153,0.38)]",
+		cancelButton:
+			"border border-emerald-400/35 text-emerald-900/80 hover:border-emerald-500/60 hover:bg-emerald-200/65 hover:text-emerald-950 dark:border-emerald-400/20 dark:text-emerald-200/80 dark:hover:border-emerald-400/45 dark:hover:bg-emerald-400/15 dark:hover:text-emerald-100",
+		focusRing:
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-50 dark:focus-visible:ring-emerald-300 dark:focus-visible:ring-offset-[#071a15]",
 	},
 	medium: {
 		card: "border-amber-300/85 bg-amber-50/95 text-amber-950 dark:border-yellow-500/25 dark:bg-yellow-950/20 dark:text-yellow-100/90",
@@ -101,12 +107,16 @@ export const NOTE_TONE_STYLES: Record<NoteToneKey, NoteToneStyles> = {
 		focusButton:
 			"border-amber-300 bg-amber-100/80 hover:bg-amber-200/70 text-amber-900 dark:border-yellow-500/25 dark:bg-yellow-500/10 dark:hover:bg-yellow-400/15 dark:text-yellow-300 dark:hover:text-yellow-200",
 		iconButton:
-			"hover:bg-amber-200/60 text-amber-800 hover:text-amber-950 dark:hover:bg-yellow-400/15 dark:text-yellow-400/75 dark:hover:text-yellow-300",
+			"hover:bg-amber-200/75 text-amber-800 hover:text-amber-950 dark:hover:bg-yellow-400/20 dark:text-yellow-300/80 dark:hover:text-yellow-200",
 		activeBottomShadow:
 			"shadow-[0_16px_26px_-10px_rgba(217,119,6,0.4)] dark:shadow-[0_16px_26px_-10px_rgba(250,204,21,0.48)]",
 		pill: "border-amber-400/70 bg-amber-200/75 text-amber-950 dark:border-yellow-400/40 dark:bg-yellow-400/20 dark:text-yellow-200",
 		ctaButton:
-			"bg-amber-400 text-slate-950 hover:bg-amber-300 dark:bg-yellow-300 dark:text-slate-950 dark:hover:bg-yellow-200",
+			"bg-amber-400 text-slate-950 hover:bg-amber-500 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(217,119,6,0.32)] dark:bg-yellow-300 dark:text-slate-950 dark:hover:bg-yellow-200 dark:hover:shadow-[0_8px_22px_rgba(250,204,21,0.36)]",
+		cancelButton:
+			"border border-amber-400/40 text-amber-900/80 hover:border-amber-500/65 hover:bg-amber-200/65 hover:text-amber-950 dark:border-yellow-400/20 dark:text-yellow-200/80 dark:hover:border-yellow-400/45 dark:hover:bg-yellow-400/15 dark:hover:text-yellow-100",
+		focusRing:
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50 dark:focus-visible:ring-yellow-300 dark:focus-visible:ring-offset-[#1a1506]",
 	},
 	high: {
 		card: "border-red-300/85 bg-red-50/95 text-red-950 dark:border-red-500/30 dark:bg-red-950/25 dark:text-red-100/90",
@@ -128,12 +138,16 @@ export const NOTE_TONE_STYLES: Record<NoteToneKey, NoteToneStyles> = {
 		focusButton:
 			"border-red-300 bg-red-100/80 hover:bg-red-200/70 text-red-900 dark:border-red-500/25 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-300 dark:hover:text-red-200",
 		iconButton:
-			"hover:bg-red-200/60 text-red-800 hover:text-red-950 dark:hover:bg-red-400/15 dark:text-red-400/75 dark:hover:text-red-300",
+			"hover:bg-red-200/75 text-red-800 hover:text-red-950 dark:hover:bg-red-400/20 dark:text-red-300/80 dark:hover:text-red-200",
 		activeBottomShadow:
 			"shadow-[0_16px_26px_-10px_rgba(220,38,38,0.4)] dark:shadow-[0_16px_26px_-10px_rgba(248,113,113,0.5)]",
 		pill: "border-red-400/65 bg-red-200/70 text-red-900 dark:border-red-400/40 dark:bg-red-500/20 dark:text-red-200",
 		ctaButton:
-			"bg-red-500 text-white hover:bg-red-600 dark:bg-red-400 dark:text-slate-950 dark:hover:bg-red-300",
+			"bg-red-600 text-white hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(220,38,38,0.35)] dark:bg-red-400 dark:text-slate-950 dark:hover:bg-red-300 dark:hover:shadow-[0_8px_22px_rgba(248,113,113,0.38)]",
+		cancelButton:
+			"border border-red-400/35 text-red-900/80 hover:border-red-500/60 hover:bg-red-200/65 hover:text-red-950 dark:border-red-400/20 dark:text-red-200/80 dark:hover:border-red-400/45 dark:hover:bg-red-400/15 dark:hover:text-red-100",
+		focusRing:
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 dark:focus-visible:ring-red-300 dark:focus-visible:ring-offset-[#1f0a10]",
 	},
 	daily: {
 		card: "border-purple-300/85 bg-purple-50/95 text-purple-950 dark:border-purple-500/30 dark:bg-purple-950/20 dark:text-purple-100/90",
@@ -155,12 +169,16 @@ export const NOTE_TONE_STYLES: Record<NoteToneKey, NoteToneStyles> = {
 		focusButton:
 			"border-purple-300 bg-purple-100/80 hover:bg-purple-200/70 text-purple-900 dark:border-purple-500/25 dark:bg-purple-500/10 dark:hover:bg-purple-500/20 dark:text-purple-300 dark:hover:text-purple-200",
 		iconButton:
-			"hover:bg-purple-200/60 text-purple-800 hover:text-purple-950 dark:hover:bg-purple-500/15 dark:text-purple-400/80 dark:hover:text-purple-300",
+			"hover:bg-purple-200/75 text-purple-800 hover:text-purple-950 dark:hover:bg-purple-400/20 dark:text-purple-300/80 dark:hover:text-purple-200",
 		activeBottomShadow:
 			"shadow-[0_16px_26px_-10px_rgba(126,34,206,0.4)] dark:shadow-[0_16px_26px_-10px_rgba(168,85,247,0.55)]",
 		pill: "border-purple-400/60 bg-purple-200/70 text-purple-900 dark:border-purple-400/40 dark:bg-purple-500/20 dark:text-purple-200",
 		ctaButton:
-			"bg-purple-600 text-white hover:bg-purple-500 dark:bg-purple-400 dark:text-slate-950 dark:hover:bg-purple-300",
+			"bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(126,34,206,0.35)] dark:bg-purple-400 dark:text-slate-950 dark:hover:bg-purple-300 dark:hover:shadow-[0_8px_22px_rgba(192,132,252,0.38)]",
+		cancelButton:
+			"border border-purple-400/35 text-purple-900/80 hover:border-purple-500/60 hover:bg-purple-200/65 hover:text-purple-950 dark:border-purple-400/20 dark:text-purple-200/80 dark:hover:border-purple-400/45 dark:hover:bg-purple-400/15 dark:hover:text-purple-100",
+		focusRing:
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:ring-offset-2 focus-visible:ring-offset-purple-50 dark:focus-visible:ring-purple-300 dark:focus-visible:ring-offset-[#130a22]",
 	},
 };
 
