@@ -5,10 +5,11 @@ import {
 	NOTE_TONE_STYLES,
 	PRIORITY_LABEL,
 } from "../../utils/noteTheme";
-import ModalShell from "../ui/ModalShell";
+import ModalShell, { type ModalAnchorRect } from "../ui/ModalShell";
 
 interface EditTaskModalProps {
 	task: Task | null;
+	anchorRect?: ModalAnchorRect | null;
 	onClose: () => void;
 	projects: Project[];
 	onSubmit: (updatedTask: Task) => void;
@@ -16,6 +17,7 @@ interface EditTaskModalProps {
 
 export default function EditTaskModal({
 	task,
+	anchorRect = null,
 	onClose,
 	onSubmit,
 }: EditTaskModalProps) {
@@ -58,6 +60,7 @@ export default function EditTaskModal({
 			onClose={onClose}
 			ariaLabel="Editar nota adhesiva"
 			tone={toneKey}
+			anchorRect={anchorRect}
 			onPrevTone={
 				isDaily ? undefined : () => setPriority((p) => cyclePriority(p, "prev"))
 			}

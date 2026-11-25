@@ -12,6 +12,7 @@ import { useKanbanData } from "../../hooks/useKanbanData";
 import type { Task } from "../../types/kanban";
 import { getTodayDateKey } from "../../utils/date";
 import { getErrorToastTheme, getSuccessToastTheme } from "../../utils/toast";
+import type { ModalAnchorRect } from "../ui/ModalShell";
 import CreateTaskModal from "./CreateTaskModal";
 import EditTaskModal from "./EditTaskModal";
 import KanbanColumn from "./KanbanColumn";
@@ -122,6 +123,31 @@ export default function KanbanBoard() {
 	const [showAddModal, setShowAddModal] = useState<boolean>(false);
 	const [modalColumn, setModalColumn] = useState<Task["column"]>("pendiente");
 	const [editingTask, setEditingTask] = useState<Task | null>(null);
+	const [editingAnchorRect, setEditingAnchorRect] =
+		useState<ModalAnchorRect | null>(null);
+
+	const handleStartEditingTask = (task: Task, e: React.MouseEvent) => {
+		const cardEl = (e.currentTarget as HTMLElement).closest(
+			"[data-task-card]",
+		) as HTMLElement | null;
+		if (cardEl) {
+			const rect = cardEl.getBoundingClientRect();
+			setEditingAnchorRect({
+				top: rect.top,
+				left: rect.left,
+				width: rect.width,
+				height: rect.height,
+			});
+		} else {
+			setEditingAnchorRect(null);
+		}
+		setEditingTask(task);
+	};
+
+	const handleCloseEditingTask = () => {
+		setEditingTask(null);
+		setEditingAnchorRect(null);
+	};
 
 	// Drag and Drop
 	const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
@@ -411,7 +437,7 @@ export default function KanbanBoard() {
 				isRitual: updatedTask.isRitual,
 				ritualId: updatedTask.ritualId as Id<"rituals"> | undefined,
 			});
-			setEditingTask(null);
+			handleCloseEditingTask();
 		} catch (e) {
 			console.error(e);
 		}
@@ -557,6 +583,7 @@ export default function KanbanBoard() {
 								tasks={colTasks}
 								projects={projects}
 								currentProjectId={currentProjectId}
+								editingTaskId={editingTask?.id ?? null}
 								isDraggingFromOtherColumn={
 									draggingTask !== null && draggingTask.column !== col.id
 								}
@@ -570,7 +597,7 @@ export default function KanbanBoard() {
 								onDragEnd={handleDragEnd}
 								onFocusClick={handleFocusClick}
 								onMoveTask={moveTask}
-								onEditTask={setEditingTask}
+								onEditTask={handleStartEditingTask}
 								onDeleteTask={deleteTask}
 								onCompleteTask={completeTask}
 							/>
@@ -588,10 +615,11 @@ export default function KanbanBoard() {
 				onSubmit={handleAddCardSubmit}
 			/>
 
-			{/* EDIT CARD MODAL */}
+			{/* EDIT CARD MODAL (anchored in place over the card with full-screen blur behind) */}
 			<EditTaskModal
 				task={editingTask}
-				onClose={() => setEditingTask(null)}
+				anchorRect={editingAnchorRect}
+				onClose={handleCloseEditingTask}
 				projects={projects}
 				onSubmit={handleEditCardSubmit}
 			/>

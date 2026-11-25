@@ -16,11 +16,12 @@ interface TaskCardProps {
 	projectOfTask?: Project;
 	currentProjectId: string;
 	colId: string;
+	isEditing?: boolean;
 	onDragStart: () => void;
 	onDragEnd?: () => void;
 	onFocusClick: () => void;
 	onMoveTask: (direction: "forward" | "backward") => void;
-	onEditTask: () => void;
+	onEditTask: (e: React.MouseEvent) => void;
 	onDeleteTask: (e: React.MouseEvent) => void;
 	onCompleteTask: (e: React.MouseEvent) => void;
 }
@@ -30,6 +31,7 @@ export default function TaskCard({
 	projectOfTask,
 	currentProjectId,
 	colId,
+	isEditing = false,
 	onDragStart,
 	onDragEnd,
 	onFocusClick,
@@ -48,7 +50,7 @@ export default function TaskCard({
 			data-task-card
 			data-ritual={isRitual}
 			data-note-tone={toneKey}
-			draggable
+			draggable={!isEditing}
 			onDragStart={(e) => {
 				e.dataTransfer?.setData("text/plain", task.id);
 				if (e.dataTransfer) {
@@ -57,7 +59,9 @@ export default function TaskCard({
 				onDragStart();
 			}}
 			onDragEnd={onDragEnd}
-			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-[border-color,background-color,box-shadow] duration-200 cursor-grab active:cursor-grabbing shadow-sm ${tone.card} ${tone.cardHover}`}
+			className={`relative rounded-2xl border p-5 flex flex-col justify-between transition-[border-color,background-color,box-shadow,opacity] duration-200 cursor-grab active:cursor-grabbing shadow-sm ${tone.card} ${tone.cardHover} ${
+				isEditing ? "opacity-0 pointer-events-none" : ""
+			}`}
 		>
 			{/* Tech-tape overlay */}
 			<div
@@ -143,7 +147,7 @@ export default function TaskCard({
 						)}
 						<button
 							type="button"
-							onClick={onEditTask}
+							onClick={(e) => onEditTask(e)}
 							className={`p-1 rounded-lg ml-0.5 transition cursor-pointer ${tone.iconButton}`}
 							title="Editar"
 						>

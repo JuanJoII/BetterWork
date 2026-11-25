@@ -16,6 +16,7 @@ interface KanbanColumnProps {
 	tasks: Task[];
 	projects: Project[];
 	currentProjectId: string;
+	editingTaskId?: string | null;
 	isDraggingFromOtherColumn: boolean;
 	onDragOver: (e: React.DragEvent) => void;
 	onDrop: () => void;
@@ -24,7 +25,7 @@ interface KanbanColumnProps {
 	onDragEnd: () => void;
 	onFocusClick: (id: string) => void;
 	onMoveTask: (id: string, direction: "forward" | "backward") => void;
-	onEditTask: (task: Task) => void;
+	onEditTask: (task: Task, e: React.MouseEvent) => void;
 	onDeleteTask: (id: string, e: React.MouseEvent) => void;
 	onCompleteTask: (id: string, e: React.MouseEvent) => void;
 }
@@ -69,6 +70,7 @@ export default function KanbanColumn({
 	tasks: colTasks,
 	projects,
 	currentProjectId,
+	editingTaskId,
 	isDraggingFromOtherColumn,
 	onDragOver,
 	onDrop,
@@ -195,11 +197,12 @@ export default function KanbanColumn({
 									projectOfTask={projectOfTask}
 									currentProjectId={currentProjectId}
 									colId={col.id}
+									isEditing={editingTaskId === task.id}
 									onDragStart={() => onDragStart(task.id)}
 									onDragEnd={onDragEnd}
 									onFocusClick={() => onFocusClick(task.id)}
 									onMoveTask={(dir) => onMoveTask(task.id, dir)}
-									onEditTask={() => onEditTask(task)}
+									onEditTask={(e) => onEditTask(task, e)}
 									onDeleteTask={(e) => onDeleteTask(task.id, e)}
 									onCompleteTask={(e) => onCompleteTask(task.id, e)}
 								/>

@@ -1,26 +1,46 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { NOTE_TONE_STYLES, type NoteToneKey } from "../../utils/noteTheme";
+
+export interface ModalAnchorRect {
+	top: number;
+	left: number;
+	width: number;
+	height: number;
+}
 
 interface ModalShellProps {
 	isOpen: boolean;
 	onClose: () => void;
 	ariaLabel: string;
 	tone?: NoteToneKey;
+	anchorRect?: ModalAnchorRect | null;
 	onPrevTone?: () => void;
 	onNextTone?: () => void;
 	children: React.ReactNode;
 }
+
+const VIEWPORT_MARGIN = 16;
+const ARROW_SLOT_WIDTH = 56; // 44px arrow + 12px gap
 
 export default function ModalShell({
 	isOpen,
 	onClose,
 	ariaLabel,
 	tone = "medium",
+	anchorRect = null,
 	onPrevTone,
 	onNextTone,
 	children,
 }: ModalShellProps) {
+	const stageRef = useRef<HTMLDivElement>(null);
+	const [anchoredStyle, setAnchoredStyle] = useState<{
+		top: number;
+		left: number;
+		cardWidth: number;
+	} | null>(null);
+
 	useEffect(() => {
 		if (!isOpen) return;
 
@@ -36,14 +56,75 @@ export default function ModalShell({
 		};
 	}, [isOpen, onClose]);
 
-	if (!isOpen) return null;
-
-	const styles = NOTE_TONE_STYLES[tone];
 	const showToneArrows = Boolean(onPrevTone && onNextTone);
 
-	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-			{/* Clickable blurred backdrop */}
+	// Compute clamped in-place coordinates anchored to the clicked card
+	useLayoutEffect(() => {
+		if (!isOpen || !anchorRect || typeof window === "undefined") {
+			setAnchoredStyle(null);
+			return;
+		}
+
+		const computePosition = () => {
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+
+			// Fall back to centered modal on very narrow screens
+			if (vw < 640) {
+				setAnchoredStyle(null);
+				return;
+			}
+
+			const arrowsOverhead = showToneArrows ? ARROW_SLOT_WIDTH * 2 : 0;
+			const maxCardWidth = Math.max(
+				280,
+				vw - VIEWPORT_MARGIN * 2 - arrowsOverhead,
+			);
+			const cardWidth = Math.min(Math.max(anchorRect.width, 320), maxCardWidth);
+			const totalStageWidth = cardWidth + arrowsOverhead;
+
+			// Center the card horizontally over the original card's center
+			const originalCenterX = anchorRect.left + anchorRect.width / 2;
+			const idealStageLeft = originalCenterX - totalStageWidth / 2;
+			const clampedLeft = Math.min(
+				Math.max(idealStageLeft, VIEWPORT_MARGIN),
+				Math.max(VIEWPORT_MARGIN, vw - totalStageWidth - VIEWPORT_MARGIN),
+			);
+
+			const measuredHeight =
+				stageRef.current?.getBoundingClientRect().height ||
+				Math.max(anchorRect.height, 300);
+			const clampedTop = Math.min(
+				Math.max(anchorRect.top, VIEWPORT_MARGIN + 8),
+				Math.max(VIEWPORT_MARGIN + 8, vh - measuredHeight - VIEWPORT_MARGIN),
+			);
+
+			setAnchoredStyle({
+				top: Math.round(clampedTop),
+				left: Math.round(clampedLeft),
+				cardWidth: Math.round(cardWidth),
+			});
+		};
+
+		computePosition();
+		window.addEventListener("resize", computePosition);
+		return () => window.removeEventListener("resize", computePosition);
+	}, [isOpen, anchorRect, showToneArrows]);
+
+	if (!isOpen || typeof document === "undefined") return null;
+
+	const styles = NOTE_TONE_STYLES[tone];
+	const isAnchored = anchoredStyle !== null;
+
+	const modalContent = (
+		<div
+			className={
+				isAnchored
+					? "fixed inset-0 z-[60]"
+					: "fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4"
+			}
+		>
+			{/* Clickable blurred backdrop covering the entire viewport (including Header) */}
 			<button
 				type="button"
 				aria-label="Cerrar ventana"
@@ -52,7 +133,24 @@ export default function ModalShell({
 			/>
 
 			{/* Stage wrapping left arrow + sticky note + right arrow */}
-			<div className="relative z-10 flex w-full max-w-[34rem] items-center justify-center gap-2 sm:gap-3.5 rise-in">
+			<div
+				ref={stageRef}
+				data-anchored={isAnchored ? "true" : "false"}
+				style={
+					isAnchored
+						? {
+								position: "fixed",
+								top: `${anchoredStyle.top}px`,
+								left: `${anchoredStyle.left}px`,
+							}
+						: undefined
+				}
+				className={
+					isAnchored
+						? "z-10 flex items-center justify-center gap-2 sm:gap-3 animate-in fade-in zoom-in-[0.98] duration-200"
+						: "relative z-10 flex w-full max-w-[34rem] items-center justify-center gap-2 sm:gap-3.5 rise-in"
+				}
+			>
 				{showToneArrows && (
 					<button
 						type="button"
@@ -70,7 +168,12 @@ export default function ModalShell({
 					role="dialog"
 					aria-modal="true"
 					aria-label={ariaLabel}
-					className={`relative flex-1 min-w-0 max-w-md rounded-3xl border px-5 py-5 sm:px-6 sm:py-6 backdrop-blur-2xl transition-[background-color,border-color,box-shadow,color] duration-300 ${styles.modalSheet}`}
+					style={
+						isAnchored ? { width: `${anchoredStyle.cardWidth}px` } : undefined
+					}
+					className={`relative rounded-3xl border px-5 py-5 sm:px-6 sm:py-6 backdrop-blur-2xl transition-[background-color,border-color,box-shadow,color] duration-300 ${
+						isAnchored ? "shrink-0" : "flex-1 min-w-0 max-w-md"
+					} ${styles.modalSheet}`}
 				>
 					{/* Signature centered tech-tape */}
 					<div
@@ -122,4 +225,6 @@ export default function ModalShell({
 			</div>
 		</div>
 	);
+
+	return createPortal(modalContent, document.body);
 }

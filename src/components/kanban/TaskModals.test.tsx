@@ -136,4 +136,42 @@ describe("Sticky-note direct manipulation modals", () => {
 			screen.queryByRole("button", { name: "Cambiar prioridad siguiente" }),
 		).toBeNull();
 	});
+
+	it("anchors EditTaskModal in place at the original card coordinates while blurring the rest of the page", () => {
+		Object.defineProperty(window, "innerWidth", {
+			writable: true,
+			configurable: true,
+			value: 1280,
+		});
+		Object.defineProperty(window, "innerHeight", {
+			writable: true,
+			configurable: true,
+			value: 800,
+		});
+
+		const task: Task = {
+			id: "t3",
+			title: "Nota anclada",
+			description: "Se edita en su mismo lugar",
+			priority: "medium",
+			column: "en-proceso",
+			projectId: "p2",
+			createdAt: "2026-11-20T00:00:00Z",
+		};
+
+		render(
+			<EditTaskModal
+				task={task}
+				anchorRect={{ top: 220, left: 480, width: 340, height: 210 }}
+				onClose={vi.fn()}
+				projects={PROJECTS}
+				onSubmit={vi.fn()}
+			/>,
+		);
+
+		const stage = document.body.querySelector("[data-anchored='true']");
+		expect(stage).toBeTruthy();
+		expect((stage as HTMLElement).style.position).toBe("fixed");
+		expect((stage as HTMLElement).style.top).toBe("220px");
+	});
 });
